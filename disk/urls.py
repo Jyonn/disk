@@ -15,7 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import url
 # from django.contrib import admin
+from django.shortcuts import render
+
+from Config.views import up_token
+
+
+def index(request):
+    return render(request, 'upload.html')
 
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
+    url(r'^token/', up_token),
+    url(r'^index.html', index),
 ]
