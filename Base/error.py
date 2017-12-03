@@ -1,3 +1,7 @@
+# 171203 Adel Liu
+# 错误表，在编码时不断添加
+
+
 class Error:
     USERNAME_EXIST = 2010
     JWT_EXPIRED = 2009

@@ -28,8 +28,7 @@ def require_get(r_params=list()):
             for require_param in r_params:
                 if require_param not in request.GET:
                     return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
-            # request.POST = request.GET
-            setattr(request, 'd', request.GET)
+            request.d = request.GET
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -56,13 +55,16 @@ def require_post(r_params=list(), decode=True):
                         request.POST[r_param] = c
                 else:
                     return error_response(Error.REQUIRE_PARAM, append_msg=r_param)
-                setattr(request, 'd', request.POST)
+                request.d = request.POST
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
 
 
 def require_json(func):
+    """
+    把request.body的内容反序列化为json
+    """
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         if request.body:
@@ -76,14 +78,14 @@ def require_json(func):
     return wrapper
 
 
-def logging(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        deprint('BGN -- ', func.__name__)
-        rtn = func(*args, **kwargs)
-        deprint('END --', func.__name__)
-        return rtn
-    return wrapper
+# def logging(func):
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         deprint('BGN -- ', func.__name__)
+#         rtn = func(*args, **kwargs)
+#         deprint('END --', func.__name__)
+#         return rtn
+#     return wrapper
 
 
 def decorator_generator(verify_func):
@@ -102,6 +104,10 @@ def decorator_generator(verify_func):
 
 
 def require_login_func(request):
+    """
+    需要登录
+    并根据传入的token获取user
+    """
     jwt_str = request.d.get('token')
     from Base.jtoken import jwt_d
 

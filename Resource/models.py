@@ -6,8 +6,9 @@ from Base.response import Ret
 
 class Resource(models.Model):
     """
-    root resource id = 1
-    once a new user created, a new folder is to be created in root resource
+    资源类
+    根资源文件夹id=1
+    一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
     L = {
         'rname': 256,

@@ -7,7 +7,8 @@ from Base.response import Ret
 
 class User(models.Model):
     """
-    root user id = 1
+    用户类
+    根超级用户id=1
     """
     L = {
         'username': 32,
@@ -17,6 +18,7 @@ class User(models.Model):
         null=True,
         blank=True,
         default=None,
+        verbose_name='暂时不用'
     )
     username = models.CharField(
         max_length=L['username'],
@@ -34,9 +36,10 @@ class User(models.Model):
         default=None,
         null=True,
         blank=True,
+        verbose_name='暂时不用'
     )
     grant = models.BooleanField(
-        verbose_name='whether have right to create user',
+        verbose_name='是否有权限新增用户',
         default=False,
     )
 

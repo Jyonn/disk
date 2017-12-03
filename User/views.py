@@ -1,4 +1,3 @@
-# from Base.common import get_user_from_session, save_user_to_session, logout_user_from_session
 from Base.decorator import require_json, require_post, require_login, require_get
 from Base.error import Error
 from Base.response import response, error_response
@@ -10,6 +9,9 @@ from Base.qn import get_upload_token
 @require_post(['username', 'password'], decode=False)
 @require_login
 def create_user(request):
+    """
+    创建用户
+    """
     username = request.d['username']
     password = request.d['password']
 
@@ -34,6 +36,9 @@ def create_user(request):
 @require_json
 @require_post(['username', 'password'], decode=False)
 def auth_token(request):
+    """
+    登录获取token
+    """
     username = request.d['username']
     password = request.d['password']
 
@@ -55,9 +60,12 @@ def auth_token(request):
     return response(body=d)
 
 
-@require_get
+@require_get()
 @require_login
 def upload_avatar_token(request):
+    """
+    获取七牛上传token
+    """
     o_user = request.user
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)

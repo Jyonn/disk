@@ -2,6 +2,9 @@ from django.db import models
 
 
 class Config(models.Model):
+    """
+    系统配置，如七牛密钥等
+    """
     L = {
         'key': 512,
         'value': 1024,

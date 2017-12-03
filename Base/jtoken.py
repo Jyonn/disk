@@ -1,3 +1,6 @@
+# 171203 Adel Liu
+# 第一次使用jwt身份认证技术
+
 import datetime
 
 import jwt
@@ -8,6 +11,11 @@ from disk.settings import SECRET_KEY, JWT_ENCODE_ALGO
 
 
 def jwt_e(d, expire_second=60 * 60 * 24):
+    """
+    jwt签名加密
+    :param d: 被加密的字典数据
+    :param expire_second: 过期时间
+    """
     if not isinstance(d, dict):
         return Ret(Error.STRANGE)
     d['ctime'] = datetime.datetime.now().timestamp()
@@ -17,6 +25,10 @@ def jwt_e(d, expire_second=60 * 60 * 24):
 
 
 def jwt_d(s):
+    """
+    jwt签名解密
+    :param s: 被加密的字符串
+    """
     if not isinstance(s, str):
         return Ret(Error.STRANGE)
     try:

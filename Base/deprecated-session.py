@@ -1,3 +1,6 @@
+# 171203 Adel Liu
+# 暂时弃用，图片验证码可以继续使用
+
 import datetime
 
 

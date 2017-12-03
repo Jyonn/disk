@@ -15,6 +15,9 @@ class Ret:
 
 
 def response(code=0, msg="ok", body=None):
+    """
+    回复HTTP请求
+    """
     resp = {
         "code": code,
         "msg": msg,
@@ -30,6 +33,9 @@ def response(code=0, msg="ok", body=None):
 
 
 def error_response(error_id, append_msg=""):
+    """
+    回复一个错误
+    """
     for error in Error.ERROR_DICT:
         if error_id == error[0]:
             return response(code=error_id, msg=error[1]+append_msg)
