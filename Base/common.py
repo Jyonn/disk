@@ -1,3 +1,6 @@
+# 171203 Adel Liu
+# 弃用session，该用jwt
+
 # from User.models import User
 # from Base.error import Error
 # from Base.response import Ret
@@ -5,6 +8,9 @@
 
 
 def deprint(*args):
+    """
+    系统处于调试状态时输出数据
+    """
     from disk.settings import DEBUG
     if DEBUG:
         print(*args)

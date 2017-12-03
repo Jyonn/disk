@@ -1,4 +1,5 @@
 class Error:
+    USERNAME_EXIST = 2010
     JWT_EXPIRED = 2009
     ERROR_JWT_FORMAT = 2008
     JWT_PARAM_INCOMPLETE = 2007
@@ -20,9 +21,10 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (USERNAME_EXIST, "已存在的用户名"),
         (JWT_EXPIRED, "身份认证过期"),
-        (ERROR_JWT_FORMAT, "身份认证数据错误"),
-        (JWT_PARAM_INCOMPLETE, "身份认证数据缺少参数"),
+        (ERROR_JWT_FORMAT, "身份认证token错误"),
+        (JWT_PARAM_INCOMPLETE, "身份认证token缺少参数"),
         (REQUIRE_DICT, "需要字典数据"),
         (ERROR_CREATE_USER, "创建用户错误"),
         (REQUIRE_GRANT, "需要可创建用户权限"),

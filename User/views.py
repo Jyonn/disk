@@ -1,17 +1,17 @@
 # from Base.common import get_user_from_session, save_user_to_session, logout_user_from_session
-from Base.decorator import require_json, require_post, require_params, require_login
+from Base.decorator import require_json, require_post, require_login, require_get
 from Base.error import Error
 from Base.response import response, error_response
 from User.models import User
+from Base.qn import get_upload_token
 
 
 @require_json
-@require_post
-@require_params(['username', 'password'], decode=False)
+@require_post(['username', 'password'], decode=False)
 @require_login
 def create_user(request):
-    username = request.POST['username']
-    password = request.POST['password']
+    username = request.d['username']
+    password = request.d['password']
 
     # ret = get_user_from_session(request)
     # if ret.error is not Error.OK:
@@ -32,11 +32,10 @@ def create_user(request):
 
 
 @require_json
-@require_post
-@require_params(['username', 'password'], decode=False)
+@require_post(['username', 'password'], decode=False)
 def auth_token(request):
-    username = request.POST['username']
-    password = request.POST['password']
+    username = request.d['username']
+    password = request.d['password']
 
     ret = User.authenticate(username, password)
     if ret.error != Error.OK:
@@ -56,7 +55,13 @@ def auth_token(request):
     return response(body=d)
 
 
-# @require_post
-# def user_logout(request):
-#     logout_user_from_session(request)
-#     return response()
+@require_get
+@require_login
+def upload_avatar_token(request):
+    o_user = request.user
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+
+    key = 'user/avatar/%s' % o_user.pk
+    qn_token = get_upload_token(key)
+    return response(body=dict(upload_token=qn_token))

@@ -47,6 +47,9 @@ class User(models.Model):
         if not o_parent.grant:
             return Ret(Error.REQUIRE_GRANT)
         hash_password = User._hash(password)
+        ret = User.get_user_by_username(username)
+        if ret.error is Error.OK:
+            return Ret(Error.USERNAME_EXIST)
         try:
             o_user = cls(
                 username=username,

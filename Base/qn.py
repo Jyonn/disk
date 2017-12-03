@@ -15,6 +15,7 @@ except:
 
 auth = qiniu.Auth(access_key=AccessKey, secret_key=SecretKey)
 host = HOST
+key_prefix = 'disk/'
 
 
 def get_upload_token(key):
@@ -28,7 +29,7 @@ def get_upload_token(key):
         },
         'callbackBodyType': 'application/json',
     }
-    return auth.upload_token(bucket=bucket, key=key, expires=3600)
+    return auth.upload_token(bucket=bucket, key=key_prefix+key, expires=3600, policy=policy)
 
 
 
