@@ -1,7 +1,9 @@
 from django.db import models
+from django.utils.crypto import get_random_string
 
 from Base.error import Error
 from Base.response import Ret
+from User.models import User
 
 
 class Resource(models.Model):
@@ -15,12 +17,21 @@ class Resource(models.Model):
         'description': 1024,
         'manager': 255,
         'dlpath': 1024,
+        'visit_key': 4,
     }
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
-    RTYPE_TABLE = (
+    RTYPE_TUPLE = (
         (RTYPE_FILE, 'file'),
         (RTYPE_FOLDER, 'folder'),
+    )
+    STATUS_PUBLIC = 0
+    STATUS_PRIVATE = 1
+    STATUS_PROTECT = 2
+    STATUS_TUPLE = (
+        (STATUS_PUBLIC, 'public'),
+        (STATUS_PRIVATE, 'private'),
+        (STATUS_PROTECT, 'protect')
     )
     rname = models.CharField(
         verbose_name='resource name',
@@ -28,7 +39,7 @@ class Resource(models.Model):
     )
     rtype = models.IntegerField(
         verbose_name='file or folder',
-        choices=RTYPE_TABLE,
+        choices=RTYPE_TUPLE,
     )
     description = models.CharField(
         verbose_name='description in Markdown',
@@ -40,7 +51,7 @@ class Resource(models.Model):
         default=None,
     )
     owner = models.ForeignKey(
-        'User',
+        User,
     )
     parent = models.ForeignKey(
         'Resource',
@@ -53,9 +64,20 @@ class Resource(models.Model):
         max_length=L['dlpath'],
         default=None,
     )
+    status = models.IntegerField(
+        choices=STATUS_TUPLE,
+        verbose_name='加密状态 0公开 1仅自己可见 2需要密码',
+        default=STATUS_PUBLIC,
+    )
+    visit_key = models.CharField(
+        max_length=L['visit_key'],
+        verbose_name='当status为2时有效',
+    )
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, desc, dlpath):
+    def create_file(cls, rname, o_user, o_parent, desc, dlpath, status):
+        if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
+            return Ret(Error.ERROR_RESOURCE_STATUS)
         try:
             o_res = cls(
                 rname=rname,
@@ -65,6 +87,8 @@ class Resource(models.Model):
                 owner=o_user,
                 parent=o_parent,
                 dlpath=dlpath,
+                status=status,
+                visit_key=get_random_string(length=4)
             )
         except:
             return Ret(Error.CREATE_FILE_ERROR)
