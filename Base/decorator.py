@@ -108,6 +108,28 @@ def decorator_generator(verify_func):
     return decorator
 
 
+def maybe_login_func(request):
+    jwt_str = request.d.get('token')
+    from Base.jtoken import jwt_d
+
+    ret = jwt_d(jwt_str)
+    if ret.error is not Error.OK:
+        return Error.OK
+    d = ret.body
+    try:
+        user_id = d['user_id']
+        from User.models import User
+        ret = User.get_user_by_id(user_id)
+        if ret.error is not Error.OK:
+            return Error.Ok
+        o_user = ret.body
+    except Exception as e:
+        deprint(e)
+        return Error.OK
+    request.user = o_user
+    return Error.OK
+
+
 def require_login_func(request):
     """
     需要登录
@@ -132,6 +154,6 @@ def require_login_func(request):
         return Error.STRANGE
     request.user = o_user
     return Error.OK
-    # return load_session(request, 'user', once_delete=False) is not None
 
 require_login = decorator_generator(require_login_func)
+maybe_login = decorator_generator(maybe_login_func)

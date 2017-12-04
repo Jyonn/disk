@@ -96,6 +96,10 @@ class Resource(models.Model):
 
     @classmethod
     def create_folder(cls, rname, o_user, o_parent, desc):
+        if not isinstance(o_parent, Resource):
+            return Ret(Error.STRANGE)
+        if o_parent.rtype == Resource.RTYPE_FILE:
+            return Ret(Error.ERROR_FILE_PARENT)
         try:
             o_res = cls(
                 rname=rname,
@@ -109,3 +113,43 @@ class Resource(models.Model):
         except:
             return Ret(Error.CREATE_FOLDER_ERROR)
         return Ret(Error.OK, o_res)
+
+    @staticmethod
+    def get_res_by_id(res_id):
+        try:
+            o_res = Resource.objects.get(pk=res_id)
+        except:
+            return Ret(Error.NOT_FOUND_RESOURCE)
+        return Ret(Error.OK, o_res)
+
+    def belong(self, o_user):
+        if not isinstance(o_user, User):
+            return Ret(Error.STRANGE)
+        return Ret(Error.OK, self.parent == o_user)
+
+    def to_dict(self):
+        return dict(
+            rname=self.rname,
+            rtype=self.rtype,
+            description=self.description,
+            avatar=self.avatar,
+            owner=self.owner.to_dict(),
+            parent_id=self.parent_id,
+            status=self.status,
+        )
+
+    def get_child_res_list(self):
+        # if self.rtype == self.RTYPE_FILE:
+        #     return Ret(Error.ERROR_FILE_PARENT)
+        # if self.owner == o_user or self.status == self.STATUS_PUBLIC or \
+        #         (self.status == self.STATUS_PROTECT and self.visit_key == visit_key):
+        _res_list = Resource.objects.filter(parent=self)
+        # else:
+        #     return Ret(Error.ERROR_REACH_PRIVATE)
+
+        res_list = [self.to_dict()]
+        for o_res in _res_list:
+            res_list.append(o_res.to_dict())
+
+        return Ret(Error.OK, res_list)
+
