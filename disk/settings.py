@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
-HOST = 'http://localhost:8000'
+HOST = 'https://disk.6-79.cn'
+CDN_HOST = 'https://res.6-79.cn'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -127,3 +128,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+MAX_AVATAR_SIZE = 3*1024*1024
+MAX_FILE_SIZE = 100*1024*1024

@@ -1,8 +1,9 @@
 from Base.decorator import require_json, require_post, require_login, require_get
 from Base.error import Error
+from Base.policy import get_avatar_policy
 from Base.response import response, error_response
 from User.models import User
-from Base.qn import get_upload_token
+from Base.qn import get_upload_token, auth_callback
 
 
 @require_json
@@ -60,16 +61,39 @@ def auth_token(request):
     return response(body=d)
 
 
-@require_get()
+@require_get(['filename'])
 @require_login
 def upload_avatar_token(request):
     """
     获取七牛上传token
     """
+    filename = request.d['filename']
+
     o_user = request.user
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    key = 'user/avatar/%s' % o_user.pk
-    qn_token = get_upload_token(key)
-    return response(body=dict(upload_token=qn_token))
+    import datetime
+    key = 'user/%s/avatar/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(), filename)
+    qn_token, key = get_upload_token(key, get_avatar_policy(o_user.pk))
+    return response(body=dict(upload_token=qn_token, key=key))
+
+
+@require_json
+@require_post(['key', 'user_id'])
+def upload_avatar_callback(request):
+    ret = auth_callback(request)
+    if ret.error is not Error.OK:
+        return error_response(ret.error)
+
+    key = request.d['key']
+    user_id = request.d['user_id']
+    ret = User.get_user_by_id(user_id)
+    if ret.error is not Error.OK:
+        return error_response(ret.error)
+    o_user = ret.body
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+    o_user.avatar = key
+    o_user.save()
+    return response(body=o_user.to_dict())

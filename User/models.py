@@ -95,6 +95,7 @@ class User(models.Model):
         return dict(
             user_id=self.pk,
             username=self.username,
+            avatar=self.get_avatar_url(),
         )
 
     @staticmethod
@@ -106,3 +107,9 @@ class User(models.Model):
         if User._hash(password) == o_user.password:
             return Ret(Error.OK, o_user)
         return Ret(Error.ERROR_PASSWORD)
+
+    def get_avatar_url(self):
+        if self.avatar is None:
+            return None
+        from Base.qn import get_resource_url
+        return get_resource_url(self.avatar)

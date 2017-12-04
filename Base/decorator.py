@@ -7,6 +7,7 @@ import base64
 from functools import wraps
 
 # from django.views.decorators import http
+from django.http import HttpRequest
 
 from Base.common import deprint
 from Base.response import *
@@ -23,6 +24,8 @@ def require_get(r_params=list()):
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            if not isinstance(request, HttpRequest):
+                return error_response(Error.STRANGE)
             if request.method != "GET":
                 return error_response(Error.ERROR_METHOD)
             for require_param in r_params:
@@ -42,6 +45,8 @@ def require_post(r_params=list(), decode=True):
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            if not isinstance(request, HttpRequest):
+                return error_response(Error.STRANGE)
             if request.method != "POST":
                 return error_response(Error.ERROR_METHOD)
             for r_param in r_params:

@@ -3,6 +3,7 @@
 
 
 class Error:
+    UNAUTH_CALLBACK = 2011
     USERNAME_EXIST = 2010
     JWT_EXPIRED = 2009
     ERROR_JWT_FORMAT = 2008
@@ -25,6 +26,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (UNAUTH_CALLBACK, "未经授权的回调函数"),
         (USERNAME_EXIST, "已存在的用户名"),
         (JWT_EXPIRED, "身份认证过期"),
         (ERROR_JWT_FORMAT, "身份认证token错误"),
