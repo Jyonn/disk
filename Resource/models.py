@@ -41,6 +41,9 @@ class Resource(models.Model):
         verbose_name='file or folder',
         choices=RTYPE_TUPLE,
     )
+    rsize = models.IntegerField(
+        default=0,
+    )
     description = models.CharField(
         verbose_name='description in Markdown',
         max_length=L['description'],
@@ -75,27 +78,28 @@ class Resource(models.Model):
     )
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, desc, dlpath, status):
+    def create_file(cls, rname, o_user, o_parent, dlpath, status, size):
         if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
             return Ret(Error.ERROR_RESOURCE_STATUS)
         try:
             o_res = cls(
                 rname=rname,
                 rtype=Resource.RTYPE_FILE,
-                description=desc,
+                description=None,
                 avatar=None,
                 owner=o_user,
                 parent=o_parent,
                 dlpath=dlpath,
                 status=status,
-                visit_key=get_random_string(length=4)
+                visit_key=get_random_string(length=4),
+                rsize=size,
             )
         except:
             return Ret(Error.CREATE_FILE_ERROR)
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_folder(cls, rname, o_user, o_parent, desc):
+    def create_folder(cls, rname, o_user, o_parent, desc, status):
         if not isinstance(o_parent, Resource):
             return Ret(Error.STRANGE)
         if o_parent.rtype == Resource.RTYPE_FILE:
@@ -109,6 +113,9 @@ class Resource(models.Model):
                 owner=o_user,
                 parent=o_parent,
                 dlpath=None,
+                status=status,
+                visit_key=get_random_string(length=4),
+                rsize=0,
             )
         except:
             return Ret(Error.CREATE_FOLDER_ERROR)
@@ -139,13 +146,7 @@ class Resource(models.Model):
         )
 
     def get_child_res_list(self):
-        # if self.rtype == self.RTYPE_FILE:
-        #     return Ret(Error.ERROR_FILE_PARENT)
-        # if self.owner == o_user or self.status == self.STATUS_PUBLIC or \
-        #         (self.status == self.STATUS_PROTECT and self.visit_key == visit_key):
         _res_list = Resource.objects.filter(parent=self)
-        # else:
-        #     return Ret(Error.ERROR_REACH_PRIVATE)
 
         res_list = [self.to_dict()]
         for o_res in _res_list:
@@ -153,3 +154,23 @@ class Resource(models.Model):
 
         return Ret(Error.OK, res_list)
 
+    @staticmethod
+    def get_root_folder(o_user):
+        try:
+            o_res = Resource.objects.get(owner=o_user, parent=1, rtype=Resource.RTYPE_FOLDER)
+        except:
+            return Ret(Error.ERROR_GET_ROOT_FOLDER)
+        return Ret(Error.OK, o_res)
+
+    def readable(self, o_user, visit_key):
+        if self.owner == o_user or self.status == Resource.STATUS_PUBLIC:
+            return True
+        if self.status == Resource.STATUS_PROTECT and self.visit_key == visit_key:
+            return True
+        return False
+
+    def get_dl_url(self):
+        if self.rtype != Resource.RTYPE_FILE:
+            return None
+        from  Base.qn import get_resource_url
+        return get_resource_url(self.dlpath)

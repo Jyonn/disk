@@ -3,7 +3,10 @@
 
 
 class Error:
-    ERROR_REACH_PRIVATE = 2015
+    REQUIRE_FILE = 2018
+    ERROR_GET_ROOT_FOLDER = 2017
+    PARENT_NOT_BELONG = 2016
+    NOT_READABLE = 2015
     ERROR_FILE_PARENT = 2014
     NOT_FOUND_RESOURCE = 2013
     ERROR_RESOURCE_STATUS = 2012
@@ -30,7 +33,10 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
-        (ERROR_REACH_PRIVATE, "无法获取私有资源"),
+        (REQUIRE_FILE, "需要文件资源"),
+        (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
+        (PARENT_NOT_BELONG, "无法在他人目录下创建"),
+        (NOT_READABLE, "无法读取"),
         (ERROR_FILE_PARENT, "文件资源不能成为父目录"),
         (NOT_FOUND_RESOURCE, "不存在的资源"),
         (ERROR_RESOURCE_STATUS, "错误的资源公开信息"),
