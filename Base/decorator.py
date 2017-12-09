@@ -16,6 +16,40 @@ from Base.response import *
 # require_get = http.require_GET
 
 
+def validate_params(r_params, g_params):
+    """
+    [('a', '[a-z]+'), 'b', ('c', valid_c)]
+    """
+
+    import re
+    for r_param in r_params:
+        if isinstance(r_param, str):
+            raw_param = r_param
+        elif isinstance(r_param, tuple):
+            if len(r_param) == 0:
+                continue
+            raw_param = r_param[0]
+        else:
+            continue
+        if raw_param not in g_params:
+            return Ret(Error.REQUIRE_PARAM, append_msg=raw_param)
+        if isinstance(r_param, tuple):
+            v = g_params[raw_param]
+            for valid_method in r_param[1:]:
+                print(valid_method)
+                if isinstance(valid_method, str):
+                    if re.match(valid_method, v) is None:
+                        return Ret(Error.PARAM_FORMAT_ERROR, append_msg=raw_param)
+                elif callable(valid_method):
+                    try:
+                        ret = valid_method(v)
+                        if ret.error is not Error.OK:
+                            return Ret(ret.error)
+                    except:
+                        return Ret(Error.VALIDATION_FUNC_ERROR)
+    return Ret()
+
+
 def require_get(r_params=list()):
     """
     需要获取的参数是否在request.GET中存在
@@ -28,9 +62,12 @@ def require_get(r_params=list()):
                 return error_response(Error.STRANGE)
             if request.method != "GET":
                 return error_response(Error.ERROR_METHOD)
-            for require_param in r_params:
-                if require_param not in request.GET:
-                    return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
+            # for require_param in r_params:
+            #     if require_param not in request.GET:
+            #         return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
+            ret = validate_params(r_params, request.GET)
+            if ret.error is not Error.OK:
+                return error_response(ret.error, append_msg=ret.append_msg)
             request.d = request.GET
             return func(request, *args, **kwargs)
         return wrapper
@@ -49,18 +86,28 @@ def require_post(r_params=list(), decode=True):
                 return error_response(Error.STRANGE)
             if request.method != "POST":
                 return error_response(Error.ERROR_METHOD)
-            for r_param in r_params:
-                if r_param in request.POST:
-                    if decode:
-                        x = request.POST[r_param]
-                        try:
-                            c = base64.decodebytes(bytes(x, encoding='utf8')).decode()
-                        except:
-                            return error_response(Error.REQUIRE_BASE64)
-                        request.POST[r_param] = c
-                else:
-                    return error_response(Error.REQUIRE_PARAM, append_msg=r_param)
-                request.d = request.POST
+            # for r_param in r_params:
+            #     if r_param in request.POST:
+            #         if decode:
+            #             x = request.POST[r_param]
+            #             try:
+            #                 c = base64.decodebytes(bytes(x, encoding='utf8')).decode()
+            #             except:
+            #                 return error_response(Error.REQUIRE_BASE64)
+            #             request.POST[r_param] = c
+            #     else:
+            #         return error_response(Error.REQUIRE_PARAM, append_msg=r_param)
+            #     request.d = request.POST
+            if decode:
+                for k in request.POST.keys():
+                    try:
+                        c = base64.decodebytes(bytes(request.POST[k], encoding='utf8')).decode()
+                    except:
+                        return error_response(Error.REQUIRE_BASE64)
+            ret = validate_params(r_params, request.POST)
+            if ret.error is not Error.OK:
+                return error_response(ret.error, append_msg=ret.append_msg)
+            request.d = request.POST
             return func(request, *args, **kwargs)
         return wrapper
     return decorator

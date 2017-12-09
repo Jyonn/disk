@@ -10,6 +10,7 @@ class User(models.Model):
     用户类
     根超级用户id=1
     """
+    ROOT_ID = 1
     L = {
         'username': 32,
         'password': 32,
@@ -43,6 +44,13 @@ class User(models.Model):
         default=False,
     )
 
+    def format_attr(self):
+        valid_chars = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
+        for char in self.username:
+            if char not in valid_chars:
+                return Ret(Error.INVALID_USERNAME)
+        return Ret(Error.OK)
+
     @classmethod
     def create(cls, username, password, o_parent):
         if not isinstance(o_parent, User):
@@ -62,6 +70,9 @@ class User(models.Model):
                 avatar=None,
                 grant=False,
             )
+            ret = o_user.format_attr()
+            if ret.error is not Error.OK:
+                return Ret(ret.error)
             o_user.save()
         except Exception as e:
             deprint(e)

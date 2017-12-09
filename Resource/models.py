@@ -12,6 +12,7 @@ class Resource(models.Model):
     根资源文件夹id=1
     一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
+    ROOT_ID = 1
     L = {
         'rname': 256,
         'description': 1024,
@@ -77,10 +78,18 @@ class Resource(models.Model):
         verbose_name='当status为2时有效',
     )
 
+    def format_attr(self):
+        invalid_chars = '\\/.*:\'"|<>?'
+        for char in invalid_chars:
+            if char in self.rname:
+                return Ret(Error.INVALID_RNAME)
+
+        if self.status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
+            return Ret(Error.ERROR_RESOURCE_STATUS)
+        return Ret(Error.OK)
+
     @classmethod
     def create_file(cls, rname, o_user, o_parent, dlpath, status, size):
-        if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
-            return Ret(Error.ERROR_RESOURCE_STATUS)
         try:
             o_res = cls(
                 rname=rname,
@@ -94,6 +103,10 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=size,
             )
+            ret = o_res.format_attr()
+            if ret.error is not Error.OK:
+                return Ret(ret.error)
+            o_res.save()
         except:
             return Ret(Error.CREATE_FILE_ERROR)
         return Ret(Error.OK, o_res)
@@ -117,6 +130,10 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=0,
             )
+            ret = o_res.format_attr()
+            if ret.error is not Error.OK:
+                return Ret(ret.error)
+            o_res.save()
         except:
             return Ret(Error.CREATE_FOLDER_ERROR)
         return Ret(Error.OK, o_res)
@@ -172,5 +189,20 @@ class Resource(models.Model):
     def get_dl_url(self):
         if self.rtype != Resource.RTYPE_FILE:
             return None
-        from  Base.qn import get_resource_url
+        from Base.qn import get_resource_url
         return get_resource_url(self.dlpath)
+
+    def change_visit_key(self):
+        self.visit_key = get_random_string(length=4)
+        self.save()
+
+    def change_info(self, rname, status, desc):
+        self.rname = rname
+        self.status = status
+        self.description = desc
+        ret = Resource.format_attr(self)
+        if ret.error is not Error.OK:
+            return Ret(ret.error)
+        self.change_visit_key()
+        self.save()
+        return Ret(Error.OK)

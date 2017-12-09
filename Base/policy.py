@@ -21,6 +21,22 @@ FILE_POLICY = dict(
     fsizeLimit=MAX_FILE_SIZE,
 )
 
+# AVATAR_POLICY = dict(
+#     insertOnly=1,
+#     returnUrl=AVATAR_CALLBACK,
+#     # callbackBodyType='application/json',
+#     fsizeMin=1,
+#     fsizeLimit=MAX_AVATAR_SIZE,
+#     mimeLimit='image/*',
+# )
+# FILE_POLICY = dict(
+#     insertOnly=1,
+#     returnUrl=FILE_CALLBACK,
+#     # callbackBodyType='application/json',
+#     fsizeMin=1,
+#     fsizeLimit=MAX_FILE_SIZE,
+# )
+
 
 def get_avatar_policy(user_id):
     policy = AVATAR_POLICY

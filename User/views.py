@@ -2,6 +2,7 @@ from Base.decorator import require_json, require_post, require_login, require_ge
 from Base.error import Error
 from Base.policy import get_avatar_policy
 from Base.response import response, error_response
+from Resource.models import Resource
 from User.models import User
 from Base.qn import get_upload_token, auth_callback
 
@@ -31,11 +32,21 @@ def create_user(request):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
+    ret = Resource.get_res_by_id(Resource.ROOT_ID)
+    if ret.error is not Error.OK:
+        return error_response(ret.error)
+    o_root = ret.body
+
+    ret = Resource.create_folder(
+        o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username, Resource.STATUS_PUBLIC)
+    if ret.error is not Error.OK:
+        return error_response(ret.error)
+
     return response(body=o_user.to_dict())
 
 
 @require_json
-@require_post(['username', 'password'], decode=False)
+@require_post([('username', '^[^ ]+$'), 'password'], decode=False)
 def auth_token(request):
     """
     登录获取token

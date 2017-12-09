@@ -3,6 +3,8 @@
 
 
 class Error:
+    INVALID_USERNAME = 2020
+    INVALID_RNAME = 2019
     REQUIRE_FILE = 2018
     ERROR_GET_ROOT_FOLDER = 2017
     PARENT_NOT_BELONG = 2016
@@ -23,6 +25,8 @@ class Error:
     ERROR_PASSWORD = 2001
     NOT_FOUND_USER = 2000
 
+    VALIDATION_FUNC_ERROR = 1008
+    PARAM_FORMAT_ERROR = 1007
     REQUIRE_BASE64 = 1006
     ERROR_METHOD = 1005
     STRANGE = 1004
@@ -33,6 +37,8 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),
+        (INVALID_RNAME, "资源名称不能包含非法字符（<>!:|'\"\\/等）"),
         (REQUIRE_FILE, "需要文件资源"),
         (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
         (PARENT_NOT_BELONG, "无法在他人目录下创建"),
@@ -53,6 +59,8 @@ class Error:
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 
+        (VALIDATION_FUNC_ERROR, "错误的参数验证函数"),
+        (PARAM_FORMAT_ERROR, "错误的参数格式"),
         (REQUIRE_BASE64, "参数需要base64编码"),
         (ERROR_METHOD, "错误的HTTP请求方法"),
         (STRANGE, "未知错误"),

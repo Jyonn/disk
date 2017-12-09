@@ -9,9 +9,10 @@ class Ret:
     """
     函数返回类
     """
-    def __init__(self, error=Error.OK, body=None):
+    def __init__(self, error=Error.OK, body=None, append_msg=''):
         self.error = error
         self.body = body or []
+        self.append_msg = append_msg
 
 
 def response(code=0, msg="ok", body=None):

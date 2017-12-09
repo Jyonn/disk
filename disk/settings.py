@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 
 HOST = 'https://disk.6-79.cn'
+# HOST = 'localhost:8000'
 CDN_HOST = 'https://res.6-79.cn'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
