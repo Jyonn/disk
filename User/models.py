@@ -1,6 +1,9 @@
+import re
+
 from django.db import models
 
 from Base.common import deprint
+from Base.decorator import field_validator
 from Base.error import Error
 from Base.response import Ret
 
@@ -14,6 +17,7 @@ class User(models.Model):
     L = {
         'username': 32,
         'password': 32,
+        'nickname': 10,
     }
     email = models.EmailField(
         null=True,
@@ -43,16 +47,35 @@ class User(models.Model):
         verbose_name='是否有权限新增用户',
         default=False,
     )
+    nickname = models.CharField(
+        max_length=L['nickname'],
+        default=None,
+    )
+    FIELD_LIST = ['email', 'username', 'password', 'parent', 'avatar', 'grant', 'nickname']
 
-    def format_attr(self):
-        valid_chars = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
-        for char in self.username:
-            if char not in valid_chars:
-                return Ret(Error.INVALID_USERNAME)
-        return Ret(Error.OK)
+    @staticmethod
+    def _valid_username(username):
+        valid_chars = '^[A-Za-z0-9_]{3,32}$'
+        if re.match(valid_chars, username) is None:
+            return Ret(Error.INVALID_USERNAME)
+        return Ret()
+
+    @staticmethod
+    def _valid_password(password):
+        valid_chars = '^[A-Za-z0-9!@#$%^&*()_+-=,.?;:]{6,16}$'
+        if re.match(valid_chars, password) is None:
+            return Ret(Error.INVALID_PASSWORD)
+        return Ret()
 
     @classmethod
-    def create(cls, username, password, o_parent):
+    def _validate(cls, d):
+        return field_validator(d, cls)
+
+    @classmethod
+    def create(cls, username, password, nickname, o_parent):
+        ret = cls._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
         if not isinstance(o_parent, User):
             return Ret(Error.STRANGE)
         if not o_parent.grant:
@@ -69,10 +92,8 @@ class User(models.Model):
                 parent=o_parent,
                 avatar=None,
                 grant=False,
+                nickname=nickname,
             )
-            ret = o_user.format_attr()
-            if ret.error is not Error.OK:
-                return Ret(ret.error)
             o_user.save()
         except Exception as e:
             deprint(e)
@@ -111,9 +132,14 @@ class User(models.Model):
 
     @staticmethod
     def authenticate(username, password):
+        ret = User._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        deprint('success valid')
         try:
             o_user = User.objects.get(username=username)
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.NOT_FOUND_USER)
         if User._hash(password) == o_user.password:
             return Ret(Error.OK, o_user)

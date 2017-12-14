@@ -3,6 +3,7 @@
 
 
 class Error:
+    INVALID_PASSWORD = 2021
     INVALID_USERNAME = 2020
     INVALID_RNAME = 2019
     REQUIRE_FILE = 2018
@@ -37,6 +38,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (INVALID_PASSWORD, "密码长度应在6-16个字符之内且无非法字符"),
         (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),
         (INVALID_RNAME, "资源名称不能包含非法字符（<>!:|'\"\\/等）"),
         (REQUIRE_FILE, "需要文件资源"),

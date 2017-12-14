@@ -4,13 +4,18 @@
 # 把最终参数字典存储在request.d中
 
 import base64
+import json
 from functools import wraps
 
 # from django.views.decorators import http
+from django.db import models
 from django.http import HttpRequest
 
+# from Base.common import deprint
 from Base.common import deprint
-from Base.response import *
+from Base.error import Error
+from Base.param import Param
+from Base.response import Ret, error_response
 
 # require_post = http.require_POST
 # require_get = http.require_GET
@@ -36,7 +41,7 @@ def validate_params(r_params, g_params):
         if isinstance(r_param, tuple):
             v = g_params[raw_param]
             for valid_method in r_param[1:]:
-                print(valid_method)
+                # print(valid_method)
                 if isinstance(valid_method, str):
                     if re.match(valid_method, v) is None:
                         return Ret(Error.PARAM_FORMAT_ERROR, append_msg=raw_param)
@@ -47,6 +52,31 @@ def validate_params(r_params, g_params):
                             return Ret(ret.error)
                     except:
                         return Ret(Error.VALIDATION_FUNC_ERROR)
+    return Ret()
+
+
+def field_validator(d, cls):
+    field_list = getattr(cls, 'FIELD_LIST', None)
+    if field_list is None:
+        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不存在FIELD_LIST')
+    _meta = getattr(cls, '_meta', None)
+    if _meta is None:
+        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不是Django的models类')
+    ll = getattr(cls, 'L', None)
+    if ll is None:
+        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不存在长度字典L')
+
+    for k in d.keys():
+        if k in getattr(cls, 'FIELD_LIST'):
+            if isinstance(_meta.get_field(k), models.CharField):
+                if len(d[k]) > ll[k]:
+                    return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的长度不应超过%s个字符' % (k, ll[k]))
+            vf = getattr(cls, '_valid_%s' % k, None)
+            if vf is not None and callable(vf):
+                print('_valid_', k)
+                ret = vf(d[k])
+                if ret.error is not Error.OK:
+                    return ret
     return Ret()
 
 
@@ -68,7 +98,7 @@ def require_get(r_params=list()):
             ret = validate_params(r_params, request.GET)
             if ret.error is not Error.OK:
                 return error_response(ret.error, append_msg=ret.append_msg)
-            request.d = request.GET
+            request.d = Param(request.GET)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -86,28 +116,16 @@ def require_post(r_params=list(), decode=True):
                 return error_response(Error.STRANGE)
             if request.method != "POST":
                 return error_response(Error.ERROR_METHOD)
-            # for r_param in r_params:
-            #     if r_param in request.POST:
-            #         if decode:
-            #             x = request.POST[r_param]
-            #             try:
-            #                 c = base64.decodebytes(bytes(x, encoding='utf8')).decode()
-            #             except:
-            #                 return error_response(Error.REQUIRE_BASE64)
-            #             request.POST[r_param] = c
-            #     else:
-            #         return error_response(Error.REQUIRE_PARAM, append_msg=r_param)
-            #     request.d = request.POST
             if decode:
                 for k in request.POST.keys():
                     try:
-                        c = base64.decodebytes(bytes(request.POST[k], encoding='utf8')).decode()
+                        base64.decodebytes(bytes(request.POST[k], encoding='utf8')).decode()
                     except:
                         return error_response(Error.REQUIRE_BASE64)
             ret = validate_params(r_params, request.POST)
             if ret.error is not Error.OK:
                 return error_response(ret.error, append_msg=ret.append_msg)
-            request.d = request.POST
+            request.d = Param(request.POST)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -147,9 +165,10 @@ def decorator_generator(verify_func):
 
     def decorator(func):
         def wrapper(request, *args, **kwargs):
-            error_id = verify_func(request)
-            if error_id is not Error.OK:
-                return error_response(error_id)
+            ret = verify_func(request)
+            # deprint('decorator', ret, verify_func)
+            if ret.error is not Error.OK:
+                return error_response(ret.error, append_msg=ret.append_msg)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -161,20 +180,20 @@ def maybe_login_func(request):
 
     ret = jwt_d(jwt_str)
     if ret.error is not Error.OK:
-        return Error.OK
+        return Ret()
     d = ret.body
     try:
-        user_id = d['user_id']
+        user_id = d.user_id
         from User.models import User
         ret = User.get_user_by_id(user_id)
         if ret.error is not Error.OK:
-            return Error.Ok
+            return Ret()
         o_user = ret.body
     except Exception as e:
         deprint(e)
-        return Error.OK
+        return Ret()
     request.user = o_user
-    return Error.OK
+    return Ret()
 
 
 def require_login_func(request):
@@ -182,25 +201,28 @@ def require_login_func(request):
     需要登录
     并根据传入的token获取user
     """
-    jwt_str = request.d.get('token')
+    jwt_str = getattr(request.d, 'token', None)
+    if jwt_str is None:
+        return Ret(Error.REQUIRE_LOGIN)
     from Base.jtoken import jwt_d
 
     ret = jwt_d(jwt_str)
+    # deprint('jwt_d', ret.error, jwt_str)
     if ret.error is not Error.OK:
-        return ret.error
+        return ret
     d = ret.body
     try:
-        user_id = d['user_id']
+        user_id = d["user_id"]
         from User.models import User
         ret = User.get_user_by_id(user_id)
         if ret.error is not Error.OK:
-            return ret.error
+            return ret
         o_user = ret.body
     except Exception as e:
         deprint(e)
-        return Error.STRANGE
+        return Ret(Error.STRANGE)
     request.user = o_user
-    return Error.OK
+    return Ret()
 
 require_login = decorator_generator(require_login_func)
 maybe_login = decorator_generator(maybe_login_func)

@@ -8,19 +8,15 @@ from Base.qn import get_upload_token, auth_callback
 
 
 @require_json
-@require_post(['username', 'password'], decode=False)
+@require_post(['username', 'password', 'nickname'], decode=False)
 @require_login
 def create_user(request):
     """
     创建用户
     """
-    username = request.d['username']
-    password = request.d['password']
+    username = request.d.username
+    password = request.d.password
 
-    # ret = get_user_from_session(request)
-    # if ret.error is not Error.OK:
-    #     return error_response(ret.error)
-    # o_parent = ret.body
     o_parent = request.user
     if not isinstance(o_parent, User):
         return error_response(Error.STRANGE)
@@ -46,17 +42,17 @@ def create_user(request):
 
 
 @require_json
-@require_post([('username', '^[^ ]+$'), 'password'], decode=False)
+@require_post(['username', 'password'], decode=False)
 def auth_token(request):
     """
     登录获取token
     """
-    username = request.d['username']
-    password = request.d['password']
+    username = request.d.username
+    password = request.d.password
 
     ret = User.authenticate(username, password)
     if ret.error != Error.OK:
-        return error_response(ret.error)
+        return error_response(ret.error, append_msg=ret.append_msg)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -72,13 +68,13 @@ def auth_token(request):
     return response(body=d)
 
 
-@require_get(['filename'])
+@require_get([('filename', '^[^\\/?:*<>|]+$')])
 @require_login
 def upload_avatar_token(request):
     """
     获取七牛上传token
     """
-    filename = request.d['filename']
+    filename = request.d.filename
 
     o_user = request.user
     if not isinstance(o_user, User):
@@ -97,8 +93,8 @@ def upload_avatar_callback(request):
     if ret.error is not Error.OK:
         return error_response(ret.error)
 
-    key = request.d['key']
-    user_id = request.d['user_id']
+    key = request.d.key
+    user_id = request.d.user_id
     ret = User.get_user_by_id(user_id)
     if ret.error is not Error.OK:
         return error_response(ret.error)

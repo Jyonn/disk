@@ -105,7 +105,7 @@ class Resource(models.Model):
             )
             ret = o_res.format_attr()
             if ret.error is not Error.OK:
-                return Ret(ret.error)
+                return ret
             o_res.save()
         except:
             return Ret(Error.CREATE_FILE_ERROR)
@@ -132,7 +132,7 @@ class Resource(models.Model):
             )
             ret = o_res.format_attr()
             if ret.error is not Error.OK:
-                return Ret(ret.error)
+                return ret
             o_res.save()
         except:
             return Ret(Error.CREATE_FOLDER_ERROR)
@@ -202,7 +202,7 @@ class Resource(models.Model):
         self.description = desc
         ret = Resource.format_attr(self)
         if ret.error is not Error.OK:
-            return Ret(ret.error)
+            return ret
         self.change_visit_key()
         self.save()
-        return Ret(Error.OK)
+        return Ret()
