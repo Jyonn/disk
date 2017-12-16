@@ -49,4 +49,4 @@ def auth_callback(request):
 
 def get_resource_url(key, expires=3600):
     url = '%s/%s' % (CDN_HOST, key)
-    return auth.private_download_url(url, expires=3600)
+    return auth.private_download_url(url, expires=expires)

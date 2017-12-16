@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.crypto import get_random_string
 
+from Base.decorator import field_validator
 from Base.error import Error
 from Base.response import Ret
 from User.models import User
@@ -77,19 +78,46 @@ class Resource(models.Model):
         max_length=L['visit_key'],
         verbose_name='当status为2时有效',
     )
+    FIELD_LIST = ['rname', 'rtype', 'rsize', 'description', 'avatar', 'owner', 'parent', 'dlpath', 'status', 'visit_key']
 
-    def format_attr(self):
+    @staticmethod
+    def _valid_rname(rname):
         invalid_chars = '\\/.*:\'"|<>?'
         for char in invalid_chars:
-            if char in self.rname:
+            if char in rname:
                 return Ret(Error.INVALID_RNAME)
+        return Ret()
 
-        if self.status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
+    @staticmethod
+    def _valid_status(status):
+        if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
             return Ret(Error.ERROR_RESOURCE_STATUS)
-        return Ret(Error.OK)
+        return Ret()
+
+    @staticmethod
+    def _valid_rtype(rtype):
+        if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER]:
+            return Ret(Error.ERROR_RESOURCE_TYPE)
+        return Ret()
+
+    @staticmethod
+    def _valid_o_parent(o_parent):
+        if not isinstance(o_parent, Resource):
+            return Ret(Error.STRANGE)
+        if o_parent.rtype != Resource.RTYPE_FOLDER:
+            return Ret(Error.ERROR_FILE_PARENT)
+        return Ret()
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, dlpath, status, size):
+    def _validate(cls, d):
+        return field_validator(d, Resource)
+
+    @classmethod
+    def create_file(cls, rname, o_user, o_parent, dlpath, status, rsize):
+        ret = cls._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+
         try:
             o_res = cls(
                 rname=rname,
@@ -101,11 +129,8 @@ class Resource(models.Model):
                 dlpath=dlpath,
                 status=status,
                 visit_key=get_random_string(length=4),
-                rsize=size,
+                rsize=rsize,
             )
-            ret = o_res.format_attr()
-            if ret.error is not Error.OK:
-                return ret
             o_res.save()
         except:
             return Ret(Error.CREATE_FILE_ERROR)

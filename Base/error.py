@@ -3,6 +3,7 @@
 
 
 class Error:
+    ERROR_RESOURCE_TYPE = 2022
     INVALID_PASSWORD = 2021
     INVALID_USERNAME = 2020
     INVALID_RNAME = 2019
@@ -38,6 +39,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (ERROR_RESOURCE_TYPE, "错误的资源类型"),
         (INVALID_PASSWORD, "密码长度应在6-16个字符之内且无非法字符"),
         (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),
         (INVALID_RNAME, "资源名称不能包含非法字符（<>!:|'\"\\/等）"),

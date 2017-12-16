@@ -1,3 +1,6 @@
+import base64
+import json
+
 from Base.decorator import require_json, require_post, require_login, require_get
 from Base.error import Error
 from Base.policy import get_avatar_policy
@@ -81,7 +84,8 @@ def upload_avatar_token(request):
         return error_response(Error.STRANGE)
 
     import datetime
-    key = 'user/%s/avatar/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(), filename)
+    crt_time = datetime.datetime.now().timestamp()
+    key = 'user/%s/avatar/%s/%s' % (o_user.pk, crt_time, filename)
     qn_token, key = get_upload_token(key, get_avatar_policy(o_user.pk))
     return response(body=dict(upload_token=qn_token, key=key))
 
@@ -101,6 +105,28 @@ def upload_avatar_callback(request):
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
-    o_user.avatar = key
-    o_user.save()
+    o_user.modify_avatar(key)
+    return response(body=o_user.to_dict())
+
+
+@require_get(['upload_ret'])
+def avatar_callback(request):
+    upload_ret = request.d.upload_ret
+    # print(upload_ret)
+    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    # print(upload_ret)
+    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+    # print(upload_ret)
+    upload_ret = json.loads(upload_ret)
+    # print(upload_ret)
+    key = upload_ret['key']
+    user_id = upload_ret['user_id']
+
+    ret = User.get_user_by_id(user_id)
+    if ret.error is not Error.OK:
+        return error_response(ret.error)
+    o_user = ret.body
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+    o_user.modify_avatar(key)
     return response(body=o_user.to_dict())

@@ -150,3 +150,7 @@ class User(models.Model):
             return None
         from Base.qn import get_resource_url
         return get_resource_url(self.avatar)
+
+    def modify_avatar(self, avatar_key):
+        self.avatar = avatar_key
+        self.save()

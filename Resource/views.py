@@ -13,10 +13,10 @@ from User.models import User
 def create_folder(request):
     o_user = request.user
 
-    folder_name = request.d['folder_name']
-    parent_id = request.d['parent_id']
-    desc = request.d['description']
-    status = request.d['status']
+    folder_name = request.d.folder_name
+    parent_id = request.d.parent_id
+    desc = request.d.description
+    status = request.d.status
 
     if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
         return error_response(Error.ERROR_RESOURCE_STATUS)
@@ -66,8 +66,8 @@ def get_root_res(request):
 @maybe_login
 def get_child_res_list(request):
     o_user = request.user
-    parent_id = request.d['parent_id']
-    visit_key = request.d['visit_key']
+    parent_id = request.d.parent_id
+    visit_key = request.d.visit_key
 
     ret = Resource.get_res_by_id(parent_id)
     if ret.error is not Error.OK:
@@ -90,9 +90,9 @@ def get_child_res_list(request):
 @require_login
 def upload_res_token(request):
     o_user = request.user
-    parent_id = request.d['parent_id']
-    status = request.d['status']
-    filename = request.d['filename']
+    parent_id = request.d.parent_id
+    status = request.d.status
+    filename = request.d.filename
 
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -112,7 +112,7 @@ def upload_res_token(request):
 
     import datetime
     policy = get_file_policy(o_user.pk, o_parent.pk, status)
-    key = 'res/%s/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(),filename)
+    key = 'res/%s/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(), filename)
     qn_token, key = get_upload_token(key, policy)
     return response(body=dict(upload_token=qn_token, key=key))
 
@@ -124,12 +124,12 @@ def upload_res_callback(request):
     if ret.error is not Error.OK:
         return error_response(ret.error)
 
-    key = request.d['key']
-    user_id = request.d['user_id']
-    fsize = request.d['fsize']
-    fname = request.d['fname']
-    parent_id = request.d['parent_id']
-    status = request.d['status']
+    key = request.d.key
+    user_id = request.d.user_id
+    fsize = request.d.fsize
+    fname = request.d.fname
+    parent_id = request.d.parent_id
+    status = request.d.status
 
     # get user by id
     ret = User.get_user_by_id(user_id)
@@ -161,7 +161,7 @@ def upload_res_callback(request):
 @require_login
 def get_visit_key(request):
     o_user = request.user
-    res_id = request.d['res_id']
+    res_id = request.d.res_id
 
     ret = Resource.get_res_by_id(res_id)
     if ret.error is not Error.OK:

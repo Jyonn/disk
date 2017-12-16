@@ -13,11 +13,12 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url, include
+# from django.conf.urls import url, include
 # from django.contrib import admin
+from django.urls import path, include
 from django.shortcuts import render
 
-from Config.views import up_token
+from Config.views import upload
 
 
 def index(request):
@@ -25,7 +26,7 @@ def index(request):
 
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
-    url(r'^api/', include('disk.api-urls')),
-    # url(r'^token/', up_token),
+    path('api', include('disk.api-urls')),
+    path('upload', upload),
     # url(r'^index.html', index),
 ]
