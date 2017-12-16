@@ -73,7 +73,7 @@ def field_validator(d, cls):
                     return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的长度不应超过%s个字符' % (k, ll[k]))
         vf = getattr(cls, '_valid_%s' % k, None)
         if vf is not None and callable(vf):
-            print('_valid_', k)
+            # print('_valid_', k)
             ret = vf(d[k])
             if ret.error is not Error.OK:
                 return ret

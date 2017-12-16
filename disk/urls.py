@@ -26,7 +26,7 @@ def index(request):
 
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
-    path('api', include('disk.api-urls')),
+    path('api/', include('disk.api-urls')),
     path('upload', upload),
     # url(r'^index.html', index),
 ]

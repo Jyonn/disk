@@ -1,6 +1,7 @@
-from django.conf.urls import url, include
+# from django.conf.urls import url, include
+from django.urls import path, include
 
 urlpatterns = [
-    url(r'^user/', include('User.urls')),
-    url(r'^resource/', include('Resource.urls')),
+    path('user/', include('User.urls')),
+    path('resource/', include('Resource.urls')),
 ]

@@ -36,6 +36,7 @@ class User(models.Model):
         'User',
         null=True,
         blank=True,
+        on_delete=models.SET_NULL,
     )
     avatar = models.URLField(
         default=None,
@@ -135,7 +136,6 @@ class User(models.Model):
         ret = User._validate(locals())
         if ret.error is not Error.OK:
             return ret
-        deprint('success valid')
         try:
             o_user = User.objects.get(username=username)
         except Exception as e:

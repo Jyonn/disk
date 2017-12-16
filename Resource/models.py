@@ -57,12 +57,14 @@ class Resource(models.Model):
     )
     owner = models.ForeignKey(
         User,
+        on_delete=models.CASCADE,
     )
     parent = models.ForeignKey(
         'Resource',
         null=True,
         blank=True,
         default=0,
+        on_delete=models.CASCADE,
     )
     dlpath = models.CharField(
         verbose_name='download relative path to res.6-79.cn',
@@ -78,7 +80,8 @@ class Resource(models.Model):
         max_length=L['visit_key'],
         verbose_name='当status为2时有效',
     )
-    FIELD_LIST = ['rname', 'rtype', 'rsize', 'description', 'avatar', 'owner', 'parent', 'dlpath', 'status', 'visit_key']
+    FIELD_LIST = \
+        ['rname', 'rtype', 'rsize', 'description', 'avatar', 'owner', 'parent', 'dlpath', 'status', 'visit_key']
 
     @staticmethod
     def _valid_rname(rname):
@@ -138,10 +141,10 @@ class Resource(models.Model):
 
     @classmethod
     def create_folder(cls, rname, o_user, o_parent, desc, status):
-        if not isinstance(o_parent, Resource):
-            return Ret(Error.STRANGE)
-        if o_parent.rtype == Resource.RTYPE_FILE:
-            return Ret(Error.ERROR_FILE_PARENT)
+        ret = cls._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+
         try:
             o_res = cls(
                 rname=rname,
@@ -155,9 +158,6 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=0,
             )
-            ret = o_res.format_attr()
-            if ret.error is not Error.OK:
-                return ret
             o_res.save()
         except:
             return Ret(Error.CREATE_FOLDER_ERROR)
@@ -221,13 +221,14 @@ class Resource(models.Model):
         self.visit_key = get_random_string(length=4)
         self.save()
 
-    def change_info(self, rname, status, desc):
-        self.rname = rname
-        self.status = status
-        self.description = desc
-        ret = Resource.format_attr(self)
+    def change_info(self, rname, status, description):
+        ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
+
+        self.rname = rname
+        self.status = status
+        self.description = description
         self.change_visit_key()
         self.save()
         return Ret()
