@@ -24,7 +24,7 @@ def create_folder(request):
     # get parent folder
     ret = Resource.get_res_by_id(parent_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_parent = ret.body
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
@@ -36,7 +36,7 @@ def create_folder(request):
 
     ret = Resource.create_folder(folder_name, o_user, o_parent, desc, status)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_res = ret.body
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
@@ -50,14 +50,14 @@ def get_root_res(request):
 
     ret = Resource.get_root_folder(o_user)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_root = ret.body
     if not isinstance(o_root, Resource):
         return error_response(Error.STRANGE)
 
     ret = o_root.get_child_res_list()
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     res_list = ret.body
     return response(body=res_list)
 
@@ -77,7 +77,7 @@ def get_res_info(request):
 
     ret = o_res.get_child_res_list()
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     res_list = ret.body
     return response(body=dict(info=o_res.to_dict(), child_list=res_list))
 
@@ -95,7 +95,7 @@ def upload_res_token(request):
 
     ret = Resource.get_res_by_id(parent_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_parent = ret.body
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
@@ -118,7 +118,7 @@ def upload_res_token(request):
 def upload_res_callback(request):
     ret = auth_callback(request)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
 
     key = request.d.key
     user_id = request.d.user_id
@@ -130,7 +130,7 @@ def upload_res_callback(request):
     # get user by id
     ret = User.get_user_by_id(user_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -138,14 +138,14 @@ def upload_res_callback(request):
     # get parent by id
     ret = Resource.get_res_by_id(parent_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_parent = ret.body
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
 
     ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_res = ret.body
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)

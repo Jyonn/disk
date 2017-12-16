@@ -28,24 +28,24 @@ def create_user(request):
 
     ret = User.create(username, password, nickname, o_parent)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
     ret = Resource.get_res_by_id(Resource.ROOT_ID)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_root = ret.body
 
     ret = Resource.create_folder(
         o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username, Resource.STATUS_PUBLIC)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
 
     ret = jwt_e(o_user.to_dict())
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     token, d = ret.body
     d['token'] = token
 
@@ -63,7 +63,7 @@ def auth_token(request):
 
     ret = User.authenticate(username, password)
     if ret.error != Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -72,7 +72,7 @@ def auth_token(request):
     from Base.jtoken import jwt_e
     ret = jwt_e(o_user.to_dict())
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     token, d = ret.body
     d['token'] = token
 
@@ -103,13 +103,13 @@ def upload_avatar_token(request):
 def upload_avatar_callback(request):
     ret = auth_callback(request)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
 
     key = request.d.key
     user_id = request.d.user_id
     ret = User.get_user_by_id(user_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -132,7 +132,7 @@ def avatar_callback(request):
 
     ret = User.get_user_by_id(user_id)
     if ret.error is not Error.OK:
-        return error_response(ret.error, append_msg=ret.append_msg)
+        return error_response(ret)
     o_user = ret.body
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)

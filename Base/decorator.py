@@ -25,12 +25,12 @@ def validate_params(r_param_valid_list, g_params):
     """
     [('a', '[a-z]+'), 'b', ('c', valid_c_func), ('d', valid_d_func, default_value)]
     """
-    new_param_dict = {}
+    new_param_dict = {}  # 把g_params的queryDict数据存到新的字典中
 
     import re
     for r_param_valid in r_param_valid_list:
         # has_default_value = False
-        default_value = None  # 默认值
+        # default_value = None  # 默认值
         valid_method = None  # 验证参数的方式（如果是字符串则为正则匹配，如果是函数则带入函数，否则忽略）
 
         if isinstance(r_param_valid, str):  # 如果rpv只是个字符串，则符合例子中的'b'情况
@@ -44,9 +44,8 @@ def validate_params(r_param_valid_list, g_params):
                 valid_method = r_param_valid[1]  # 得到验证方式
                 if len(r_param_valid) > 2:
                     # has_default_value = True
-                    default_value = r_param_valid[2]
                     # g_params.setdefault(r_param, default_value)  # 设置变量默认值
-                    new_param_dict[r_param] = default_value
+                    new_param_dict[r_param] = r_param_valid[2]
         else:  # 忽略
             continue
 
@@ -71,6 +70,12 @@ def validate_params(r_param_valid_list, g_params):
 
 
 def field_validator(d, cls):
+    """
+    针对model的验证函数
+    事先需要FIELD_LIST存放需要验证的属性
+    需要L字典存放CharField类型字段的最大长度
+    可选创建_valid_<param>函数进行自校验
+    """
     field_list = getattr(cls, 'FIELD_LIST', None)
     if field_list is None:
         return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不存在FIELD_LIST')
@@ -112,7 +117,7 @@ def require_get(r_params=list()):
             #         return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
             ret = validate_params(r_params, request.GET)
             if ret.error is not Error.OK:
-                return error_response(ret.error, append_msg=ret.append_msg)
+                return error_response(ret)
             request.d = Param(ret.body)
             return func(request, *args, **kwargs)
         return wrapper
@@ -139,7 +144,7 @@ def require_post(r_params=list(), decode=True):
                         return error_response(Error.REQUIRE_BASE64)
             ret = validate_params(r_params, request.POST)
             if ret.error is not Error.OK:
-                return error_response(ret.error, append_msg=ret.append_msg)
+                return error_response(ret)
             request.d = Param(ret.body)
             return func(request, *args, **kwargs)
         return wrapper
@@ -183,7 +188,7 @@ def decorator_generator(verify_func):
             ret = verify_func(request)
             # deprint('decorator', ret, verify_func)
             if ret.error is not Error.OK:
-                return error_response(ret.error, append_msg=ret.append_msg)
+                return error_response(ret)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator

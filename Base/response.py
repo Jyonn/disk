@@ -42,8 +42,12 @@ def response(code=0, msg="ok", body=None):
 def error_response(error_id, append_msg=""):
     """
     回复一个错误
+    171216 当error_id为Ret类时，自动转换
     """
     # deprint('error_id', error_id)
+    if isinstance(error_id, Ret):
+        append_msg = error_id.append_msg
+        error_id = error_id.error
     for error in Error.ERROR_DICT:
         if error_id == error[0]:
             return response(code=error_id, msg=error[1]+append_msg)

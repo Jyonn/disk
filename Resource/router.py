@@ -15,13 +15,13 @@ def rt_res(request, slug):
 
     ret = Resource.get_res_by_id(Resource.ROOT_ID)
     if ret.error is not Error.OK:
-        return error_response(ret.error)
+        return error_response(ret)
     o_res_parent = ret.body
 
     for rid in slug_list:
         ret = Resource.get_res_by_id(rid)
         if ret.error is not Error.OK:
-            return error_response(ret.error)
+            return error_response(ret)
         o_res_crt = ret.body
         if not isinstance(o_res_crt, Resource):
             return error_response(Error.STRANGE)
