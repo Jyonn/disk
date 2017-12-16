@@ -187,13 +187,13 @@ class Resource(models.Model):
             return Ret(Error.STRANGE)
         return Ret(Error.OK, self.parent == o_user)
 
-    def to_dict(self):
+    def to_dict(self, b_owner=True):
         return dict(
             rname=self.rname,
             rtype=self.rtype,
             description=self.description,
             avatar=self.avatar,
-            # owner=self.owner.to_dict(),
+            owner=self.owner.to_dict() if b_owner else None,
             parent_id=self.parent_id,
             status=self.status,
             dl=self.get_dl_url(),
@@ -205,7 +205,7 @@ class Resource(models.Model):
 
         res_list = []
         for o_res in _res_list:
-            res_list.append(o_res.to_dict())
+            res_list.append(o_res.to_dict(b_owner=False))
 
         return Ret(Error.OK, res_list)
 
