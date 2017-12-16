@@ -1,7 +1,7 @@
 from Base.error import Error
 from Base.response import error_response
 from Resource.models import Resource
-from Resource.views import upload_res_token, get_res_info
+from Resource.views import upload_res_token, get_res_info, create_folder, get_visit_key, get_dl_link
 
 
 def rt_res_token(request):
@@ -11,27 +11,38 @@ def rt_res_token(request):
 
 
 def rt_res(request, slug):
-    slug_list = slug.split('-')
-
-    ret = Resource.get_res_by_id(Resource.ROOT_ID)
+    ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:
         return error_response(ret)
-    o_res_parent = ret.body
-
-    for rid in slug_list:
-        ret = Resource.get_res_by_id(rid)
-        if ret.error is not Error.OK:
-            return error_response(ret)
-        o_res_crt = ret.body
-        if not isinstance(o_res_crt, Resource):
-            return error_response(Error.STRANGE)
-        if o_res_crt.parent != o_res_parent:
-            return error_response(Error.ERROR_RESOURCE_RELATION)
-        o_res_parent = o_res_crt
-
-    request.resource = o_res_parent
+    request.resource = ret.body
 
     if request.method == "GET":
         return get_res_info(request)
+    if request.method == "POST":
+        return create_folder(request)
+
+    return error_response(Error.ERROR_METHOD)
+
+
+def rt_res_visit_key(request, slug):
+    ret = Resource.decode_slug(slug)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    request.resource = ret.body
+
+    if request.method == 'GET':
+        return get_visit_key(request)
+
+    return error_response(Error.ERROR_METHOD)
+
+
+def rt_res_dl(request, slug):
+    ret = Resource.decode_slug(slug)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    request.resource = ret.body
+
+    if request.method == "GET":
+        return get_dl_link(request)
 
     return error_response(Error.ERROR_METHOD)

@@ -1,14 +1,45 @@
 import base64
 import json
 
-from Base.decorator import require_json, require_post, require_login, require_get
+from Base.decorator import require_json, require_post, require_login, require_get, require_delete, require_root, \
+    require_put
 from Base.error import Error
 from Base.jtoken import jwt_e
 from Base.policy import get_avatar_policy
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
-from Base.qn import get_upload_token, auth_callback
+from Base.qn import get_upload_token, qiniu_auth_callback
+
+
+@require_get()
+def get_user_info(request, user_id):
+    ret = User.get_user_by_id(user_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_user = ret.body
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+    return response(body=o_user.to_dict())
+
+
+@require_delete()
+@require_login
+def delete_user(request, user_id):
+    o_parent = request.user
+    if not isinstance(o_parent, User):
+        return error_response(Error.STRANGE)
+
+    ret = User.get_user_by_id(user_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_user = ret.body
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+    if o_user.parent != o_parent or o_parent.pk == User.ROOT_ID:
+        return error_response(Error.REQUIRE_FATHER_OR_ROOT_DELETE)
+    o_user.delete()
+    return response()
 
 
 @require_json
@@ -101,7 +132,7 @@ def upload_avatar_token(request):
 @require_json
 @require_post(['key', 'user_id'])
 def upload_avatar_callback(request):
-    ret = auth_callback(request)
+    ret = qiniu_auth_callback(request)
     if ret.error is not Error.OK:
         return error_response(ret)
 
@@ -137,4 +168,22 @@ def avatar_callback(request):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
     o_user.modify_avatar(key)
+    return response(body=o_user.to_dict())
+
+
+@require_json
+@require_put([('password', None, None), ('nickname', None, None)], decode=False)
+@require_login
+def modify_user(request):
+    o_user = request.user
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+
+    password = request.d.password
+    nickname = request.d.nickname
+    if password is not None:
+        ret = o_user.change_password(password)
+        if ret.error is not Error.OK:
+            return error_response(ret)
+    o_user.modify_info(nickname)
     return response(body=o_user.to_dict())

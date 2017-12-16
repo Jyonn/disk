@@ -21,6 +21,7 @@ class Resource(models.Model):
         'manager': 255,
         'dlpath': 1024,
         'visit_key': 4,
+        'cover': 1024,
     }
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
@@ -51,10 +52,11 @@ class Resource(models.Model):
         verbose_name='description in Markdown',
         max_length=L['description'],
     )
-    avatar = models.URLField(
+    cover = models.CharField(
         null=True,
         blank=True,
         default=None,
+        max_length=L['cover']
     )
     owner = models.ForeignKey(
         User,
@@ -88,7 +90,7 @@ class Resource(models.Model):
         auto_now=True,
     )
     FIELD_LIST = [
-        'rname', 'rtype', 'rsize', 'description', 'avatar',
+        'rname', 'rtype', 'rsize', 'description', 'cover',
         'owner', 'parent', 'dlpath', 'status', 'visit_key', 'create_time'
     ]
 
@@ -135,7 +137,7 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=Resource.RTYPE_FILE,
                 description=None,
-                avatar=None,
+                cover=None,
                 owner=o_user,
                 parent=o_parent,
                 dlpath=dlpath,
@@ -160,7 +162,7 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=Resource.RTYPE_FOLDER,
                 description=desc,
-                avatar=None,
+                cover=None,
                 owner=o_user,
                 parent=o_parent,
                 dlpath=None,
@@ -183,21 +185,34 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     def belong(self, o_user):
-        if not isinstance(o_user, User):
-            return Ret(Error.STRANGE)
-        return Ret(Error.OK, self.parent == o_user)
+        # if not isinstance(o_user, User):
+        #     return Ret(Error.STRANGE)
+        return self.owner == o_user
 
-    def to_dict(self, b_owner=True):
+    def get_cover_url(self):
+        if self.cover is None:
+            return None
+        from Base.qn import get_resource_url
+        return get_resource_url(self.cover)
+
+    def to_dict_for_child(self):
         return dict(
             rname=self.rname,
             rtype=self.rtype,
             description=self.description,
-            avatar=self.avatar,
-            owner=self.owner.to_dict() if b_owner else None,
+            cover=self.get_cover_url(),
+            status=self.status,
+        )
+
+    def to_dict(self):
+        return dict(
+            rname=self.rname,
+            rtype=self.rtype,
+            description=self.description,
+            cover=self.get_cover_url(),
+            owner=self.owner.to_dict(),
             parent_id=self.parent_id,
             status=self.status,
-            dl=self.get_dl_url(),
-            visit_key=self.get_visit_key(),
         )
 
     def get_child_res_list(self):
@@ -205,7 +220,7 @@ class Resource(models.Model):
 
         res_list = []
         for o_res in _res_list:
-            res_list.append(o_res.to_dict(b_owner=False))
+            res_list.append(o_res.to_dict_for_child())
 
         return Ret(Error.OK, res_list)
 
@@ -213,7 +228,8 @@ class Resource(models.Model):
     def get_root_folder(o_user):
         try:
             o_res = Resource.objects.get(owner=o_user, parent=1, rtype=Resource.RTYPE_FOLDER)
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.ERROR_GET_ROOT_FOLDER)
         return Ret(Error.OK, o_res)
 
@@ -250,3 +266,24 @@ class Resource(models.Model):
         self.change_visit_key()
         self.save()
         return Ret()
+
+    @staticmethod
+    def decode_slug(slug):
+        slug_list = slug.split('-')
+
+        ret = Resource.get_res_by_id(Resource.ROOT_ID)
+        if ret.error is not Error.OK:
+            return Ret(ret)
+        o_res_parent = ret.body
+
+        for rid in slug_list:
+            ret = Resource.get_res_by_id(rid)
+            if ret.error is not Error.OK:
+                return Ret(ret)
+            o_res_crt = ret.body
+            if not isinstance(o_res_crt, Resource):
+                return Ret(Error.STRANGE)
+            if o_res_crt.parent != o_res_parent:
+                return Ret(Error.ERROR_RESOURCE_RELATION)
+            o_res_parent = o_res_crt
+        return Ret(Error.OK, o_res_parent)

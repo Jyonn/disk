@@ -18,6 +18,7 @@ class User(models.Model):
         'username': 32,
         'password': 32,
         'nickname': 10,
+        'avatar': 1024,
     }
     email = models.EmailField(
         null=True,
@@ -43,11 +44,11 @@ class User(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    avatar = models.URLField(
+    avatar = models.CharField(
         default=None,
         null=True,
         blank=True,
-        verbose_name='暂时不用'
+        max_length=L['avatar'],
     )
     grant = models.BooleanField(
         verbose_name='是否有权限新增用户',
@@ -73,6 +74,14 @@ class User(models.Model):
             return Ret(Error.INVALID_PASSWORD)
         return Ret()
 
+    @staticmethod
+    def _valid_o_parent(o_parent):
+        if not isinstance(o_parent, User):
+            return Ret(Error.STRANGE)
+        if not o_parent.grant:
+            return Ret(Error.REQUIRE_GRANT)
+        return Ret()
+
     @classmethod
     def _validate(cls, d):
         return field_validator(d, cls)
@@ -82,10 +91,7 @@ class User(models.Model):
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
-        if not isinstance(o_parent, User):
-            return Ret(Error.STRANGE)
-        if not o_parent.grant:
-            return Ret(Error.REQUIRE_GRANT)
+
         hash_password = User._hash(password)
         ret = User.get_user_by_username(username)
         if ret.error is Error.OK:
@@ -102,7 +108,7 @@ class User(models.Model):
             )
             o_user.save()
         except Exception as e:
-            deprint(e)
+            deprint(str(e))
             return Ret(Error.ERROR_CREATE_USER)
         return Ret(Error.OK, o_user)
 
@@ -128,7 +134,8 @@ class User(models.Model):
     def get_user_by_username(username):
         try:
             o_user = User.objects.get(username=username)
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.NOT_FOUND_USER)
         return Ret(Error.OK, o_user)
 
@@ -136,7 +143,8 @@ class User(models.Model):
     def get_user_by_id(user_id):
         try:
             o_user = User.objects.get(pk=user_id)
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.NOT_FOUND_USER)
         return Ret(Error.OK, o_user)
 
@@ -145,6 +153,7 @@ class User(models.Model):
             user_id=self.pk,
             username=self.username,
             avatar=self.get_avatar_url(),
+            nickname=self.nickname,
         )
 
     @staticmethod
@@ -167,6 +176,19 @@ class User(models.Model):
         from Base.qn import get_resource_url
         return get_resource_url(self.avatar)
 
-    def modify_avatar(self, avatar_key):
-        self.avatar = avatar_key
+    def modify_avatar(self, avatar):
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        self.avatar = avatar
         self.save()
+        return Ret()
+
+    def modify_info(self, nickname):
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        if nickname is not None:
+            self.nickname = nickname
+        self.save()
+        return Ret()

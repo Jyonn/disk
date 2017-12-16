@@ -17,6 +17,7 @@ from Base.error import Error
 from Base.param import Param
 from Base.response import Ret, error_response
 
+
 # require_post = http.require_POST
 # require_get = http.require_GET
 
@@ -25,9 +26,8 @@ def validate_params(r_param_valid_list, g_params):
     """
     [('a', '[a-z]+'), 'b', ('c', valid_c_func), ('d', valid_d_func, default_value)]
     """
-    new_param_dict = {}  # 把g_params的queryDict数据存到新的字典中
-
     import re
+
     for r_param_valid in r_param_valid_list:
         # has_default_value = False
         # default_value = None  # 默认值
@@ -44,17 +44,14 @@ def validate_params(r_param_valid_list, g_params):
                 valid_method = r_param_valid[1]  # 得到验证方式
                 if len(r_param_valid) > 2:
                     # has_default_value = True
-                    # g_params.setdefault(r_param, default_value)  # 设置变量默认值
-                    new_param_dict[r_param] = r_param_valid[2]
+                    g_params.setdefault(r_param, r_param_valid[2])
         else:  # 忽略
             continue
 
-        for k in g_params.keys():
-            new_param_dict[k] = g_params[k]
-        if r_param not in new_param_dict:  # 如果传入数据中没有变量名
+        if r_param not in g_params:  # 如果传入数据中没有变量名
             return Ret(Error.REQUIRE_PARAM, append_msg=r_param)  # 报错
 
-        req_value = new_param_dict[r_param]
+        req_value = g_params[r_param]
 
         if isinstance(valid_method, str):
             if re.match(valid_method, req_value) is None:
@@ -63,10 +60,11 @@ def validate_params(r_param_valid_list, g_params):
             try:
                 ret = valid_method(req_value)
                 if ret.error is not Error.OK:
-                    return Ret(ret.error)
-            except:
+                    return Ret(ret)
+            except Exception as e:
+                deprint(str(e))
                 return Ret(Error.VALIDATION_FUNC_ERROR)
-    return Ret(Error.OK, new_param_dict)
+    return Ret(Error.OK, g_params)
 
 
 def field_validator(d, cls):
@@ -100,71 +98,97 @@ def field_validator(d, cls):
     return Ret()
 
 
-def require_get(r_params=list()):
-    """
-    需要获取的参数是否在request.GET中存在
-    并把结果保存到request.params中
-    """
+# def require_get(r_params=list()):
+#     """
+#     需要获取的参数是否在request.GET中存在
+#     并把结果保存到request.params中
+#     """
+#
+#     def decorator(func):
+#         @wraps(func)
+#         def wrapper(request, *args, **kwargs):
+#             if not isinstance(request, HttpRequest):
+#                 return error_response(Error.STRANGE)
+#             if request.method != "GET":
+#                 return error_response(Error.ERROR_METHOD)
+#             # for require_param in r_params:
+#             #     if require_param not in request.GET:
+#             #         return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
+#             ret = validate_params(r_params, request.GET)
+#             if ret.error is not Error.OK:
+#                 return error_response(ret)
+#             request.d = Param(ret.body)
+#             return func(request, *args, **kwargs)
+#
+#         return wrapper
+#
+#     return decorator
+
+
+def require_method(method, r_params=list(), decode=True):
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             if not isinstance(request, HttpRequest):
                 return error_response(Error.STRANGE)
-            if request.method != "GET":
-                return error_response(Error.ERROR_METHOD)
-            # for require_param in r_params:
-            #     if require_param not in request.GET:
-            #         return error_response(Error.REQUIRE_PARAM, append_msg=require_param)
-            ret = validate_params(r_params, request.GET)
+            if request.method != method:
+                return error_response(Error.ERROR_METHOD, append_msg='，需要%s请求' % method)
+            if request.method == "GET":
+                request.DICT = request.GET.dict()
+            else:
+                try:
+                    request.DICT = json.loads(request.body.decode())
+                except:
+                    request.DICT = {}
+            if decode:
+                for k in request.DICT.keys():
+                    try:
+                        base64.decodebytes(bytes(request.DICT[k], encoding='utf8')).decode()
+                    except Exception as e:
+                        deprint(str(e))
+                        return error_response(Error.REQUIRE_BASE64)
+            ret = validate_params(r_params, request.DICT)
             if ret.error is not Error.OK:
                 return error_response(ret)
             request.d = Param(ret.body)
             return func(request, *args, **kwargs)
+
         return wrapper
     return decorator
 
 
 def require_post(r_params=list(), decode=True):
-    """
-    需要获取的参数是否在request.POST中存在
-    并把结果保存到request.params中
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            if not isinstance(request, HttpRequest):
-                return error_response(Error.STRANGE)
-            if request.method != "POST":
-                return error_response(Error.ERROR_METHOD)
-            if decode:
-                for k in request.POST.keys():
-                    try:
-                        base64.decodebytes(bytes(request.POST[k], encoding='utf8')).decode()
-                    except:
-                        return error_response(Error.REQUIRE_BASE64)
-            ret = validate_params(r_params, request.POST)
-            if ret.error is not Error.OK:
-                return error_response(ret)
-            request.d = Param(ret.body)
-            return func(request, *args, **kwargs)
-        return wrapper
-    return decorator
+    return require_method('POST', r_params, decode)
+
+
+def require_get(r_params=list(), decode=False):
+    return require_method('GET', r_params, decode)
+
+
+def require_put(r_params=list(), decode=True):
+    return require_method('PUT', r_params, decode)
+
+
+def require_delete(r_params=list(), decode=False):
+    return require_method('DELETE', r_params, decode)
 
 
 def require_json(func):
     """
     把request.body的内容反序列化为json
     """
+
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         if request.body:
             try:
-                request.POST = json.loads(request.body.decode())
+                request.DICT = json.loads(request.body.decode())
             except:
                 pass
             return func(request, *args, **kwargs)
         else:
             return error_response(Error.REQUIRE_JSON)
+
     return wrapper
 
 
@@ -190,13 +214,10 @@ def decorator_generator(verify_func):
             if ret.error is not Error.OK:
                 return error_response(ret)
             return func(request, *args, **kwargs)
+
         return wrapper
+
     return decorator
-
-
-def maybe_login_func(request):
-    require_login_func(request)
-    return Ret()
 
 
 def require_login_func(request):
@@ -226,10 +247,30 @@ def require_login_func(request):
         if float(d['ctime']) < float(o_user.pwd_change_time):
             return Ret(Error.PASSWORD_CHANGED)
     except Exception as e:
-        deprint(e)
+        deprint(str(e))
         return Ret(Error.STRANGE)
     request.user = o_user
     return Ret()
 
+
+def maybe_login_func(request):
+    require_login_func(request)
+    return Ret()
+
+
+def require_root_func(request):
+    ret = require_login_func(request)
+    if ret.error is not Error.OK:
+        return ret
+    o_user = request.user
+    from User.models import User
+    if not isinstance(o_user, User):
+        return Ret(Error.STRANGE)
+    if o_user.pk != User.ROOT_ID:
+        return Ret(Error.REQUIRE_ROOT)
+    return Ret()
+
+
 require_login = decorator_generator(require_login_func)
 maybe_login = decorator_generator(maybe_login_func)
+require_root = decorator_generator(require_root_func)

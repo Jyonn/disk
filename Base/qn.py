@@ -33,7 +33,7 @@ def get_upload_token(key, policy):
     return auth.upload_token(bucket=bucket, key=key, expires=3600, policy=policy), key
 
 
-def auth_callback(request):
+def qiniu_auth_callback(request):
     if not isinstance(request, HttpRequest):
         return Ret(Error.STRANGE)
     auth_header = request.META.get('Authorization')

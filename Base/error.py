@@ -3,6 +3,7 @@
 
 
 class Error:
+    REQUIRE_FATHER_OR_ROOT_DELETE = 2025
     PASSWORD_CHANGED = 2024
     ERROR_RESOURCE_RELATION = 2023
     ERROR_RESOURCE_TYPE = 2022
@@ -29,6 +30,7 @@ class Error:
     ERROR_PASSWORD = 2001
     NOT_FOUND_USER = 2000
 
+    REQUIRE_ROOT = 1009
     VALIDATION_FUNC_ERROR = 1008
     PARAM_FORMAT_ERROR = 1007
     REQUIRE_BASE64 = 1006
@@ -41,6 +43,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),
         (PASSWORD_CHANGED, "密码已改变，需要重新获取token"),
         (ERROR_RESOURCE_RELATION, "错误的资源逻辑关系"),
         (ERROR_RESOURCE_TYPE, "错误的资源类型"),
@@ -50,7 +53,7 @@ class Error:
         (REQUIRE_FILE, "需要文件资源"),
         (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
         (PARENT_NOT_BELONG, "无法在他人目录下创建"),
-        (NOT_READABLE, "无法读取"),
+        (NOT_READABLE, "没有读取权限"),
         (ERROR_FILE_PARENT, "文件资源不能成为父目录"),
         (NOT_FOUND_RESOURCE, "不存在的资源"),
         (ERROR_RESOURCE_STATUS, "错误的资源公开信息"),
@@ -67,6 +70,7 @@ class Error:
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 
+        (REQUIRE_ROOT, "需要管理员登录"),
         (VALIDATION_FUNC_ERROR, "错误的参数验证函数"),
         (PARAM_FORMAT_ERROR, "错误的参数格式"),
         (REQUIRE_BASE64, "参数需要base64编码"),
