@@ -32,6 +32,11 @@ class User(models.Model):
     password = models.CharField(
         max_length=L['password'],
     )
+    pwd_change_time = models.FloatField(
+        null=True,
+        blank=True,
+        default=0,
+    )
     parent = models.ForeignKey(
         'User',
         null=True,
@@ -100,6 +105,17 @@ class User(models.Model):
             deprint(e)
             return Ret(Error.ERROR_CREATE_USER)
         return Ret(Error.OK, o_user)
+
+    def change_password(self, password):
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        hash_password = User._hash(password)
+        self.password = hash_password
+        import datetime
+        self.pwd_change_time = datetime.datetime.now().timestamp()
+        self.save()
+        return Ret()
 
     @staticmethod
     def _hash(s):

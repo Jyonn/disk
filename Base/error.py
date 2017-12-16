@@ -3,6 +3,8 @@
 
 
 class Error:
+    PASSWORD_CHANGED = 2024
+    ERROR_RESOURCE_RELATION = 2023
     ERROR_RESOURCE_TYPE = 2022
     INVALID_PASSWORD = 2021
     INVALID_USERNAME = 2020
@@ -39,6 +41,8 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (PASSWORD_CHANGED, "密码已改变，需要重新获取token"),
+        (ERROR_RESOURCE_RELATION, "错误的资源逻辑关系"),
         (ERROR_RESOURCE_TYPE, "错误的资源类型"),
         (INVALID_PASSWORD, "密码长度应在6-16个字符之内且无非法字符"),
         (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.crypto import get_random_string
 
+from Base.common import deprint
 from Base.decorator import field_validator
 from Base.error import Error
 from Base.response import Ret
@@ -70,6 +71,8 @@ class Resource(models.Model):
         verbose_name='download relative path to res.6-79.cn',
         max_length=L['dlpath'],
         default=None,
+        null=True,
+        blank=True,
     )
     status = models.IntegerField(
         choices=STATUS_TUPLE,
@@ -80,8 +83,14 @@ class Resource(models.Model):
         max_length=L['visit_key'],
         verbose_name='当status为2时有效',
     )
-    FIELD_LIST = \
-        ['rname', 'rtype', 'rsize', 'description', 'avatar', 'owner', 'parent', 'dlpath', 'status', 'visit_key']
+    create_time = models.DateTimeField(
+        auto_created=True,
+        auto_now=True,
+    )
+    FIELD_LIST = [
+        'rname', 'rtype', 'rsize', 'description', 'avatar',
+        'owner', 'parent', 'dlpath', 'status', 'visit_key', 'create_time'
+    ]
 
     @staticmethod
     def _valid_rname(rname):
@@ -135,7 +144,8 @@ class Resource(models.Model):
                 rsize=rsize,
             )
             o_res.save()
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.CREATE_FILE_ERROR)
         return Ret(Error.OK, o_res)
 
@@ -159,7 +169,8 @@ class Resource(models.Model):
                 rsize=0,
             )
             o_res.save()
-        except:
+        except Exception as e:
+            deprint(str(e))
             return Ret(Error.CREATE_FOLDER_ERROR)
         return Ret(Error.OK, o_res)
 
@@ -182,15 +193,17 @@ class Resource(models.Model):
             rtype=self.rtype,
             description=self.description,
             avatar=self.avatar,
-            owner=self.owner.to_dict(),
+            # owner=self.owner.to_dict(),
             parent_id=self.parent_id,
             status=self.status,
+            dl=self.get_dl_url(),
+            visit_key=self.get_visit_key(),
         )
 
     def get_child_res_list(self):
         _res_list = Resource.objects.filter(parent=self)
 
-        res_list = [self.to_dict()]
+        res_list = []
         for o_res in _res_list:
             res_list.append(o_res.to_dict())
 
@@ -216,6 +229,11 @@ class Resource(models.Model):
             return None
         from Base.qn import get_resource_url
         return get_resource_url(self.dlpath)
+
+    def get_visit_key(self):
+        if self.status == Resource.STATUS_PROTECT:
+            return self.visit_key
+        return None
 
     def change_visit_key(self):
         self.visit_key = get_random_string(length=4)

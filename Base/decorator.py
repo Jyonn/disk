@@ -21,38 +21,53 @@ from Base.response import Ret, error_response
 # require_get = http.require_GET
 
 
-def validate_params(r_params, g_params):
+def validate_params(r_param_valid_list, g_params):
     """
-    [('a', '[a-z]+'), 'b', ('c', valid_c)]
+    [('a', '[a-z]+'), 'b', ('c', valid_c_func), ('d', valid_d_func, default_value)]
     """
+    new_param_dict = {}
 
     import re
-    for r_param in r_params:
-        if isinstance(r_param, str):
-            raw_param = r_param
-        elif isinstance(r_param, tuple):
-            if len(r_param) == 0:
+    for r_param_valid in r_param_valid_list:
+        # has_default_value = False
+        default_value = None  # 默认值
+        valid_method = None  # 验证参数的方式（如果是字符串则为正则匹配，如果是函数则带入函数，否则忽略）
+
+        if isinstance(r_param_valid, str):  # 如果rpv只是个字符串，则符合例子中的'b'情况
+            r_param = r_param_valid
+
+        elif isinstance(r_param_valid, tuple):  # 如果rpv是tuple，则依次为变量名、验证方式、默认值
+            if len(r_param_valid) == 0:  # 忽略
                 continue
-            raw_param = r_param[0]
-        else:
+            r_param = r_param_valid[0]  # 得到变量名
+            if len(r_param_valid) > 1:
+                valid_method = r_param_valid[1]  # 得到验证方式
+                if len(r_param_valid) > 2:
+                    # has_default_value = True
+                    default_value = r_param_valid[2]
+                    # g_params.setdefault(r_param, default_value)  # 设置变量默认值
+                    new_param_dict[r_param] = default_value
+        else:  # 忽略
             continue
-        if raw_param not in g_params:
-            return Ret(Error.REQUIRE_PARAM, append_msg=raw_param)
-        if isinstance(r_param, tuple):
-            v = g_params[raw_param]
-            for valid_method in r_param[1:]:
-                # print(valid_method)
-                if isinstance(valid_method, str):
-                    if re.match(valid_method, v) is None:
-                        return Ret(Error.PARAM_FORMAT_ERROR, append_msg=raw_param)
-                elif callable(valid_method):
-                    try:
-                        ret = valid_method(v)
-                        if ret.error is not Error.OK:
-                            return Ret(ret.error)
-                    except:
-                        return Ret(Error.VALIDATION_FUNC_ERROR)
-    return Ret()
+
+        for k in g_params.keys():
+            new_param_dict[k] = g_params[k]
+        if r_param not in new_param_dict:  # 如果传入数据中没有变量名
+            return Ret(Error.REQUIRE_PARAM, append_msg=r_param)  # 报错
+
+        req_value = new_param_dict[r_param]
+
+        if isinstance(valid_method, str):
+            if re.match(valid_method, req_value) is None:
+                return Ret(Error.PARAM_FORMAT_ERROR, append_msg=r_param)
+        elif callable(valid_method):
+            try:
+                ret = valid_method(req_value)
+                if ret.error is not Error.OK:
+                    return Ret(ret.error)
+            except:
+                return Ret(Error.VALIDATION_FUNC_ERROR)
+    return Ret(Error.OK, new_param_dict)
 
 
 def field_validator(d, cls):
@@ -98,7 +113,7 @@ def require_get(r_params=list()):
             ret = validate_params(r_params, request.GET)
             if ret.error is not Error.OK:
                 return error_response(ret.error, append_msg=ret.append_msg)
-            request.d = Param(request.GET)
+            request.d = Param(ret.body)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -125,7 +140,7 @@ def require_post(r_params=list(), decode=True):
             ret = validate_params(r_params, request.POST)
             if ret.error is not Error.OK:
                 return error_response(ret.error, append_msg=ret.append_msg)
-            request.d = Param(request.POST)
+            request.d = Param(ret.body)
             return func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -175,24 +190,7 @@ def decorator_generator(verify_func):
 
 
 def maybe_login_func(request):
-    jwt_str = request.d.get('token')
-    from Base.jtoken import jwt_d
-
-    ret = jwt_d(jwt_str)
-    if ret.error is not Error.OK:
-        return Ret()
-    d = ret.body
-    try:
-        user_id = d.user_id
-        from User.models import User
-        ret = User.get_user_by_id(user_id)
-        if ret.error is not Error.OK:
-            return Ret()
-        o_user = ret.body
-    except Exception as e:
-        deprint(e)
-        return Ret()
-    request.user = o_user
+    require_login_func(request)
     return Ret()
 
 
@@ -218,6 +216,10 @@ def require_login_func(request):
         if ret.error is not Error.OK:
             return ret
         o_user = ret.body
+        if not isinstance(o_user, User):
+            return Ret(Error.STRANGE)
+        if float(d['ctime']) < float(o_user.pwd_change_time):
+            return Ret(Error.PASSWORD_CHANGED)
     except Exception as e:
         deprint(e)
         return Ret(Error.STRANGE)
