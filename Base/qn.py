@@ -1,6 +1,7 @@
-# 171203 Adel Liu
-# 即将使用web前端直接上传到七牛 而无需通过服务器 减小服务器压力
+"""171203 Adel Liu
 
+即将使用web前端直接上传到七牛 而无需通过服务器 减小服务器压力
+"""
 import qiniu
 from django.http import HttpRequest
 

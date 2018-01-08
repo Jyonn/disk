@@ -1,5 +1,7 @@
-# 171203 Adel Liu
-# 弃用session，该用jwt
+""" 171203 Adel Liu
+
+弃用session，该用jwt
+"""
 
 # from User.models import User
 # from Base.error import Error

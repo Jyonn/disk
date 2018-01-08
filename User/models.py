@@ -112,10 +112,12 @@ class User(models.Model):
             return Ret(Error.ERROR_CREATE_USER)
         return Ret(Error.OK, o_user)
 
-    def change_password(self, password):
+    def change_password(self, password, old_password):
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
+        if self.password != User._hash(old_password):
+            return Ret(Error.ERROR_PASSWORD)
         hash_password = User._hash(password)
         self.password = hash_password
         import datetime

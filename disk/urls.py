@@ -24,9 +24,19 @@ from Config.views import upload
 def index(request):
     return render(request, 'upload.html')
 
+
+# def dl_qn(request):
+#     key = request.GET['k']
+#     from Base.qn import get_resource_url
+#     from Base.response import response
+#     return response(body=get_resource_url(key, expires=60*60*12))
+#
+#
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
     path('api/', include('disk.api-urls')),
     path('upload', upload),
     # url(r'^index.html', index),
+
+    # path('dl', dl_qn),
 ]

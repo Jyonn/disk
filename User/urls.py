@@ -9,5 +9,5 @@ urlpatterns = [
     path('<int:user_id>', rt_user_id),
     path('token', rt_user_token),
     path('avatar', rt_user_avatar),
-    path('avatar/callback', avatar_callback)
+    # path('avatar/callback', avatar_callback)
 ]

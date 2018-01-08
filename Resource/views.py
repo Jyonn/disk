@@ -74,11 +74,11 @@ def get_res_info(request):
     return response(body=dict(info=o_res.to_dict(), child_list=res_list))
 
 
-@require_get(['filename', 'parent_id', 'description', 'status'])
+@require_get(['filename', 'parent_id', 'status'])
 @require_login
 def upload_res_token(request):
     o_user = request.user
-    parent_id = request.d.parent_id
+    parent_id = request.d.parent_idnu
     status = request.d.status
     filename = request.d.filename
 

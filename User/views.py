@@ -1,7 +1,7 @@
 import base64
 import json
 
-from Base.decorator import require_json, require_post, require_login, require_get, require_delete, require_root, \
+from Base.decorator import require_json, require_post, require_login, require_get, require_delete, \
     require_put
 from Base.error import Error
 from Base.jtoken import jwt_e
@@ -10,6 +10,13 @@ from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
 from Base.qn import get_upload_token, qiniu_auth_callback
+
+
+@require_get()
+@require_login
+def get_my_info(request):
+    o_user = request.user
+    return get_user_info(request, o_user.pk)
 
 
 @require_get()
@@ -172,7 +179,7 @@ def avatar_callback(request):
 
 
 @require_json
-@require_put([('password', None, None), ('nickname', None, None)], decode=False)
+@require_put([('password', None, None), ('old_password', None, None), ('nickname', None, None)], decode=False)
 @require_login
 def modify_user(request):
     o_user = request.user
@@ -181,8 +188,9 @@ def modify_user(request):
 
     password = request.d.password
     nickname = request.d.nickname
+    old_password = request.d.old_password
     if password is not None:
-        ret = o_user.change_password(password)
+        ret = o_user.change_password(password, old_password)
         if ret.error is not Error.OK:
             return error_response(ret)
     o_user.modify_info(nickname)

@@ -86,6 +86,7 @@ CORS_ALLOW_HEADERS = (
     'x-csrftoken',
     'x-requested-with',
     'Pragma',
+    'Token',
 )
 
 ROOT_URLCONF = 'disk.urls'

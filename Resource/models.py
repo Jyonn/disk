@@ -25,9 +25,11 @@ class Resource(models.Model):
     }
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
+    RTYPE_LINK = 2
     RTYPE_TUPLE = (
         (RTYPE_FILE, 'file'),
         (RTYPE_FOLDER, 'folder'),
+        (RTYPE_LINK, 'link'),
     )
     STATUS_PUBLIC = 0
     STATUS_PRIVATE = 1
@@ -110,7 +112,7 @@ class Resource(models.Model):
 
     @staticmethod
     def _valid_rtype(rtype):
-        if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER]:
+        if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER, Resource.RTYPE_LINK]:
             return Ret(Error.ERROR_RESOURCE_TYPE)
         return Ret()
 
