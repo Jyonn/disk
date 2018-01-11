@@ -187,10 +187,12 @@ class User(models.Model):
         return Ret()
 
     def modify_info(self, nickname):
+        if nickname is None:
+            nickname = self.nickname
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
-        if nickname is not None:
-            self.nickname = nickname
+        # if nickname is not None:
+        self.nickname = nickname
         self.save()
         return Ret()

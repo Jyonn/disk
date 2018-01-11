@@ -3,6 +3,7 @@
 
 
 class Error:
+    NOT_WRITEABLE = 2026
     REQUIRE_FATHER_OR_ROOT_DELETE = 2025
     PASSWORD_CHANGED = 2024
     ERROR_RESOURCE_RELATION = 2023
@@ -30,6 +31,7 @@ class Error:
     ERROR_PASSWORD = 2001
     NOT_FOUND_USER = 2000
 
+    PROCESS_FUNC_ERROR = 1011
     TUPLE_FORMAT_ERROR = 1010
     REQUIRE_ROOT = 1009
     VALIDATION_FUNC_ERROR = 1008
@@ -44,13 +46,14 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (NOT_WRITEABLE, "没有权限修改资源"),
         (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),
         (PASSWORD_CHANGED, "密码已改变，需要重新获取token"),
         (ERROR_RESOURCE_RELATION, "错误的资源逻辑关系"),
         (ERROR_RESOURCE_TYPE, "错误的资源类型"),
         (INVALID_PASSWORD, "密码长度应在6-16个字符之内且无非法字符"),
         (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),
-        (INVALID_RNAME, "资源名称不能包含非法字符（<>!:|'\"\\/等）"),
+        (INVALID_RNAME, "资源名称不能包含非法字符（\\/*:\'\"|<>?等）"),
         (REQUIRE_FILE, "需要文件资源"),
         (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
         (PARENT_NOT_BELONG, "无法在他人目录下创建"),
@@ -71,6 +74,7 @@ class Error:
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 
+        (PROCESS_FUNC_ERROR, "参数预处理函数错误"),
         (TUPLE_FORMAT_ERROR, "属性元组格式错误"),
         (REQUIRE_ROOT, "需要管理员登录"),
         (VALIDATION_FUNC_ERROR, "错误的参数验证函数"),

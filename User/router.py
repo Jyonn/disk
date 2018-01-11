@@ -28,9 +28,9 @@ def rt_user_avatar(request):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_user_id(request, user_id):
+def rt_username(request, username):
     if request.method == "GET":
-        return get_user_info(request, user_id)
+        return get_user_info(request, username)
     if request.method == "DELETE":
-        return delete_user(request, user_id)
+        return delete_user(request, username)
     return error_response(Error.ERROR_METHOD)

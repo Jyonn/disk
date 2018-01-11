@@ -21,7 +21,19 @@ from Base.response import Ret, error_response
 def validate_params(r_param_valid_list, g_params):
     """ 验证参数
 
-    [('a', '[a-z]+'), 'b', ('c', valid_c_func), ('d', valid_d_func, default_value)]
+    [
+        ('a', '[a-z]+'),
+        'b',
+        ('c', valid_c_func),
+        ('d', valid_d_func, default_d_value)
+        {
+            "value": "e",
+            "func": valid_e_func,
+            "default": True,
+            "default_value": default_e_value,
+            "process": process_e_value (str to int)
+        }
+    ]
     """
     import re
 
@@ -31,6 +43,7 @@ def validate_params(r_param_valid_list, g_params):
         # has_default_value = False
         # default_value = None  # 默认值
         valid_method = None  # 验证参数的方式（如果是字符串则为正则匹配，如果是函数则带入函数，否则忽略）
+        process = None
 
         if isinstance(r_param_valid, str):  # 如果rpv只是个字符串，则符合例子中的'b'情况
             r_param = r_param_valid
@@ -44,7 +57,17 @@ def validate_params(r_param_valid_list, g_params):
                 if len(r_param_valid) > 2:
                     # has_default_value = True
                     g_params.setdefault(r_param, r_param_valid[2])
-        else:  # 忽略
+        elif isinstance(r_param_valid, dict):  # 忽略
+            r_param = r_param_valid.get('value', None)
+            if r_param is None:
+                continue
+            valid_method = r_param_valid.get('func', None)
+            default = r_param_valid.get('default', False)
+            default_value = r_param_valid.get('default_value', None)
+            if default:
+                g_params.setdefault(r_param, default_value)
+            process = r_param_valid.get('process', None)
+        else:
             continue
 
         if r_param not in g_params:  # 如果传入数据中没有变量名
@@ -59,10 +82,15 @@ def validate_params(r_param_valid_list, g_params):
             try:
                 ret = valid_method(req_value)
                 if ret.error is not Error.OK:
-                    return Ret(ret)
+                    return ret
             except Exception as err:
                 deprint(str(err))
                 return Ret(Error.VALIDATION_FUNC_ERROR)
+        if process is not None and callable(process):
+            try:
+                g_params[r_param] = process(req_value)
+            except:
+                return Ret(Error.PROCESS_FUNC_ERROR)
     return Ret(Error.OK, g_params)
 
 
@@ -226,7 +254,6 @@ def require_login_func(request):
 
     if float(dict_['ctime']) < float(o_user.pwd_change_time):
         return Ret(Error.PASSWORD_CHANGED)
-
     request.user = o_user
     return Ret()
 

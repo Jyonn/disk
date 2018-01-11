@@ -16,12 +16,12 @@ from Base.qn import get_upload_token, qiniu_auth_callback
 @require_login
 def get_my_info(request):
     o_user = request.user
-    return get_user_info(request, o_user.pk)
+    return get_user_info(request, o_user.username)
 
 
 @require_get()
-def get_user_info(request, user_id):
-    ret = User.get_user_by_id(user_id)
+def get_user_info(request, username):
+    ret = User.get_user_by_username(username)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_user = ret.body
@@ -32,12 +32,12 @@ def get_user_info(request, user_id):
 
 @require_delete()
 @require_login
-def delete_user(request, user_id):
+def delete_user(request, username):
     o_parent = request.user
     if not isinstance(o_parent, User):
         return error_response(Error.STRANGE)
 
-    ret = User.get_user_by_id(user_id)
+    ret = User.get_user_by_username(username)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_user = ret.body
@@ -77,7 +77,7 @@ def create_user(request):
     o_root = ret.body
 
     ret = Resource.create_folder(
-        o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username, Resource.STATUS_PUBLIC)
+        o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username, Resource.STATUS_PRIVATE)
     if ret.error is not Error.OK:
         return error_response(ret)
 

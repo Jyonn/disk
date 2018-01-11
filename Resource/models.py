@@ -67,10 +67,14 @@ class Resource(models.Model):
     sub_type = models.IntegerField(
         verbose_name='sub type',
         choices=SUB_TYPE_TUPLE,
+        default=STYPE_FOLDER,
     )
     description = models.CharField(
         verbose_name='description in Markdown',
         max_length=L['description'],
+        null=True,
+        blank=True,
+        default=None,
     )
     cover = models.CharField(
         null=True,
@@ -120,23 +124,12 @@ class Resource(models.Model):
 
     @staticmethod
     def _valid_rname(rname):
-        invalid_chars = '\\/.*:\'"|<>?'
+        invalid_chars = '\\/*:\'"|<>?'
         for char in invalid_chars:
             if char in rname:
+                print(char)
                 return Ret(Error.INVALID_RNAME)
         return Ret()
-
-    # @staticmethod
-    # def _valid_status(status):
-    #     if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
-    #         return Ret(Error.ERROR_RESOURCE_STATUS)
-    #     return Ret()
-    #
-    # @staticmethod
-    # def _valid_rtype(rtype):
-    #     if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER, Resource.RTYPE_LINK]:
-    #         return Ret(Error.ERROR_RESOURCE_TYPE)
-    #     return Ret()
 
     @staticmethod
     def _valid_o_parent(o_parent):
@@ -151,7 +144,8 @@ class Resource(models.Model):
         return field_validator(d, Resource)
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, dlpath, status, rsize):
+    def create_file(cls, rname, o_user, o_parent, dlpath, status, rsize, sub_type):
+        print(locals())
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -168,6 +162,7 @@ class Resource(models.Model):
                 status=status,
                 visit_key=get_random_string(length=4),
                 rsize=rsize,
+                sub_type=sub_type,
             )
             o_res.save()
         except Exception as e:
@@ -185,6 +180,7 @@ class Resource(models.Model):
             o_res = cls(
                 rname=rname,
                 rtype=Resource.RTYPE_FOLDER,
+                sub_type=Resource.STYPE_FOLDER,
                 description=desc,
                 cover=None,
                 owner=o_user,
@@ -193,6 +189,7 @@ class Resource(models.Model):
                 status=status,
                 visit_key=get_random_string(length=4),
                 rsize=0,
+                dlcount=0,
             )
             o_res.save()
         except Exception as e:
@@ -221,6 +218,7 @@ class Resource(models.Model):
 
     def to_dict_for_child(self):
         return dict(
+            res_id=self.pk,
             rname=self.rname,
             rtype=self.rtype,
             # description=self.description,
@@ -231,8 +229,10 @@ class Resource(models.Model):
 
     def to_dict(self):
         return dict(
+            res_id=self.pk,
             rname=self.rname,
             rtype=self.rtype,
+            sub_type=self.sub_type,
             description=self.description,
             cover=self.get_cover_url(),
             owner=self.owner.to_dict(),
@@ -283,31 +283,19 @@ class Resource(models.Model):
         self.visit_key = get_random_string(length=4)
         self.save()
 
-    def change_info(self, rname, status, description):
-        ret = self._validate(locals())
-        if ret.error is not Error.OK:
-            return ret
-
-        self.rname = rname
-        self.status = status
-        self.description = description
-        self.change_visit_key()
-        self.save()
-        return Ret()
-
     @staticmethod
     def decode_slug(slug):
         slug_list = slug.split('-')
 
         ret = Resource.get_res_by_id(Resource.ROOT_ID)
         if ret.error is not Error.OK:
-            return Ret(ret)
+            return ret
         o_res_parent = ret.body
 
         for rid in slug_list:
             ret = Resource.get_res_by_id(rid)
             if ret.error is not Error.OK:
-                return Ret(ret)
+                return ret
             o_res_crt = ret.body
             if not isinstance(o_res_crt, Resource):
                 return Ret(Error.STRANGE)
@@ -315,3 +303,21 @@ class Resource(models.Model):
                 return Ret(Error.ERROR_RESOURCE_RELATION)
             o_res_parent = o_res_crt
         return Ret(Error.OK, o_res_parent)
+
+    def modify_info(self, rname, description, status):
+        if rname is None:
+            rname = self.rname
+        if description is None:
+            description = self.description
+        if status is None:
+            status = self.status
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        self.rname = rname
+        self.description = description
+        if self.status != status:
+            self.change_visit_key()
+            self.status = status
+        self.save()
+        return Ret()
