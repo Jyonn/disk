@@ -51,4 +51,5 @@ def error_response(error_id, append_msg=""):
     for error in Error.ERROR_DICT:
         if error_id == error[0]:
             return response(code=error_id, msg=error[1]+append_msg)
-    return error_response(Error.NOT_FOUND_ERROR)
+    deprint('Error Not Found: ', error_id)
+    return error_response(Error.ERROR_NOT_FOUND)

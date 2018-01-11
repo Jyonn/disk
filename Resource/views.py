@@ -38,25 +38,6 @@ def create_folder(request):
     return response(body=o_res.to_dict())
 
 
-# @require_get()
-# @require_login
-# def get_root_res(request):
-#     o_user = request.user
-#
-#     ret = Resource.get_root_folder(o_user)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     o_root = ret.body
-#     if not isinstance(o_root, Resource):
-#         return error_response(Error.STRANGE)
-#
-#     ret = o_root.get_child_res_list()
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     res_list = ret.body
-#     return response(body=res_list)
-#
-
 @require_get()
 @require_login
 def get_my_res(request):
@@ -233,6 +214,9 @@ def dlpath_callback(request):
     o_parent = ret.body
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
+
+    if not o_parent.belong(o_user):
+        return error_response(Error.PARENT_NOT_BELONG)
 
     ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize, sub_type)
     if ret.error is not Error.OK:

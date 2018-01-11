@@ -77,7 +77,7 @@ def validate_params(r_param_valid_list, g_params):
 
         if isinstance(valid_method, str):
             if re.match(valid_method, req_value) is None:
-                return Ret(Error.PARAM_FORMAT_ERROR, append_msg=r_param)
+                return Ret(Error.ERROR_PARAM_FORMAT, append_msg=r_param)
         elif callable(valid_method):
             try:
                 ret = valid_method(req_value)
@@ -85,12 +85,12 @@ def validate_params(r_param_valid_list, g_params):
                     return ret
             except Exception as err:
                 deprint(str(err))
-                return Ret(Error.VALIDATION_FUNC_ERROR)
+                return Ret(Error.ERROR_VALIDATION_FUNC)
         if process is not None and callable(process):
             try:
                 g_params[r_param] = process(req_value)
             except:
-                return Ret(Error.PROCESS_FUNC_ERROR)
+                return Ret(Error.ERROR_PROCESS_FUNC)
     return Ret(Error.OK, g_params)
 
 
@@ -103,19 +103,19 @@ def field_validator(dict_, cls):
     """
     field_list = getattr(cls, 'FIELD_LIST', None)
     if field_list is None:
-        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不存在FIELD_LIST')
+        return Ret(Error.ERROR_VALIDATION_FUNC, append_msg='，不存在FIELD_LIST')
     _meta = getattr(cls, '_meta', None)
     if _meta is None:
-        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不是Django的models类')
+        return Ret(Error.ERROR_VALIDATION_FUNC, append_msg='，不是Django的models类')
     len_list = getattr(cls, 'L', None)
     if len_list is None:
-        return Ret(Error.VALIDATION_FUNC_ERROR, append_msg='，不存在长度字典L')
+        return Ret(Error.ERROR_VALIDATION_FUNC, append_msg='，不存在长度字典L')
 
     for k in dict_.keys():
         if k in getattr(cls, 'FIELD_LIST'):
             if isinstance(_meta.get_field(k), models.CharField):
                 if len(dict_[k]) > len_list[k]:
-                    return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k]))
+                    return Ret(Error.ERROR_PARAM_FORMAT, append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k]))
 
         tuple_name = '%s_TUPLE' % k.upper()
         tuple_ = getattr(cls, tuple_name, None)
@@ -123,11 +123,11 @@ def field_validator(dict_, cls):
             flag = False
             for item in tuple_:
                 if not isinstance(item, tuple):
-                    return Ret(Error.TUPLE_FORMAT_ERROR, append_msg='（%s）' % tuple_name)
+                    return Ret(Error.ERROR_TUPLE_FORMAT, append_msg='（%s）' % tuple_name)
                 if dict_[k] == item[0]:
                     flag = True
             if not flag:
-                return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的值应该在%s之中' % (k, tuple_name))
+                return Ret(Error.ERROR_PARAM_FORMAT, append_msg='，%s的值应该在%s之中' % (k, tuple_name))
         valid_func = getattr(cls, '_valid_%s' % k, None)
         if valid_func is not None and callable(valid_func):
             # print('_valid_', k)

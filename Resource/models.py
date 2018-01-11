@@ -145,7 +145,6 @@ class Resource(models.Model):
 
     @classmethod
     def create_file(cls, rname, o_user, o_parent, dlpath, status, rsize, sub_type):
-        print(locals())
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -167,7 +166,7 @@ class Resource(models.Model):
             o_res.save()
         except Exception as e:
             deprint(str(e))
-            return Ret(Error.CREATE_FILE_ERROR)
+            return Ret(Error.ERROR_CREATE_FILE)
         return Ret(Error.OK, o_res)
 
     @classmethod
@@ -194,8 +193,33 @@ class Resource(models.Model):
             o_res.save()
         except Exception as e:
             deprint(str(e))
-            return Ret(Error.CREATE_FOLDER_ERROR)
+            return Ret(Error.ERROR_CREATE_FOLDER)
         return Ret(Error.OK, o_res)
+
+    @classmethod
+    def create_link(cls, rname, o_user, o_parent, desc, status, dlpath):
+        ret = cls._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+
+        try:
+            o_res = cls(
+                rname=rname,
+                rtype=Resource.RTYPE_LINK,
+                sub_type=Resource.STYPE_LINK,
+                description=desc,
+                cover=None,
+                owner=o_user,
+                o_parent=o_parent,
+                dlpath=link,
+                visit_key=get_random_string(length=4),
+                rsize=0,
+                dlcount=0,
+            )
+            o_res.save()
+        except Exception as e:
+            deprint(str(e))
+            return Ret(Error.ERROR_CREATE_LINK)
 
     @staticmethod
     def get_res_by_id(res_id):
