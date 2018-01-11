@@ -3,7 +3,7 @@ import json
 
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, require_put
 from Base.error import Error
-from Base.policy import get_file_policy
+from Base.policy import get_file_policy, get_cover_policy
 from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
 from Resource.models import Resource
@@ -11,17 +11,13 @@ from User.models import User
 
 
 @require_json
-@require_post(['folder_name', 'description', 'status'], decode=False)
+@require_post(['folder_name', 'description'], decode=False)
 @require_login
 def create_folder(request):
     o_user = request.user
 
     folder_name = request.d.folder_name
     desc = request.d.description
-    status = request.d.status
-
-    if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
-        return error_response(Error.ERROR_RESOURCE_STATUS)
 
     # get parent folder
     o_parent = request.resource
@@ -29,7 +25,31 @@ def create_folder(request):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
-    ret = Resource.create_folder(folder_name, o_user, o_parent, desc, status)
+    ret = Resource.create_folder(folder_name, o_user, o_parent, desc)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_res = ret.body
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+    return response(body=o_res.to_dict())
+
+
+@require_json
+@require_post(['link_name', 'description', 'link'], decode=False)
+@require_login
+def create_link(request):
+    o_user = request.user
+
+    link_name = request.d.link_name
+    desc = request.d.description
+    link = request.d.link
+
+    o_parent = request.resource
+
+    if not o_parent.belong(o_user):
+        return error_response(Error.PARENT_NOT_BELONG)
+
+    ret = Resource.create_link(link_name, o_user, o_parent, desc, link)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
@@ -73,12 +93,11 @@ def get_res_info(request):
     return response(body=dict(info=o_res.to_dict(), child_list=res_list))
 
 
-@require_get([('filename', Resource._valid_rname), 'parent_id', {'value': 'status', 'process': int}])
+@require_get([('filename', Resource._valid_rname), 'parent_id'])
 @require_login
 def upload_res_token(request):
     o_user = request.user
     parent_id = request.d.parent_id
-    status = request.d.status
     filename = request.d.filename
 
     if not isinstance(o_user, User):
@@ -94,11 +113,8 @@ def upload_res_token(request):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
-    if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
-        return error_response(Error.ERROR_RESOURCE_STATUS)
-
     import datetime
-    policy = get_file_policy(o_user.pk, o_parent.pk, status)
+    policy = get_file_policy(o_user.pk, o_parent.pk)
     key = 'res/%s/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(), filename)
     qn_token, key = get_upload_token(key, policy)
     return response(body=dict(upload_token=qn_token, key=key))
@@ -170,6 +186,8 @@ def get_dl_link(request):
     if not o_res.readable(o_user, visit_key):
         return error_response(Error.NOT_READABLE)
 
+    if o_res.rtype == Resource.RTYPE_LINK:
+        return response(body=dict(link=o_res.dlpath))
     if o_res.rtype != Resource.RTYPE_FILE:
         return error_response(Error.REQUIRE_FILE)
 
@@ -190,7 +208,6 @@ def dlpath_callback(request):
     fsize = upload_ret['fsize']
     fname = upload_ret['fname']
     parent_id = upload_ret['parent_id']
-    status = upload_ret['status']
     ftype = upload_ret['ftype']
     if ftype.find('video') == 0:
         sub_type = Resource.STYPE_VIDEO
@@ -218,7 +235,7 @@ def dlpath_callback(request):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
-    ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize, sub_type)
+    ret = Resource.create_file(fname, o_user, o_parent, key, fsize, sub_type)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
@@ -227,21 +244,67 @@ def dlpath_callback(request):
     return response(body=o_res.to_dict())
 
 
+@require_get(['upload_ret'])
+def cover_callback(request):
+    upload_ret = request.d.upload_ret
+    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    # print(upload_ret)
+    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+    # print(upload_ret)
+    upload_ret = json.loads(upload_ret)
+
+    key = upload_ret['key']
+    res_id = upload_ret['res_id']
+
+    ret = Resource.get_res_by_id(res_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_res = ret.body
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+
+    o_res.modify_cover(key)
+    return response(body=o_res.to_dict())
+
+
 @require_json
-@require_put([('rname', None, None), ('status', None, None), ('description', None, None)], decode=False)
+@require_put([('rname', None, None), ('status', None, None), ('description', None, None), ('visit_key', None, None)], decode=False)
 @require_login
 def modify_res(request):
     o_user = request.user
     rname = request.d.rname
     description = request.d.description
     status = request.d.status
+    visit_key = request.d.visit_key
 
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     if not o_res.belong(o_user):
         return error_response(Error.NOT_WRITEABLE)
-    ret = o_res.modify_info(rname, description, status)
+    ret = o_res.modify_info(rname, description, status, visit_key)
     if ret.error is not Error.OK:
         return error_response(ret)
     return response(body=o_res.to_dict())
+
+
+@require_get([('filename', '^[^\\/?:*<>|]+$')])
+@require_login
+def upload_cover_token(request):
+    """
+    获取七牛上传token
+    """
+    filename = request.d.filename
+    o_res = request.resource
+
+    o_user = request.user
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+    if not o_res.belong(o_user):
+        return error_response(Error.NOT_WRITEABLE)
+
+    import datetime
+    crt_time = datetime.datetime.now().timestamp()
+    key = 'user/%s/avatar/%s/%s' % (o_user.pk, crt_time, filename)
+    qn_token, key = get_upload_token(key, get_cover_policy(o_res.pk))
+    return response(body=dict(upload_token=qn_token, key=key))

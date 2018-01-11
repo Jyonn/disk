@@ -1,9 +1,10 @@
 # 171203 Adel Liu
 # 七牛上传政策
-from disk.settings import MAX_AVATAR_SIZE, HOST, MAX_FILE_SIZE
+from disk.settings import MAX_IMAGE_SIZE, HOST, MAX_FILE_SIZE
 
 AVATAR_CALLBACK = '%s/api/user/avatar/callback' % HOST
 FILE_CALLBACK = '%s/api/res/dlpath/callback' % HOST
+COVER_CALLBACK = '%s/api/res/cover/callback' % HOST
 
 # AVATAR_POLICY = dict(
 #     insertOnly=1,
@@ -26,7 +27,7 @@ AVATAR_POLICY = dict(
     returnUrl=AVATAR_CALLBACK,
     # callbackBodyType='application/json',
     fsizeMin=1,
-    fsizeLimit=MAX_AVATAR_SIZE,
+    fsizeLimit=MAX_IMAGE_SIZE,
     mimeLimit='image/*',
 )
 FILE_POLICY = dict(
@@ -36,6 +37,14 @@ FILE_POLICY = dict(
     fsizeMin=1,
     fsizeLimit=MAX_FILE_SIZE,
 )
+COVER_POLICY = dict(
+    insertOnly=1,
+    returnUrl=COVER_CALLBACK,
+    # callbackBodyType='application/json',
+    fsizeMin=1,
+    fsizeLimit=MAX_IMAGE_SIZE,
+    mimeLimit='image/*',
+)
 
 
 def get_avatar_policy(user_id):
@@ -44,11 +53,18 @@ def get_avatar_policy(user_id):
     return policy
 
 
-def get_file_policy(user_id, parent_id, status):
+def get_file_policy(user_id, parent_id):
     policy = FILE_POLICY
-    policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)","parent_id":%s,' \
-                           '"status":%s, "ftype": "$(mimeType)"}' % (user_id, parent_id, status)
+    policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
+                           '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
     return policy
+
+
+def get_cover_policy(res_id):
+    policy = COVER_POLICY
+    policy['returnBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
+    return policy
+
 
 # def get_avatar_policy(user_id):
 #     policy = AVATAR_POLICY
@@ -56,8 +72,14 @@ def get_file_policy(user_id, parent_id, status):
 #     return policy
 #
 #
-# def get_file_policy(user_id, parent_id, status):
+# def get_file_policy(user_id, parent_id):
 #     policy = FILE_POLICY
-#     policy['callbackBody'] = '{"key":"$(key)","user_id":"%s","fsize":"$(fsize)","fname":"$(fname)","parent_id":"%s",' \
-#                              '"status":"%s", "ftype": "$(mimeType)"}' % (user_id, parent_id, status)
+#     policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
+#                            '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
+#     return policy
+#
+#
+# def get_cover_policy(res_id):
+#     policy = COVER_POLICY
+#     policy['callbackBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
 #     return policy

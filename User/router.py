@@ -1,7 +1,7 @@
 from Base.error import Error
 from Base.response import error_response
 from User.views import create_user, auth_token, upload_avatar_token, upload_avatar_callback, get_user_info, delete_user, \
-    modify_user, get_my_info
+    modify_user, get_my_info, avatar_callback
 
 
 def rt_user(request):
@@ -23,8 +23,8 @@ def rt_user_token(request):
 def rt_user_avatar(request):
     if request.method == "GET":
         return upload_avatar_token(request)
-    if request.method == "POST":
-        return upload_avatar_callback(request)
+    # if request.method == "POST":
+    #     return upload_avatar_callback(request)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -33,4 +33,10 @@ def rt_username(request, username):
         return get_user_info(request, username)
     if request.method == "DELETE":
         return delete_user(request, username)
+    return error_response(Error.ERROR_METHOD)
+
+
+def rt_avatar_callback(request):
+    if request.method == "POST":
+        return avatar_callback(request)
     return error_response(Error.ERROR_METHOD)

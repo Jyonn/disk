@@ -1,13 +1,12 @@
 # from django.conf.urls import url
 from django.urls import path
 
-from User.router import rt_user, rt_user_token, rt_user_avatar, rt_username
-from User.views import avatar_callback
+from User.router import rt_user, rt_user_token, rt_user_avatar, rt_username, rt_avatar_callback
 
 urlpatterns = [
     path('', rt_user),
     path('@<str:username>', rt_username),
     path('token', rt_user_token),
     path('avatar', rt_user_avatar),
-    # path('avatar/callback', avatar_callback)
+    path('avatar/callback', rt_avatar_callback),
 ]

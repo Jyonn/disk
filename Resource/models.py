@@ -144,7 +144,7 @@ class Resource(models.Model):
         return field_validator(d, Resource)
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, dlpath, status, rsize, sub_type):
+    def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type):
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -158,7 +158,7 @@ class Resource(models.Model):
                 owner=o_user,
                 parent=o_parent,
                 dlpath=dlpath,
-                status=status,
+                status=Resource.STATUS_PRIVATE,
                 visit_key=get_random_string(length=4),
                 rsize=rsize,
                 sub_type=sub_type,
@@ -170,7 +170,7 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_folder(cls, rname, o_user, o_parent, desc, status):
+    def create_folder(cls, rname, o_user, o_parent, desc):
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -185,7 +185,7 @@ class Resource(models.Model):
                 owner=o_user,
                 parent=o_parent,
                 dlpath=None,
-                status=status,
+                status=Resource.STATUS_PRIVATE,
                 visit_key=get_random_string(length=4),
                 rsize=0,
                 dlcount=0,
@@ -197,7 +197,7 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_link(cls, rname, o_user, o_parent, desc, status, dlpath):
+    def create_link(cls, rname, o_user, o_parent, desc, dlpath):
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -210,8 +210,9 @@ class Resource(models.Model):
                 description=desc,
                 cover=None,
                 owner=o_user,
-                o_parent=o_parent,
-                dlpath=link,
+                parent=o_parent,
+                dlpath=dlpath,
+                status=Resource.STATUS_PRIVATE,
                 visit_key=get_random_string(length=4),
                 rsize=0,
                 dlcount=0,
@@ -220,6 +221,7 @@ class Resource(models.Model):
         except Exception as e:
             deprint(str(e))
             return Ret(Error.ERROR_CREATE_LINK)
+        return Ret(Error.OK, o_res)
 
     @staticmethod
     def get_res_by_id(res_id):
@@ -303,8 +305,8 @@ class Resource(models.Model):
             return self.visit_key
         return None
 
-    def change_visit_key(self):
-        self.visit_key = get_random_string(length=4)
+    def change_visit_key(self, visit_key):
+        self.visit_key = visit_key or get_random_string(length=4)
         self.save()
 
     @staticmethod
@@ -328,7 +330,10 @@ class Resource(models.Model):
             o_res_parent = o_res_crt
         return Ret(Error.OK, o_res_parent)
 
-    def modify_info(self, rname, description, status):
+    def modify_info(self, rname, description, status, visit_key):
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
         if rname is None:
             rname = self.rname
         if description is None:
@@ -340,8 +345,16 @@ class Resource(models.Model):
             return ret
         self.rname = rname
         self.description = description
-        if self.status != status:
-            self.change_visit_key()
+        if self.status != status or (status == Resource.STATUS_PROTECT and visit_key):
+            self.change_visit_key(visit_key)
             self.status = status
+        self.save()
+        return Ret()
+
+    def modify_cover(self, cover):
+        ret = self._validate(locals())
+        if ret.error is not Error.OK:
+            return ret
+        self.cover = cover
         self.save()
         return Ret()

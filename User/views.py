@@ -76,8 +76,7 @@ def create_user(request):
         return error_response(ret)
     o_root = ret.body
 
-    ret = Resource.create_folder(
-        o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username, Resource.STATUS_PRIVATE)
+    ret = Resource.create_folder(o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username)
     if ret.error is not Error.OK:
         return error_response(ret)
 
