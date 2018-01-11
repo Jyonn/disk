@@ -47,7 +47,7 @@ def get_avatar_policy(user_id):
 def get_file_policy(user_id, parent_id, status):
     policy = FILE_POLICY
     policy['returnBody'] = '{"key":"$(key)","user_id":"%s","fsize":"$(fsize)","fname":"$(fname)","parent_id":"%s",' \
-                           '"status":"%s"}' % (user_id, parent_id, status)
+                           '"status":"%s", "ftype": "$(mimeType)"}' % (user_id, parent_id, status)
     return policy
 
 # def get_avatar_policy(user_id):

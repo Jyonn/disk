@@ -39,6 +39,20 @@ class Resource(models.Model):
         (STATUS_PRIVATE, 'private'),
         (STATUS_PROTECT, 'protect')
     )
+    STYPE_FOLDER = 0
+    STYPE_IMAGE = 1
+    STYPE_VIDEO = 2
+    STYPE_MUSIC = 3
+    STYPE_FILE = 4
+    STYPE_LINK = 5
+    SUB_TYPE_TUPLE = (
+        (STYPE_FOLDER, 'folder'),
+        (STYPE_IMAGE, 'image'),
+        (STYPE_VIDEO, 'video'),
+        (STYPE_MUSIC, 'music'),
+        (STYPE_FILE, 'normal file'),
+        (STYPE_LINK, 'link'),
+    )
     rname = models.CharField(
         verbose_name='resource name',
         max_length=L['rname'],
@@ -49,6 +63,10 @@ class Resource(models.Model):
     )
     rsize = models.IntegerField(
         default=0,
+    )
+    sub_type = models.IntegerField(
+        verbose_name='sub type',
+        choices=SUB_TYPE_TUPLE,
     )
     description = models.CharField(
         verbose_name='description in Markdown',
@@ -91,9 +109,13 @@ class Resource(models.Model):
         auto_created=True,
         auto_now=True,
     )
+    dlcount = models.IntegerField(
+        verbose_name='download number',
+        default=0,
+    )
     FIELD_LIST = [
-        'rname', 'rtype', 'rsize', 'description', 'cover',
-        'owner', 'parent', 'dlpath', 'status', 'visit_key', 'create_time'
+        'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
+        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount'
     ]
 
     @staticmethod
@@ -104,17 +126,17 @@ class Resource(models.Model):
                 return Ret(Error.INVALID_RNAME)
         return Ret()
 
-    @staticmethod
-    def _valid_status(status):
-        if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
-            return Ret(Error.ERROR_RESOURCE_STATUS)
-        return Ret()
-
-    @staticmethod
-    def _valid_rtype(rtype):
-        if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER, Resource.RTYPE_LINK]:
-            return Ret(Error.ERROR_RESOURCE_TYPE)
-        return Ret()
+    # @staticmethod
+    # def _valid_status(status):
+    #     if status not in [Resource.STATUS_PUBLIC, Resource.STATUS_PRIVATE, Resource.STATUS_PROTECT]:
+    #         return Ret(Error.ERROR_RESOURCE_STATUS)
+    #     return Ret()
+    #
+    # @staticmethod
+    # def _valid_rtype(rtype):
+    #     if rtype not in [Resource.RTYPE_FILE, Resource.RTYPE_FOLDER, Resource.RTYPE_LINK]:
+    #         return Ret(Error.ERROR_RESOURCE_TYPE)
+    #     return Ret()
 
     @staticmethod
     def _valid_o_parent(o_parent):
@@ -201,9 +223,10 @@ class Resource(models.Model):
         return dict(
             rname=self.rname,
             rtype=self.rtype,
-            description=self.description,
+            # description=self.description,
             cover=self.get_cover_url(),
             status=self.status,
+            create_time=self.create_time.timestamp(),
         )
 
     def to_dict(self):
@@ -215,6 +238,7 @@ class Resource(models.Model):
             owner=self.owner.to_dict(),
             parent_id=self.parent_id,
             status=self.status,
+            create_time=self.create_time.timestamp(),
         )
 
     def get_child_res_list(self):
@@ -245,6 +269,8 @@ class Resource(models.Model):
     def get_dl_url(self):
         if self.rtype != Resource.RTYPE_FILE:
             return None
+        self.dlcount += 1
+        self.save()
         from Base.qn import get_resource_url
         return get_resource_url(self.dlpath)
 

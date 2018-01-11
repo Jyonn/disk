@@ -88,6 +88,18 @@ def field_validator(dict_, cls):
             if isinstance(_meta.get_field(k), models.CharField):
                 if len(dict_[k]) > len_list[k]:
                     return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k]))
+
+        tuple_name = '%s_TUPLE' % k.upper()
+        tuple_ = getattr(cls, tuple_name, None)
+        if tuple_ is not None and isinstance(tuple_, tuple):
+            flag = False
+            for item in tuple_:
+                if not isinstance(item, tuple):
+                    return Ret(Error.TUPLE_FORMAT_ERROR, append_msg='（%s）' % tuple_name)
+                if dict_[k] == item[0]:
+                    flag = True
+            if not flag:
+                return Ret(Error.PARAM_FORMAT_ERROR, append_msg='，%s的值应该在%s之中' % (k, tuple_name))
         valid_func = getattr(cls, '_valid_%s' % k, None)
         if valid_func is not None and callable(valid_func):
             # print('_valid_', k)

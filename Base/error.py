@@ -30,6 +30,7 @@ class Error:
     ERROR_PASSWORD = 2001
     NOT_FOUND_USER = 2000
 
+    TUPLE_FORMAT_ERROR = 1010
     REQUIRE_ROOT = 1009
     VALIDATION_FUNC_ERROR = 1008
     PARAM_FORMAT_ERROR = 1007
@@ -70,6 +71,7 @@ class Error:
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 
+        (TUPLE_FORMAT_ERROR, "属性元组格式错误"),
         (REQUIRE_ROOT, "需要管理员登录"),
         (VALIDATION_FUNC_ERROR, "错误的参数验证函数"),
         (PARAM_FORMAT_ERROR, "错误的参数格式"),
