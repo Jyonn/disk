@@ -1,3 +1,7 @@
+""" Adel Liu 180111
+
+用户类
+"""
 import re
 
 from django.db import models
@@ -62,6 +66,7 @@ class User(models.Model):
 
     @staticmethod
     def _valid_username(username):
+        """验证用户名合法"""
         valid_chars = '^[A-Za-z0-9_]{3,32}$'
         if re.match(valid_chars, username) is None:
             return Ret(Error.INVALID_USERNAME)
@@ -69,6 +74,7 @@ class User(models.Model):
 
     @staticmethod
     def _valid_password(password):
+        """验证密码合法"""
         valid_chars = '^[A-Za-z0-9!@#$%^&*()_+-=,.?;:]{6,16}$'
         if re.match(valid_chars, password) is None:
             return Ret(Error.INVALID_PASSWORD)
@@ -76,6 +82,7 @@ class User(models.Model):
 
     @staticmethod
     def _valid_o_parent(o_parent):
+        """验证o_parent合法"""
         if not isinstance(o_parent, User):
             return Ret(Error.STRANGE)
         if not o_parent.grant:
@@ -83,11 +90,20 @@ class User(models.Model):
         return Ret()
 
     @classmethod
-    def _validate(cls, d):
-        return field_validator(d, cls)
+    def _validate(cls, dict_):
+        """验证传入参数是否合法"""
+        return field_validator(dict_, cls)
 
     @classmethod
     def create(cls, username, password, nickname, o_parent):
+        """ 创建用户
+
+        :param username: 用户名
+        :param password: 密码
+        :param nickname: 昵称
+        :param o_parent: 父用户
+        :return: Ret对象，错误返回错误代码，成功返回用户对象
+        """
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -107,12 +123,13 @@ class User(models.Model):
                 nickname=nickname,
             )
             o_user.save()
-        except Exception as e:
-            deprint(str(e))
+        except ValueError as err:
+            deprint(str(err))
             return Ret(Error.ERROR_CREATE_USER)
         return Ret(Error.OK, o_user)
 
     def change_password(self, password, old_password):
+        """修改密码"""
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -127,6 +144,7 @@ class User(models.Model):
 
     @staticmethod
     def _hash(s):
+        """获取字符串的MD5"""
         import hashlib
         md5 = hashlib.md5()
         md5.update(s.encode())
@@ -134,23 +152,26 @@ class User(models.Model):
 
     @staticmethod
     def get_user_by_username(username):
+        """根据用户名获取用户对象"""
         try:
             o_user = User.objects.get(username=username)
-        except Exception as e:
-            deprint(str(e))
+        except User.DoesNotExist as err:
+            deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
         return Ret(Error.OK, o_user)
 
     @staticmethod
     def get_user_by_id(user_id):
+        """根据用户ID获取用户对象"""
         try:
             o_user = User.objects.get(pk=user_id)
-        except Exception as e:
-            deprint(str(e))
+        except User.DoesNotExist as err:
+            deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
         return Ret(Error.OK, o_user)
 
     def to_dict(self):
+        """把用户对象转换为字典"""
         return dict(
             user_id=self.pk,
             username=self.username,
@@ -160,25 +181,28 @@ class User(models.Model):
 
     @staticmethod
     def authenticate(username, password):
+        """验证用户名和密码是否匹配"""
         ret = User._validate(locals())
         if ret.error is not Error.OK:
             return ret
         try:
             o_user = User.objects.get(username=username)
-        except Exception as e:
-            deprint(str(e))
+        except User.DoesNotExist as err:
+            deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
         if User._hash(password) == o_user.password:
             return Ret(Error.OK, o_user)
         return Ret(Error.ERROR_PASSWORD)
 
     def get_avatar_url(self):
+        """获取用户头像地址"""
         if self.avatar is None:
             return None
         from Base.qn import get_resource_url
         return get_resource_url(self.avatar)
 
     def modify_avatar(self, avatar):
+        """修改用户头像"""
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -187,6 +211,7 @@ class User(models.Model):
         return Ret()
 
     def modify_info(self, nickname):
+        """修改用户信息"""
         if nickname is None:
             nickname = self.nickname
         ret = self._validate(locals())

@@ -1,4 +1,7 @@
-# from django.conf.urls import url, include
+""" Adel Liu 180111
+
+api子路由
+"""
 from django.urls import path, include
 
 urlpatterns = [

@@ -1,3 +1,7 @@
+""" Adel Liu 180111
+
+资源类和方法
+"""
 from django.db import models
 from django.utils.crypto import get_random_string
 
@@ -124,6 +128,7 @@ class Resource(models.Model):
 
     @staticmethod
     def _valid_rname(rname):
+        """验证rname属性"""
         invalid_chars = '\\/*:\'"|<>?'
         for char in invalid_chars:
             if char in rname:
@@ -132,7 +137,13 @@ class Resource(models.Model):
         return Ret()
 
     @staticmethod
+    def pub_valid_rname(rname):
+        """验证rname属性"""
+        return Resource._valid_rname(rname)
+
+    @staticmethod
     def _valid_o_parent(o_parent):
+        """验证o_parent属性"""
         if not isinstance(o_parent, Resource):
             return Ret(Error.STRANGE)
         if o_parent.rtype != Resource.RTYPE_FOLDER:
@@ -140,11 +151,22 @@ class Resource(models.Model):
         return Ret()
 
     @classmethod
-    def _validate(cls, d):
-        return field_validator(d, Resource)
+    def _validate(cls, dict_):
+        """验证传入参数是否合法"""
+        return field_validator(dict_, Resource)
 
     @classmethod
     def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type):
+        """ 创建文件对象
+
+        :param rname: 文件名
+        :param o_user: 所属用户
+        :param o_parent: 所属目录
+        :param dlpath: 七牛存储的key
+        :param rsize: 文件大小
+        :param sub_type: 文件分类
+        :return: Ret对象，错误返回错误代码，成功返回文件对象
+        """
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -164,13 +186,21 @@ class Resource(models.Model):
                 sub_type=sub_type,
             )
             o_res.save()
-        except Exception as e:
-            deprint(str(e))
+        except ValueError as err:
+            deprint(str(err))
             return Ret(Error.ERROR_CREATE_FILE)
         return Ret(Error.OK, o_res)
 
     @classmethod
     def create_folder(cls, rname, o_user, o_parent, desc):
+        """ 创建文件夹对象
+
+        :param rname: 文件夹名
+        :param o_user: 所属用户
+        :param o_parent: 所属目录
+        :param desc: 描述说明
+        :return: Ret对象，错误返回错误代码，成功返回文件夹对象
+        """
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -191,13 +221,22 @@ class Resource(models.Model):
                 dlcount=0,
             )
             o_res.save()
-        except Exception as e:
-            deprint(str(e))
+        except ValueError as err:
+            deprint(str(err))
             return Ret(Error.ERROR_CREATE_FOLDER)
         return Ret(Error.OK, o_res)
 
     @classmethod
     def create_link(cls, rname, o_user, o_parent, desc, dlpath):
+        """ 创建链接对象
+
+        :param rname: 链接名称
+        :param o_user: 所属用户
+        :param o_parent: 所在目录
+        :param desc: 介绍说明
+        :param dlpath: 链接地址
+        :return: Ret对象，错误返回错误代码，成功返回链接对象
+        """
         ret = cls._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -218,31 +257,34 @@ class Resource(models.Model):
                 dlcount=0,
             )
             o_res.save()
-        except Exception as e:
-            deprint(str(e))
+        except ValueError as err:
+            deprint(str(err))
             return Ret(Error.ERROR_CREATE_LINK)
         return Ret(Error.OK, o_res)
 
     @staticmethod
     def get_res_by_id(res_id):
+        """根据资源id获取资源对象"""
         try:
             o_res = Resource.objects.get(pk=res_id)
-        except:
+        except Resource.DoesNotExist as err:
+            deprint(str(err))
             return Ret(Error.NOT_FOUND_RESOURCE)
         return Ret(Error.OK, o_res)
 
     def belong(self, o_user):
-        # if not isinstance(o_user, User):
-        #     return Ret(Error.STRANGE)
+        """判断资源是否属于用户"""
         return self.owner == o_user
 
     def get_cover_url(self):
+        """获取封面链接"""
         if self.cover is None:
             return None
         from Base.qn import get_resource_url
         return get_resource_url(self.cover)
 
     def to_dict_for_child(self):
+        """当资源作为子资源，获取简易字典"""
         return dict(
             res_id=self.pk,
             rname=self.rname,
@@ -254,6 +296,7 @@ class Resource(models.Model):
         )
 
     def to_dict(self):
+        """获取资源字典"""
         return dict(
             res_id=self.pk,
             rname=self.rname,
@@ -268,6 +311,7 @@ class Resource(models.Model):
         )
 
     def get_child_res_list(self):
+        """获取目录的子资源列表"""
         _res_list = Resource.objects.filter(parent=self)
 
         res_list = []
@@ -278,14 +322,16 @@ class Resource(models.Model):
 
     @staticmethod
     def get_root_folder(o_user):
+        """获取当前用户的根目录"""
         try:
             o_res = Resource.objects.get(owner=o_user, parent=1, rtype=Resource.RTYPE_FOLDER)
-        except Exception as e:
-            deprint(str(e))
+        except Resource.DoesNotExist as err:
+            deprint(str(err))
             return Ret(Error.ERROR_GET_ROOT_FOLDER)
         return Ret(Error.OK, o_res)
 
     def readable(self, o_user, visit_key):
+        """判断当前资源是否被当前用户可读"""
         if self.owner == o_user or self.status == Resource.STATUS_PUBLIC:
             return True
         if self.status == Resource.STATUS_PROTECT and self.visit_key == visit_key:
@@ -293,6 +339,7 @@ class Resource(models.Model):
         return False
 
     def get_dl_url(self):
+        """获取当前资源的下载链接"""
         if self.rtype != Resource.RTYPE_FILE:
             return None
         self.dlcount += 1
@@ -301,16 +348,19 @@ class Resource(models.Model):
         return get_resource_url(self.dlpath)
 
     def get_visit_key(self):
+        """获取当前资源的访问密码"""
         if self.status == Resource.STATUS_PROTECT:
             return self.visit_key
         return None
 
     def change_visit_key(self, visit_key):
+        """修改当前资源的访问密码"""
         self.visit_key = visit_key or get_random_string(length=4)
         self.save()
 
     @staticmethod
     def decode_slug(slug):
+        """解码slug并获取资源对象"""
         slug_list = slug.split('-')
 
         ret = Resource.get_res_by_id(Resource.ROOT_ID)
@@ -331,6 +381,14 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res_parent)
 
     def modify_info(self, rname, description, status, visit_key):
+        """ 修改资源属性
+
+        :param rname: 资源名称
+        :param description: 资源介绍
+        :param status: 资源分享类型（公开、私有、加密）
+        :param visit_key: 资源加密密钥
+        :return: Ret对象，错误返回错误代码，成功返回资源对象
+        """
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -352,6 +410,7 @@ class Resource(models.Model):
         return Ret()
 
     def modify_cover(self, cover):
+        """修改资源封面"""
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret

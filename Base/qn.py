@@ -5,23 +5,25 @@
 import qiniu
 from django.http import HttpRequest
 
+from Base.common import deprint
 from Base.error import Error
 from Base.response import Ret
 from Config.models import Config
 from disk.settings import HOST, CDN_HOST
 
 try:
-    AccessKey = Config.objects.get(key='qiniu-access-key').value
-    SecretKey = Config.objects.get(key='qiniu-secret-key').value
-    bucket = Config.objects.get(key='qiniu-bucket').value
-except:
-    AccessKey = 'ACCESSKEY'
-    SecretKey = 'SECRETKEY'
-    bucket = 'BUCKET'
+    ACCESS_KEY = Config.objects.get(key='qiniu-access-key').value
+    SECRET_KEY = Config.objects.get(key='qiniu-secret-key').value
+    BUCKET = Config.objects.get(key='qiniu-bucket').value
+except Config.DoesNotExist as err:
+    deprint(str(err))
+    ACCESS_KEY = 'ACCESSKEY'
+    SECRET_KEY = 'SECRETKEY'
+    BUCKET = 'BUCKET'
 
-auth = qiniu.Auth(access_key=AccessKey, secret_key=SecretKey)
-host = HOST
-key_prefix = 'disk/'
+_AUTH = qiniu.Auth(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
+_HOST = HOST
+_KEY_PREFIX = 'disk/'
 
 
 def get_upload_token(key, policy):
@@ -30,11 +32,12 @@ def get_upload_token(key, policy):
     :param policy: 上传策略
     :param key: 规定的键
     """
-    key = key_prefix + key
-    return auth.upload_token(bucket=bucket, key=key, expires=3600, policy=policy), key
+    key = _KEY_PREFIX + key
+    return _AUTH.upload_token(bucket=BUCKET, key=key, expires=3600, policy=policy), key
 
 
 def qiniu_auth_callback(request):
+    """七牛callback认证校验"""
     if not isinstance(request, HttpRequest):
         return Ret(Error.STRANGE)
     auth_header = request.META.get('Authorization')
@@ -42,12 +45,13 @@ def qiniu_auth_callback(request):
         return Ret(Error.UNAUTH_CALLBACK)
     url = request.get_full_path()
     body = request.body
-    verified = auth.verify_callback(auth_header, url, body, content_type='application/json')
+    verified = _AUTH.verify_callback(auth_header, url, body, content_type='application/json')
     if not verified:
         return Ret(Error.UNAUTH_CALLBACK)
     return Ret(Error.OK)
 
 
 def get_resource_url(key, expires=3600):
+    """获取临时资源链接"""
     url = '%s/%s' % (CDN_HOST, key)
-    return auth.private_download_url(url, expires=expires)
+    return _AUTH.private_download_url(url, expires=expires)

@@ -1,5 +1,4 @@
-from django.shortcuts import render
+""" Adel Liu 180111
 
-
-def upload(request):
-    return render(request, 'upload.html')
+上传测试
+"""

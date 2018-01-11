@@ -89,7 +89,8 @@ def validate_params(r_param_valid_list, g_params):
         if process is not None and callable(process):
             try:
                 g_params[r_param] = process(req_value)
-            except:
+            except Exception as err:
+                deprint(str(err))
                 return Ret(Error.ERROR_PROCESS_FUNC)
     return Ret(Error.OK, g_params)
 
@@ -115,7 +116,10 @@ def field_validator(dict_, cls):
         if k in getattr(cls, 'FIELD_LIST'):
             if isinstance(_meta.get_field(k), models.CharField):
                 if len(dict_[k]) > len_list[k]:
-                    return Ret(Error.ERROR_PARAM_FORMAT, append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k]))
+                    return Ret(
+                        Error.ERROR_PARAM_FORMAT,
+                        append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k])
+                    )
 
         tuple_name = '%s_TUPLE' % k.upper()
         tuple_ = getattr(cls, tuple_name, None)

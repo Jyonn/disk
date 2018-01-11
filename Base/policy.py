@@ -1,5 +1,7 @@
-# 171203 Adel Liu
-# 七牛上传政策
+""" 171203 Adel Liu
+
+七牛上传政策，现全部转变为303重定向，未来会改为callback
+"""
 from disk.settings import MAX_IMAGE_SIZE, HOST, MAX_FILE_SIZE
 
 AVATAR_CALLBACK = '%s/api/user/avatar/callback' % HOST
@@ -48,12 +50,14 @@ COVER_POLICY = dict(
 
 
 def get_avatar_policy(user_id):
+    """获取用户上传头像policy"""
     policy = AVATAR_POLICY
     policy['returnBody'] = '{"key":"$(key)","user_id":"%s"}' % user_id
     return policy
 
 
 def get_file_policy(user_id, parent_id):
+    """获取用户上传文件policy"""
     policy = FILE_POLICY
     policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
                            '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
@@ -61,6 +65,7 @@ def get_file_policy(user_id, parent_id):
 
 
 def get_cover_policy(res_id):
+    """获取用户上传文件封面policy"""
     policy = COVER_POLICY
     policy['returnBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
     return policy

@@ -1,10 +1,15 @@
+""" Adel Liu 180111
+
+资源API处理函数
+"""
 import base64
 import json
 
-from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, require_put
+from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
+    require_put
 from Base.error import Error
 from Base.policy import get_file_policy, get_cover_policy
-from Base.qn import get_upload_token, qiniu_auth_callback
+from Base.qn import get_upload_token  # , qiniu_auth_callback
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -13,14 +18,19 @@ from User.models import User
 @require_json
 @require_post(['folder_name', 'description'], decode=False)
 @require_login
-def create_folder(request):
+def create_folder(request, res_id):
+    """ POST /api/res/:res_id/folder
+
+    上传文件夹资源
+    """
     o_user = request.user
 
     folder_name = request.d.folder_name
     desc = request.d.description
 
     # get parent folder
-    o_parent = request.resource
+    ret = Resource.get_res_by_id(res_id)
+    o_parent = ret.body
 
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
@@ -37,14 +47,21 @@ def create_folder(request):
 @require_json
 @require_post(['link_name', 'description', 'link'], decode=False)
 @require_login
-def create_link(request):
+def create_link(request, res_id):
+    """ POST /api/res/:res_id/link
+
+    上传链接资源
+    """
     o_user = request.user
 
     link_name = request.d.link_name
     desc = request.d.description
     link = request.d.link
 
-    o_parent = request.resource
+    ret = Resource.get_res_by_id(res_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_parent = ret.body
 
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
@@ -61,6 +78,10 @@ def create_link(request):
 @require_get()
 @require_login
 def get_my_res(request):
+    """ GET /api/res/
+
+    获取我的资源根目录
+    """
     o_user = request.user
     ret = Resource.get_root_folder(o_user)
     if ret.error is not Error.OK:
@@ -69,13 +90,16 @@ def get_my_res(request):
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     request.resource = o_res
-    # return response(body=o_res.to_dict())
     return get_res_info(request)
 
 
 @require_get([('visit_key', None, None)])
 @maybe_login
 def get_res_info(request):
+    """ GET /api/res/:slug
+
+    获取资源信息
+    """
     o_user = request.user
     o_res = request.resource
     visit_key = request.d.visit_key
@@ -93,11 +117,14 @@ def get_res_info(request):
     return response(body=dict(info=o_res.to_dict(), child_list=res_list))
 
 
-@require_get([('filename', Resource._valid_rname), 'parent_id'])
+@require_get([('filename', Resource.pub_valid_rname)])
 @require_login
-def upload_res_token(request):
+def upload_res_token(request, parent_id):
+    """ GET /api/res/:res_id/token
+
+    获取七牛上传资源token
+    """
     o_user = request.user
-    parent_id = request.d.parent_id
     filename = request.d.filename
 
     if not isinstance(o_user, User):
@@ -120,51 +147,60 @@ def upload_res_token(request):
     return response(body=dict(upload_token=qn_token, key=key))
 
 
-@require_json
-@require_post(['key', 'user_id', 'fsize', 'fname', 'parent_id', 'status'])
-def upload_res_callback(request):
-    ret = qiniu_auth_callback(request)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-
-    key = request.d.key
-    user_id = request.d.user_id
-    fsize = request.d.fsize
-    fname = request.d.fname
-    parent_id = request.d.parent_id
-    status = request.d.status
-
-    # get user by id
-    ret = User.get_user_by_id(user_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_user = ret.body
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-
-    # get parent by id
-    ret = Resource.get_res_by_id(parent_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_parent = ret.body
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
-
-    ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    return response(body=o_res.to_dict())
+# @require_json
+# @require_post(['key', 'user_id', 'fsize', 'fname', 'parent_id', 'status'])
+# def upload_res_callback(request):
+#     ret = qiniu_auth_callback(request)
+#     if ret.error is not Error.OK:
+#         return error_response(ret)
+#
+#     key = request.d.key
+#     user_id = request.d.user_id
+#     fsize = request.d.fsize
+#     fname = request.d.fname
+#     parent_id = request.d.parent_id
+#     status = request.d.status
+#
+#     # get user by id
+#     ret = User.get_user_by_id(user_id)
+#     if ret.error is not Error.OK:
+#         return error_response(ret)
+#     o_user = ret.body
+#     if not isinstance(o_user, User):
+#         return error_response(Error.STRANGE)
+#
+#     # get parent by id
+#     ret = Resource.get_res_by_id(parent_id)
+#     if ret.error is not Error.OK:
+#         return error_response(ret)
+#     o_parent = ret.body
+#     if not isinstance(o_parent, Resource):
+#         return error_response(Error.STRANGE)
+#
+#     ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize)
+#     if ret.error is not Error.OK:
+#         return error_response(ret)
+#     o_res = ret.body
+#     if not isinstance(o_res, Resource):
+#         return error_response(Error.STRANGE)
+#
+#     return response(body=o_res.to_dict())
 
 
 @require_get()
 @require_login
-def get_visit_key(request):
+def get_visit_key(request, res_id):
+    """ GET /api/res/:res_id/vk
+
+    获取加密密钥
+    """
     o_user = request.user
-    o_res = request.resource
+
+    ret = Resource.get_res_by_id(res_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_res = ret.body
+
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 
@@ -176,6 +212,10 @@ def get_visit_key(request):
 @require_get([('visit_key', None, None)])
 @maybe_login
 def get_dl_link(request):
+    """ GET /api/res/:slug/dl
+
+    获取资源下载链接
+    """
     o_user = request.user
     visit_key = request.d.visit_key
 
@@ -196,6 +236,10 @@ def get_dl_link(request):
 
 @require_get(['upload_ret'])
 def dlpath_callback(request):
+    """ GET /api/res/dlpath/callback
+
+    七牛上传资源成功后的回调函数
+    """
     upload_ret = request.d.upload_ret
     upload_ret = upload_ret.replace('-', '+').replace('_', '/')
     # print(upload_ret)
@@ -246,6 +290,10 @@ def dlpath_callback(request):
 
 @require_get(['upload_ret'])
 def cover_callback(request):
+    """ GET /api/res/cover/callback
+
+    七牛上传资源封面成功后的回调函数
+    """
     upload_ret = request.d.upload_ret
     upload_ret = upload_ret.replace('-', '+').replace('_', '/')
     # print(upload_ret)
@@ -268,9 +316,21 @@ def cover_callback(request):
 
 
 @require_json
-@require_put([('rname', None, None), ('status', None, None), ('description', None, None), ('visit_key', None, None)], decode=False)
+@require_put(
+    [
+        ('rname', None, None),
+        ('status', None, None),
+        ('description', None, None),
+        ('visit_key', None, None)
+    ],
+    decode=False
+)
 @require_login
 def modify_res(request):
+    """ PUT /api/res/:slug/
+
+    修改资源信息
+    """
     o_user = request.user
     rname = request.d.rname
     description = request.d.description
@@ -290,12 +350,16 @@ def modify_res(request):
 
 @require_get([('filename', '^[^\\/?:*<>|]+$')])
 @require_login
-def upload_cover_token(request):
-    """
-    获取七牛上传token
+def upload_cover_token(request, res_id):
+    """ GET /api/res/:res_id/cover
+
+    获取七牛上传资源封面token
     """
     filename = request.d.filename
-    o_res = request.resource
+    ret = Resource.get_res_by_id(res_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_res = ret.body
 
     o_user = request.user
     if not isinstance(o_user, User):

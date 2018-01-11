@@ -1,3 +1,7 @@
+""" Adel Liu 180111
+
+用户API处理函数
+"""
 import base64
 import json
 
@@ -6,21 +10,30 @@ from Base.decorator import require_json, require_post, require_login, require_ge
 from Base.error import Error
 from Base.jtoken import jwt_e
 from Base.policy import get_avatar_policy
+from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
+
 from Resource.models import Resource
 from User.models import User
-from Base.qn import get_upload_token, qiniu_auth_callback
 
 
 @require_get()
 @require_login
 def get_my_info(request):
+    """ GET /api/user/
+
+    获取我的信息
+    """
     o_user = request.user
     return get_user_info(request, o_user.username)
 
 
 @require_get()
 def get_user_info(request, username):
+    """ GET /api/user/@:username
+
+    获取用户信息
+    """
     ret = User.get_user_by_username(username)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -33,6 +46,10 @@ def get_user_info(request, username):
 @require_delete()
 @require_login
 def delete_user(request, username):
+    """ DELETE /api/user/@:username
+
+    删除用户
+    """
     o_parent = request.user
     if not isinstance(o_parent, User):
         return error_response(Error.STRANGE)
@@ -53,7 +70,8 @@ def delete_user(request, username):
 @require_post(['username', 'password', 'nickname'], decode=False)
 @require_login
 def create_user(request):
-    """
+    """ POST /api/user/
+
     创建用户
     """
     username = request.d.username
@@ -76,23 +94,29 @@ def create_user(request):
         return error_response(ret)
     o_root = ret.body
 
-    ret = Resource.create_folder(o_user.username, o_user, o_root, '# %s Disk Home' % o_user.username)
+    ret = Resource.create_folder(
+        o_user.username,
+        o_user,
+        o_root,
+        '# %s Disk Home' % o_user.username
+    )
     if ret.error is not Error.OK:
         return error_response(ret)
 
-    ret = jwt_e(o_user.to_dict())
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    token, d = ret.body
-    d['token'] = token
-
+    # ret = jwt_e(o_user.to_dict())
+    # if ret.error is not Error.OK:
+    #     return error_response(ret)
+    # token, dict_ = ret.body
+    # dict_['token'] = token
+    #
     return response(body=o_user.to_dict())
 
 
 @require_json
 @require_post(['username', 'password'], decode=False)
 def auth_token(request):
-    """
+    """ GET /api/user/token
+
     登录获取token
     """
     username = request.d.username
@@ -106,20 +130,21 @@ def auth_token(request):
         return error_response(Error.STRANGE)
 
     # save_user_to_session(request, o_user)
-    from Base.jtoken import jwt_e
+    # from Base.jtoken import jwt_e
     ret = jwt_e(o_user.to_dict())
     if ret.error is not Error.OK:
         return error_response(ret)
-    token, d = ret.body
-    d['token'] = token
+    token, dict_ = ret.body
+    dict_['token'] = token
 
-    return response(body=d)
+    return response(body=dict_)
 
 
 @require_get([('filename', '^[^\\/?:*<>|]+$')])
 @require_login
 def upload_avatar_token(request):
-    """
+    """ GET /api/user/avatar
+
     获取七牛上传token
     """
     filename = request.d.filename
@@ -138,6 +163,10 @@ def upload_avatar_token(request):
 @require_json
 @require_post(['key', 'user_id'])
 def upload_avatar_callback(request):
+    """ POST /api/user/avatar
+
+    七牛上传用户头像回调函数
+    """
     ret = qiniu_auth_callback(request)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -156,6 +185,10 @@ def upload_avatar_callback(request):
 
 @require_get(['upload_ret'])
 def avatar_callback(request):
+    """ GET /api/user/avatar/callback
+
+    七牛上传用户头像303重定向
+    """
     upload_ret = request.d.upload_ret
     # print(upload_ret)
     upload_ret = upload_ret.replace('-', '+').replace('_', '/')
@@ -178,9 +211,20 @@ def avatar_callback(request):
 
 
 @require_json
-@require_put([('password', None, None), ('old_password', None, None), ('nickname', None, None)], decode=False)
+@require_put(
+    [
+        ('password', None, None),
+        ('old_password', None, None),
+        ('nickname', None, None)
+    ],
+    decode=False
+)
 @require_login
 def modify_user(request):
+    """ PUT /api/user/
+
+    修改用户信息
+    """
     o_user = request.user
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)

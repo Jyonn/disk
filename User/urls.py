@@ -1,4 +1,7 @@
-# from django.conf.urls import url
+""" Adel Liu 180111
+
+用户APi子路由
+"""
 from django.urls import path
 
 from User.router import rt_user, rt_user_token, rt_user_avatar, rt_username, rt_avatar_callback

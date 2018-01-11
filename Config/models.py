@@ -1,3 +1,7 @@
+""" Adel Liu 180111
+
+系统配置类
+"""
 from django.db import models
 
 
