@@ -9,11 +9,13 @@
 # from Base.session import load_session, save_session
 
 
+DEBUG = True
+
+
 def deprint(*args):
     """
     系统处于调试状态时输出数据
     """
-    from disk.settings import DEBUG
     if DEBUG:
         print(*args)
 
