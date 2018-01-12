@@ -15,7 +15,7 @@ try:
     ACCESS_KEY = Config.objects.get(key='qiniu-access-key').value
     SECRET_KEY = Config.objects.get(key='qiniu-secret-key').value
     BUCKET = Config.objects.get(key='qiniu-bucket').value
-except Config.DoesNotExist as err:
+except Exception as err:
     deprint(str(err))
     ACCESS_KEY = 'ACCESSKEY'
     SECRET_KEY = 'SECRETKEY'
