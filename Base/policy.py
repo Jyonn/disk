@@ -85,7 +85,7 @@ def get_avatar_policy(user_id):
     return policy
 
 
-def get_file_policy(user_id, parent_id):
+def get_res_policy(user_id, parent_id):
     policy = FILE_POLICY
     policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
                              '"parent_id":%s,"ftype":"$(mimeType)"}' % (user_id, parent_id)

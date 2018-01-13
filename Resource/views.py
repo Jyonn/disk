@@ -8,7 +8,7 @@ import json
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
     require_put
 from Base.error import Error
-from Base.policy import get_file_policy, get_cover_policy
+from Base.policy import get_res_policy, get_cover_policy
 from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
 from Resource.models import Resource
@@ -347,7 +347,7 @@ def upload_res_token(request, parent_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
-    qn_token, key = get_upload_token(key, get_file_policy(o_user.pk, o_parent.pk))
+    qn_token, key = get_upload_token(key, get_res_policy(o_user.pk, o_parent.pk))
     return response(body=dict(upload_token=qn_token, key=key))
 
 

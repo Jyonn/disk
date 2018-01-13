@@ -40,7 +40,7 @@ def qiniu_auth_callback(request):
     """七牛callback认证校验"""
     if not isinstance(request, HttpRequest):
         return Ret(Error.STRANGE)
-    auth_header = request.META.get('Authorization')
+    auth_header = request.META.get('HTTP_AUTHORIZATION')
     print('auth', auth_header)
     if auth_header is None:
         return Ret(Error.UNAUTH_CALLBACK)
