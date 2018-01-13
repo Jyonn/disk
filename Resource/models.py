@@ -293,6 +293,7 @@ class Resource(models.Model):
             cover=self.get_cover_url(),
             status=self.status,
             create_time=self.create_time.timestamp(),
+            sub_type=self.sub_type,
         )
 
     def to_dict(self):
