@@ -412,6 +412,6 @@ def upload_cover_token(request, res_id):
 
     import datetime
     crt_time = datetime.datetime.now().timestamp()
-    key = 'user/%s/avatar/%s/%s' % (o_user.pk, crt_time, filename)
+    key = 'cover/%s/%s/%s' % (o_res.pk, crt_time, filename)
     qn_token, key = get_upload_token(key, get_cover_policy(o_res.pk))
     return response(body=dict(upload_token=qn_token, key=key))
