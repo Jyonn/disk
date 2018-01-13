@@ -178,7 +178,7 @@ def require_method(method, r_params=None, decode=True):
     return decorator
 
 
-def require_post(r_params=None, decode=True):
+def require_post(r_params=None, decode=False):
     """decorator, require post method"""
     return require_method('POST', r_params, decode)
 
@@ -188,7 +188,7 @@ def require_get(r_params=None, decode=False):
     return require_method('GET', r_params, decode)
 
 
-def require_put(r_params=None, decode=True):
+def require_put(r_params=None, decode=False):
     """decorator, require put method"""
     return require_method('PUT', r_params, decode)
 

@@ -67,7 +67,7 @@ def delete_user(request, username):
 
 
 @require_json
-@require_post(['username', 'password', 'nickname'], decode=False)
+@require_post(['username', 'password', 'nickname'])
 @require_login
 def create_user(request):
     """ POST /api/user/
@@ -113,7 +113,7 @@ def create_user(request):
 
 
 @require_json
-@require_post(['username', 'password'], decode=False)
+@require_post(['username', 'password'])
 def auth_token(request):
     """ GET /api/user/token
 
@@ -216,8 +216,7 @@ def upload_avatar_redirect(request):
         ('password', None, None),
         ('old_password', None, None),
         ('nickname', None, None)
-    ],
-    decode=False
+    ]
 )
 @require_login
 def modify_user(request):

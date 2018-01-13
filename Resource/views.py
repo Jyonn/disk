@@ -16,7 +16,7 @@ from User.models import User
 
 
 @require_json
-@require_post(['folder_name', 'description'], decode=False)
+@require_post(['folder_name', 'description'])
 @require_login
 def create_folder(request, res_id):
     """ POST /api/res/:res_id/folder
@@ -45,7 +45,7 @@ def create_folder(request, res_id):
 
 
 @require_json
-@require_post(['link_name', 'description', 'link'], decode=False)
+@require_post(['link_name', 'description', 'link'])
 @require_login
 def create_link(request, res_id):
     """ POST /api/res/:res_id/link
@@ -365,8 +365,7 @@ def upload_cover_redirect(request):
         ('status', None, None),
         ('description', None, None),
         ('visit_key', None, None)
-    ],
-    decode=False
+    ]
 )
 @require_login
 def modify_res(request):
