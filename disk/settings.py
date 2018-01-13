@@ -28,7 +28,7 @@ SECRET_KEY = 'YOUR-SECRET-KEY'
 JWT_ENCODE_ALGO = 'HS256'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
