@@ -81,18 +81,18 @@ COVER_POLICY = dict(
 
 def get_avatar_policy(user_id):
     policy = AVATAR_POLICY
-    policy['callbackBody'] = '{"key": "$(key)","user_id"=%s}' % user_id
+    policy['callbackBody'] = '{"key":"$(key)","user_id":%s}' % user_id
     return policy
 
 
 def get_file_policy(user_id, parent_id):
     policy = FILE_POLICY
     policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
-                             '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
+                             '"parent_id":%s,"ftype":"$(mimeType)"}' % (user_id, parent_id)
     return policy
 
 
 def get_cover_policy(res_id):
     policy = COVER_POLICY
-    policy['callbackBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
+    policy['callbackBody'] = '{"key":"$(key)","res_id":%s}' % res_id
     return policy
