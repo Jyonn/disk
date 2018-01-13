@@ -41,6 +41,7 @@ def qiniu_auth_callback(request):
     if not isinstance(request, HttpRequest):
         return Ret(Error.STRANGE)
     auth_header = request.META.get('Authorization')
+    print('auth', auth_header)
     if auth_header is None:
         return Ret(Error.UNAUTH_CALLBACK)
     url = request.get_full_path()

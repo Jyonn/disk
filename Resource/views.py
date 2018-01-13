@@ -331,6 +331,7 @@ def upload_cover_callback(request):
 
     七牛上传资源封面成功后的回调函数
     """
+    print('upload')
     ret = qiniu_auth_callback(request)
     if ret.error is not Error.OK:
         return error_response(ret)
