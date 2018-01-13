@@ -6,8 +6,8 @@ from Base.error import Error
 from Base.response import error_response
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
-    get_visit_key, get_dl_link, dlpath_callback, modify_res, create_link, \
-    upload_cover_token, cover_callback
+    get_visit_key, get_dl_link, upload_dlpath_redirect, modify_res, create_link, \
+    upload_cover_token, upload_cover_redirect, upload_dlpath_callback, upload_cover_callback
 
 
 def rt_res(request):
@@ -111,18 +111,24 @@ def rt_res_cover(request, res_id):
 def rt_dlpath_callback(request):
     """ /api/res/dlpath/callback
 
-    GET:    dlpath_callback, 七牛上传资源成功后的回调函数
+    GET:    upload_dlpath_redirect, 七牛上传资源成功后的回调函数（303重定向）
+    POST:   upload_dlpath_callback, 七牛上传资源成功后的回调函数
     """
     if request.method == "GET":
-        return dlpath_callback(request)
+        return upload_dlpath_redirect(request)
+    if request.method == "POST":
+        return upload_dlpath_callback(request)
     return error_response(Error.ERROR_METHOD)
 
 
 def rt_cover_callback(request):
     """ /api/res/cover/callback
 
-    GET:    cover_callback, 七牛上传资源封面成功后的回调函数
+    GET:    upload_cover_redirect, 七牛上传资源封面成功后的回调函数（303重定向）
+    POST:   upload_cover_callback, 七牛上传资源封面成功后的回调函数
     """
     if request.method == "GET":
-        return cover_callback(request)
+        return upload_cover_redirect(request)
+    if request.method == "POST":
+        return upload_cover_callback(request)
     return error_response(Error.ERROR_METHOD)

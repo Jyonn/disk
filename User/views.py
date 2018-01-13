@@ -163,7 +163,7 @@ def upload_avatar_token(request):
 @require_json
 @require_post(['key', 'user_id'])
 def upload_avatar_callback(request):
-    """ POST /api/user/avatar
+    """ POST /api/user/avatar/callback
 
     七牛上传用户头像回调函数
     """
@@ -184,7 +184,7 @@ def upload_avatar_callback(request):
 
 
 @require_get(['upload_ret'])
-def avatar_callback(request):
+def upload_avatar_redirect(request):
     """ GET /api/user/avatar/callback
 
     七牛上传用户头像303重定向

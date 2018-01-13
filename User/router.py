@@ -5,7 +5,7 @@
 from Base.error import Error
 from Base.response import error_response
 from User.views import create_user, auth_token, upload_avatar_token, \
-    get_user_info, delete_user, modify_user, get_my_info, avatar_callback
+    get_user_info, delete_user, modify_user, get_my_info, upload_avatar_redirect, upload_avatar_callback
 
 
 def rt_user(request):
@@ -62,8 +62,11 @@ def rt_username(request, username):
 def rt_avatar_callback(request):
     """ /api/user/avatar/callback
 
-    GET:   avatar_callback, 七牛上床用户头像的回调函数
+    GET:    upload_avatar_redirect, 七牛上传用户头像的回调函数（303重定向）
+    POST:   upload_avatar_callback, 七牛上传用户头像的回调函数
     """
     if request.method == "GET":
-        return avatar_callback(request)
+        return upload_avatar_redirect(request)
+    if request.method == "POST":
+        return upload_avatar_callback(request)
     return error_response(Error.ERROR_METHOD)

@@ -8,83 +8,91 @@ AVATAR_CALLBACK = '%s/api/user/avatar/callback' % HOST
 FILE_CALLBACK = '%s/api/res/dlpath/callback' % HOST
 COVER_CALLBACK = '%s/api/res/cover/callback' % HOST
 
-# AVATAR_POLICY = dict(
-#     insertOnly=1,
-#     callbackUrl=AVATAR_CALLBACK,
-#     callbackBodyType='application/json',
-#     fsizeMin=1,
-#     fsizeLimit=MAX_AVATAR_SIZE,
-#     mimeLimit='image/*',
-# )
-# FILE_POLICY = dict(
-#     insertOnly=1,
-#     callbackUrl=FILE_CALLBACK,
-#     callbackBodyType='application/json',
-#     fsizeMin=1,
-#     fsizeLimit=MAX_FILE_SIZE,
-# )
-
 AVATAR_POLICY = dict(
     insertOnly=1,
-    returnUrl=AVATAR_CALLBACK,
-    # callbackBodyType='application/json',
+    callbackUrl=AVATAR_CALLBACK,
+    callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_IMAGE_SIZE,
     mimeLimit='image/*',
 )
 FILE_POLICY = dict(
     insertOnly=1,
-    returnUrl=FILE_CALLBACK,
-    # callbackBodyType='application/json',
+    callbackUrl=FILE_CALLBACK,
+    callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_FILE_SIZE,
 )
 COVER_POLICY = dict(
     insertOnly=1,
     returnUrl=COVER_CALLBACK,
-    # callbackBodyType='application/json',
+    callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_IMAGE_SIZE,
     mimeLimit='image/*',
 )
 
-
-def get_avatar_policy(user_id):
-    """获取用户上传头像policy"""
-    policy = AVATAR_POLICY
-    policy['returnBody'] = '{"key":"$(key)","user_id":"%s"}' % user_id
-    return policy
-
-
-def get_file_policy(user_id, parent_id):
-    """获取用户上传文件policy"""
-    policy = FILE_POLICY
-    policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
-                           '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
-    return policy
-
-
-def get_cover_policy(res_id):
-    """获取用户上传文件封面policy"""
-    policy = COVER_POLICY
-    policy['returnBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
-    return policy
+# AVATAR_POLICY = dict(
+#     insertOnly=1,
+#     returnUrl=AVATAR_CALLBACK,
+#     # callbackBodyType='application/json',
+#     fsizeMin=1,
+#     fsizeLimit=MAX_IMAGE_SIZE,
+#     mimeLimit='image/*',
+# )
+# FILE_POLICY = dict(
+#     insertOnly=1,
+#     returnUrl=FILE_CALLBACK,
+#     # callbackBodyType='application/json',
+#     fsizeMin=1,
+#     fsizeLimit=MAX_FILE_SIZE,
+# )
+# COVER_POLICY = dict(
+#     insertOnly=1,
+#     returnUrl=COVER_CALLBACK,
+#     # callbackBodyType='application/json',
+#     fsizeMin=1,
+#     fsizeLimit=MAX_IMAGE_SIZE,
+#     mimeLimit='image/*',
+# )
 
 
 # def get_avatar_policy(user_id):
+#     """获取用户上传头像policy"""
 #     policy = AVATAR_POLICY
-#     policy['callbackBody'] = '{key=$(key),user_id=%s}' % user_id
+#     policy['returnBody'] = '{"key":"$(key)","user_id":"%s"}' % user_id
 #     return policy
 #
 #
 # def get_file_policy(user_id, parent_id):
+#     """获取用户上传文件policy"""
 #     policy = FILE_POLICY
-#     policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
+#     policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
 #                            '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
 #     return policy
 #
 #
 # def get_cover_policy(res_id):
+#     """获取用户上传文件封面policy"""
 #     policy = COVER_POLICY
-#     policy['callbackBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
+#     policy['returnBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
 #     return policy
+
+
+def get_avatar_policy(user_id):
+    policy = AVATAR_POLICY
+    policy['callbackBody'] = '{key=$(key),user_id=%s}' % user_id
+    return policy
+
+
+def get_file_policy(user_id, parent_id):
+    policy = FILE_POLICY
+    policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
+                             '"parent_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_id)
+    return policy
+
+
+def get_cover_policy(res_id):
+    policy = COVER_POLICY
+    policy['callbackBody'] = '{"key":"$(key)", "res_id":%s}' % res_id
+    return policy

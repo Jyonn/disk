@@ -9,7 +9,7 @@ from Base.decorator import require_get, require_login, require_json, require_pos
     require_put
 from Base.error import Error
 from Base.policy import get_file_policy, get_cover_policy
-from Base.qn import get_upload_token  # , qiniu_auth_callback
+from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -234,25 +234,7 @@ def get_dl_link(request):
     return response(body=dict(link=o_res.get_dl_url()))
 
 
-@require_get(['upload_ret'])
-def dlpath_callback(request):
-    """ GET /api/res/dlpath/callback
-
-    七牛上传资源成功后的回调函数
-    """
-    upload_ret = request.d.upload_ret
-    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    # print(upload_ret)
-    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-    # print(upload_ret)
-    upload_ret = json.loads(upload_ret)
-
-    key = upload_ret['key']
-    user_id = upload_ret['user_id']
-    fsize = upload_ret['fsize']
-    fname = upload_ret['fname']
-    parent_id = upload_ret['parent_id']
-    ftype = upload_ret['ftype']
+def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):
     if ftype.find('video') == 0:
         sub_type = Resource.STYPE_VIDEO
     elif ftype.find('image') == 0:
@@ -288,22 +270,49 @@ def dlpath_callback(request):
     return response(body=o_res.to_dict())
 
 
-@require_get(['upload_ret'])
-def cover_callback(request):
-    """ GET /api/res/cover/callback
+@require_json
+@require_post(['key', 'user_id', 'fsize', 'fname', 'parent_id', 'ftype'])
+def upload_dlpath_callback(request):
+    """ POST /api/res/dlpath/callback
 
-    七牛上传资源封面成功后的回调函数
+    七牛上传资源回调函数
+    """
+    ret = qiniu_auth_callback(request)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+
+    key = request.d.key
+    user_id = request.d.user_id
+    fsize = request.d.fsize
+    fname = request.d.fname
+    parent_id = request.d.parent_id
+    ftype = request.d.ftype
+
+    return deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype)
+
+
+@require_get(['upload_ret'])
+def upload_dlpath_redirect(request):
+    """ GET /api/res/dlpath/callback
+
+    七牛上传资源成功后的回调函数
     """
     upload_ret = request.d.upload_ret
     upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    # print(upload_ret)
     upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-    # print(upload_ret)
     upload_ret = json.loads(upload_ret)
 
     key = upload_ret['key']
-    res_id = upload_ret['res_id']
+    user_id = upload_ret['user_id']
+    fsize = upload_ret['fsize']
+    fname = upload_ret['fname']
+    parent_id = upload_ret['parent_id']
+    ftype = upload_ret['ftype']
 
+    return deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype)
+
+
+def deal_cover_dlpath(key, res_id):
     ret = Resource.get_res_by_id(res_id)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -313,6 +322,36 @@ def cover_callback(request):
 
     o_res.modify_cover(key)
     return response(body=o_res.to_dict())
+
+
+@require_json
+@require_post(['key', 'res_id'])
+def upload_cover_callback(request):
+    """ POST /api/res/cover/callback
+
+    七牛上传资源封面成功后的回调函数
+    """
+    key = request.d.key
+    res_id = request.d.res_id
+
+    return deal_cover_dlpath(key, res_id)
+
+
+@require_get(['upload_ret'])
+def upload_cover_redirect(request):
+    """ GET /api/res/cover/callback
+
+    七牛上传资源封面成功后的重定向
+    """
+    upload_ret = request.d.upload_ret
+    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+    upload_ret = json.loads(upload_ret)
+
+    key = upload_ret['key']
+    res_id = upload_ret['res_id']
+
+    return deal_cover_dlpath(key, res_id)
 
 
 @require_json
