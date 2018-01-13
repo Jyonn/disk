@@ -354,11 +354,6 @@ class Resource(models.Model):
             return self.visit_key
         return None
 
-    def change_visit_key(self, visit_key):
-        """修改当前资源的访问密码"""
-        self.visit_key = visit_key or get_random_string(length=4)
-        self.save()
-
     @staticmethod
     def decode_slug(slug):
         """解码slug并获取资源对象"""
@@ -396,14 +391,18 @@ class Resource(models.Model):
             description = self.description
         if status is None:
             status = self.status
+        if visit_key is None:
+            visit_key = self.visit_key
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
         self.rname = rname
         self.description = description
-        if self.status != status or (status == Resource.STATUS_PROTECT and visit_key):
-            self.change_visit_key(visit_key)
-            self.status = status
+        self.status = status
+        if status == Resource.STATUS_PROTECT:
+            self.visit_key = visit_key
+        else:
+            return Ret(Error.NOT_PROTECT_NO_VISIT_KEY)
         self.save()
         return Ret()
 
