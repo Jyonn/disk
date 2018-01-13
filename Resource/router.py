@@ -127,6 +127,7 @@ def rt_cover_callback(request):
     GET:    upload_cover_redirect, 七牛上传资源封面成功后的回调函数（303重定向）
     POST:   upload_cover_callback, 七牛上传资源封面成功后的回调函数
     """
+    print(request.method)
     if request.method == "GET":
         return upload_cover_redirect(request)
     if request.method == "POST":
