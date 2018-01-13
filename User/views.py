@@ -140,16 +140,16 @@ def auth_token(request):
     return response(body=dict_)
 
 
-@require_get([('filename', '^[^\\/?:*<>|]+$')])
+@require_get([('filename', Resource.pub_valid_rname)])
 @require_login
 def upload_avatar_token(request):
     """ GET /api/user/avatar
 
     获取七牛上传token
     """
+    o_user = request.user
     filename = request.d.filename
 
-    o_user = request.user
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 

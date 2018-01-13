@@ -117,76 +117,6 @@ def get_res_info(request):
     return response(body=dict(info=o_res.to_dict(), child_list=res_list))
 
 
-@require_get([('filename', Resource.pub_valid_rname)])
-@require_login
-def upload_res_token(request, parent_id):
-    """ GET /api/res/:res_id/token
-
-    获取七牛上传资源token
-    """
-    o_user = request.user
-    filename = request.d.filename
-
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-
-    ret = Resource.get_res_by_id(parent_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_parent = ret.body
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
-
-    if not o_parent.belong(o_user):
-        return error_response(Error.PARENT_NOT_BELONG)
-
-    import datetime
-    policy = get_file_policy(o_user.pk, o_parent.pk)
-    key = 'res/%s/%s/%s' % (o_user.pk, datetime.datetime.now().timestamp(), filename)
-    qn_token, key = get_upload_token(key, policy)
-    return response(body=dict(upload_token=qn_token, key=key))
-
-
-# @require_json
-# @require_post(['key', 'user_id', 'fsize', 'fname', 'parent_id', 'status'])
-# def upload_res_callback(request):
-#     ret = qiniu_auth_callback(request)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#
-#     key = request.d.key
-#     user_id = request.d.user_id
-#     fsize = request.d.fsize
-#     fname = request.d.fname
-#     parent_id = request.d.parent_id
-#     status = request.d.status
-#
-#     # get user by id
-#     ret = User.get_user_by_id(user_id)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     o_user = ret.body
-#     if not isinstance(o_user, User):
-#         return error_response(Error.STRANGE)
-#
-#     # get parent by id
-#     ret = Resource.get_res_by_id(parent_id)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     o_parent = ret.body
-#     if not isinstance(o_parent, Resource):
-#         return error_response(Error.STRANGE)
-#
-#     ret = Resource.create_file(fname, o_user, o_parent, key, status, fsize)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     o_res = ret.body
-#     if not isinstance(o_res, Resource):
-#         return error_response(Error.STRANGE)
-#
-#     return response(body=o_res.to_dict())
-
-
 @require_get()
 @require_login
 def get_visit_key(request, res_id):
@@ -391,22 +321,56 @@ def modify_res(request):
     return response(body=o_res.to_dict())
 
 
-@require_get([('filename', '^[^\\/?:*<>|]+$')])
+@require_get([('filename', Resource.pub_valid_rname)])
+@require_login
+def upload_res_token(request, parent_id):
+    """ GET /api/res/:res_id/token
+
+    获取七牛上传资源token
+    """
+    o_user = request.user
+    filename = request.d.filename
+
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+
+    ret = Resource.get_res_by_id(parent_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_parent = ret.body
+    if not isinstance(o_parent, Resource):
+        return error_response(Error.STRANGE)
+
+    if not o_parent.belong(o_user):
+        return error_response(Error.PARENT_NOT_BELONG)
+
+    import datetime
+    crt_time = datetime.datetime.now().timestamp()
+    key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
+    qn_token, key = get_upload_token(key, get_file_policy(o_user.pk, o_parent.pk))
+    return response(body=dict(upload_token=qn_token, key=key))
+
+
+@require_get([('filename', Resource.pub_valid_rname)])
 @require_login
 def upload_cover_token(request, res_id):
     """ GET /api/res/:res_id/cover
 
     获取七牛上传资源封面token
     """
+    o_user = request.user
     filename = request.d.filename
+
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+
     ret = Resource.get_res_by_id(res_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
-
-    o_user = request.user
-    if not isinstance(o_user, User):
+    if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
+
     if not o_res.belong(o_user):
         return error_response(Error.NOT_WRITEABLE)
 
