@@ -115,11 +115,15 @@ def field_validator(dict_, cls):
     for k in dict_.keys():
         if k in getattr(cls, 'FIELD_LIST'):
             if isinstance(_meta.get_field(k), models.CharField):
-                if len(dict_[k]) > len_list[k]:
-                    return Ret(
-                        Error.ERROR_PARAM_FORMAT,
-                        append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k])
-                    )
+                try:
+                    if len(dict_[k]) > len_list[k]:
+                        return Ret(
+                            Error.ERROR_PARAM_FORMAT,
+                            append_msg='，%s的长度不应超过%s个字符' % (k, len_list[k])
+                        )
+                except TypeError as err:
+                    deprint(str(err))
+                    return Ret(Error.ERROR_PARAM_FORMAT, append_msg="，%s不是字符串" % k)
 
         tuple_name = '%s_TUPLE' % k.upper()
         tuple_ = getattr(cls, tuple_name, None)
