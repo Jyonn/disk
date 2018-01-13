@@ -25,7 +25,7 @@ FILE_POLICY = dict(
 )
 COVER_POLICY = dict(
     insertOnly=1,
-    returnUrl=COVER_CALLBACK,
+    callbackUrl=COVER_CALLBACK,
     callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_IMAGE_SIZE,
