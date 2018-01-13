@@ -5,7 +5,6 @@
 
 
 class Error:
-    NOT_PROTECT_NO_VISIT_KEY = 2028
     ERROR_CREATE_LINK = 2027
     NOT_WRITEABLE = 2026
     REQUIRE_FATHER_OR_ROOT_DELETE = 2025
@@ -50,7 +49,6 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
-        (NOT_PROTECT_NO_VISIT_KEY, "当前资源不是加密资源，无法修改密码"),
         (ERROR_CREATE_LINK, "创建链接错误"),
         (NOT_WRITEABLE, "没有权限修改资源"),
         (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),

@@ -401,8 +401,6 @@ class Resource(models.Model):
         self.status = status
         if status == Resource.STATUS_PROTECT:
             self.visit_key = visit_key
-        else:
-            return Ret(Error.NOT_PROTECT_NO_VISIT_KEY)
         self.save()
         return Ret()
 
