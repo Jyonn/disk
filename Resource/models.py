@@ -390,9 +390,6 @@ class Resource(models.Model):
         :param visit_key: 资源加密密钥
         :return: Ret对象，错误返回错误代码，成功返回资源对象
         """
-        ret = self._validate(locals())
-        if ret.error is not Error.OK:
-            return ret
         if rname is None:
             rname = self.rname
         if description is None:

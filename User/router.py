@@ -62,11 +62,11 @@ def rt_username(request, username):
 def rt_avatar_callback(request):
     """ /api/user/avatar/callback
 
-    GET:    upload_avatar_redirect, 七牛上传用户头像的回调函数（303重定向）
+    # GET:    upload_avatar_redirect, 七牛上传用户头像的回调函数（303重定向）
     POST:   upload_avatar_callback, 七牛上传用户头像的回调函数
     """
-    if request.method == "GET":
-        return upload_avatar_redirect(request)
+    # if request.method == "GET":
+    #     return upload_avatar_redirect(request)
     if request.method == "POST":
         return upload_avatar_callback(request)
     return error_response(Error.ERROR_METHOD)
