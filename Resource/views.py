@@ -6,7 +6,7 @@ import base64
 import json
 
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
-    require_put
+    require_put, require_delete
 from Base.error import Error
 from Base.policy import get_res_policy, get_cover_policy
 from Base.qn import get_upload_token, qiniu_auth_callback
@@ -314,11 +314,30 @@ def modify_res(request):
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     if not o_res.belong(o_user):
-        return error_response(Error.NOT_WRITEABLE)
+        return error_response(Error.NOT_YOUR_RESOURCE)
     ret = o_res.modify_info(rname, description, status, visit_key)
     if ret.error is not Error.OK:
         return error_response(ret)
     return response(body=o_res.to_dict())
+
+
+@require_delete()
+@require_login
+def delete_res(request):
+    """ DELETE /api/res/:slug/
+
+    删除资源
+    """
+    # TODO: 删除资源
+    o_user = request.user
+    o_res = request.resource
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+    if not o_res.belong(o_user):
+        return error_response(Error.NOT_YOUR_RESOURCE)
+    o_res.delete_()
+    return response()
+
 
 
 @require_get([('filename', Resource.pub_valid_rname)])
@@ -372,7 +391,7 @@ def upload_cover_token(request, res_id):
         return error_response(Error.STRANGE)
 
     if not o_res.belong(o_user):
-        return error_response(Error.NOT_WRITEABLE)
+        return error_response(Error.NOT_YOUR_RESOURCE)
 
     import datetime
     crt_time = datetime.datetime.now().timestamp()

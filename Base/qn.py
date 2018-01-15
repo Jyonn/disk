@@ -56,3 +56,7 @@ def get_resource_url(key, expires=3600):
     """获取临时资源链接"""
     url = '%s/%s' % (CDN_HOST, key)
     return _AUTH.private_download_url(url, expires=expires)
+
+
+# def delete_resource(key):
+#     _AUTH

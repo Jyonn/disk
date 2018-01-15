@@ -6,7 +6,7 @@
 
 class Error:
     ERROR_CREATE_LINK = 2027
-    NOT_WRITEABLE = 2026
+    NOT_YOUR_RESOURCE = 2026
     REQUIRE_FATHER_OR_ROOT_DELETE = 2025
     PASSWORD_CHANGED = 2024
     ERROR_RESOURCE_RELATION = 2023
@@ -50,7 +50,7 @@ class Error:
 
     ERROR_DICT = [
         (ERROR_CREATE_LINK, "创建链接错误"),
-        (NOT_WRITEABLE, "没有权限修改资源"),
+        (NOT_YOUR_RESOURCE, "没有操作权限"),
         (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),
         (PASSWORD_CHANGED, "密码已改变，需要重新获取token"),
         (ERROR_RESOURCE_RELATION, "错误的资源逻辑关系"),

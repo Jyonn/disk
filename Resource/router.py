@@ -7,7 +7,8 @@ from Base.response import error_response
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
     get_visit_key, get_dl_link, upload_dlpath_redirect, modify_res, create_link, \
-    upload_cover_token, upload_cover_redirect, upload_dlpath_callback, upload_cover_callback
+    upload_cover_token, upload_cover_redirect, upload_dlpath_callback, upload_cover_callback, \
+    delete_res
 
 
 def rt_res(request):
@@ -45,6 +46,8 @@ def rt_res_slug(request, slug):
         return get_res_info(request)
     if request.method == "PUT":
         return modify_res(request)
+    if request.method == "DELETE":
+        return delete_res(request)
 
     return error_response(Error.ERROR_METHOD)
 

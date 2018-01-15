@@ -276,12 +276,13 @@ class Resource(models.Model):
         """判断资源是否属于用户"""
         return self.owner == o_user
 
-    def get_cover_url(self):
+    def get_cover_url(self, small=True):
         """获取封面链接"""
         if self.cover is None:
             return None
         from Base.qn import get_resource_url
-        return get_resource_url(self.cover)
+        key = "%s-small" % self.cover if small else self.cover
+        return get_resource_url(key)
 
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
@@ -304,7 +305,7 @@ class Resource(models.Model):
             rtype=self.rtype,
             sub_type=self.sub_type,
             description=self.description,
-            cover=self.get_cover_url(),
+            cover=self.get_cover_url(small=False),
             owner=self.owner.to_dict(),
             parent_id=self.parent_id,
             status=self.status,
@@ -412,3 +413,7 @@ class Resource(models.Model):
         self.cover = cover
         self.save()
         return Ret()
+
+    def delete_(self):
+        # TODO: 删除资源
+        pass

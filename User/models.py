@@ -194,12 +194,13 @@ class User(models.Model):
             return Ret(Error.OK, o_user)
         return Ret(Error.ERROR_PASSWORD)
 
-    def get_avatar_url(self):
+    def get_avatar_url(self, small=True):
         """获取用户头像地址"""
         if self.avatar is None:
             return None
         from Base.qn import get_resource_url
-        return get_resource_url(self.avatar)
+        key = "%s-small" % self.avatar if small else self.avatar
+        return get_resource_url(key)
 
     def modify_avatar(self, avatar):
         """修改用户头像"""
