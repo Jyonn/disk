@@ -115,7 +115,7 @@ class Resource(models.Model):
     )
     create_time = models.DateTimeField(
         auto_created=True,
-        auto_now=True,
+        # auto_now=True,
     )
     dlcount = models.IntegerField(
         verbose_name='download number',
