@@ -311,6 +311,7 @@ class Resource(models.Model):
             parent_id=self.parent_id,
             status=self.status,
             create_time=self.create_time.timestamp(),
+            dlcount=self.dlcount,
         )
 
     def get_child_res_list(self):
