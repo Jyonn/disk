@@ -366,6 +366,11 @@ class Resource(models.Model):
         o_res_parent = ret.body
 
         for rid in slug_list:
+            try:
+                rid = int(rid)
+            except ValueError as err:
+                deprint(str(err))
+                return Ret(Error.ERROR_RESOURCE_ID)
             ret = Resource.get_res_by_id(rid)
             if ret.error is not Error.OK:
                 return ret

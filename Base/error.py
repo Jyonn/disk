@@ -5,6 +5,7 @@
 
 
 class Error:
+    ERROR_RESOURCE_ID = 2028
     ERROR_CREATE_LINK = 2027
     NOT_YOUR_RESOURCE = 2026
     REQUIRE_FATHER_OR_ROOT_DELETE = 2025
@@ -49,6 +50,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (ERROR_RESOURCE_ID, "错误的资源ID"),
         (ERROR_CREATE_LINK, "创建链接错误"),
         (NOT_YOUR_RESOURCE, "没有操作权限"),
         (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),
