@@ -295,6 +295,7 @@ class Resource(models.Model):
             status=self.status,
             create_time=self.create_time.timestamp(),
             sub_type=self.sub_type,
+            dlcount=self.dlcount,
         )
 
     def to_dict(self):
