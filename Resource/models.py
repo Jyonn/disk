@@ -303,6 +303,7 @@ class Resource(models.Model):
             res_id=self.pk,
             rname=self.rname,
             rtype=self.rtype,
+            rsize=self.rsize,
             sub_type=self.sub_type,
             description=self.description,
             cover=self.get_cover_url(small=False),
