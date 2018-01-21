@@ -402,7 +402,7 @@ class Resource(models.Model):
         if status is None:
             status = self.status
         if visit_key is None:
-            visit_key = self.visit_key
+            visit_key = get_random_string(length=4)
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
