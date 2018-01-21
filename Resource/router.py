@@ -74,17 +74,17 @@ def rt_res_link(request, res_id):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_res_vk(request, res_id):
-    """ /api/res/:res_id/vk
-
-    GET:    get_visit_key, 获取加密密钥
-    """
-    if request.method == 'GET':
-        return get_visit_key(request, res_id)
-
-    return error_response(Error.ERROR_METHOD)
-
-
+# def rt_res_vk(request, res_id):
+#     """ /api/res/:res_id/vk
+#
+#     GET:    get_visit_key, 获取加密密钥
+#     """
+#     if request.method == 'GET':
+#         return get_visit_key(request, res_id)
+#
+#     return error_response(Error.ERROR_METHOD)
+#
+#
 def rt_res_slug_dl(request, slug):
     """ /api/res/:slug/dl
 
