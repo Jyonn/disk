@@ -339,7 +339,6 @@ def delete_res(request):
     return response()
 
 
-
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
 def upload_res_token(request, parent_id):
