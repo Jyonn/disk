@@ -219,6 +219,7 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=0,
                 dlcount=0,
+                create_time=datetime.datetime.now(),
             )
             o_res.save()
         except ValueError as err:
