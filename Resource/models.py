@@ -192,7 +192,7 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_folder(cls, rname, o_user, o_parent, desc):
+    def create_folder(cls, rname, o_user, o_parent):
         """ 创建文件夹对象
 
         :param rname: 文件夹名
@@ -210,7 +210,7 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=Resource.RTYPE_FOLDER,
                 sub_type=Resource.STYPE_FOLDER,
-                description=desc,
+                description=None,
                 cover=None,
                 owner=o_user,
                 parent=o_parent,

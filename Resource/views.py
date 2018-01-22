@@ -16,7 +16,7 @@ from User.models import User
 
 
 @require_json
-@require_post(['folder_name', 'description'])
+@require_post(['folder_name'])
 @require_login
 def create_folder(request, res_id):
     """ POST /api/res/:res_id/folder
@@ -26,7 +26,6 @@ def create_folder(request, res_id):
     o_user = request.user
 
     folder_name = request.d.folder_name
-    desc = request.d.description
 
     # get parent folder
     ret = Resource.get_res_by_id(res_id)
@@ -35,7 +34,7 @@ def create_folder(request, res_id):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
-    ret = Resource.create_folder(folder_name, o_user, o_parent, desc)
+    ret = Resource.create_folder(folder_name, o_user, o_parent)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
