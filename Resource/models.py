@@ -2,6 +2,8 @@
 
 资源类和方法
 """
+import datetime
+
 from django.db import models
 from django.utils.crypto import get_random_string
 
@@ -113,10 +115,7 @@ class Resource(models.Model):
         max_length=L['visit_key'],
         verbose_name='当status为2时有效',
     )
-    create_time = models.DateTimeField(
-        auto_created=True,
-        # auto_now=True,
-    )
+    create_time = models.DateTimeField()
     dlcount = models.IntegerField(
         verbose_name='download number',
         default=0,
@@ -184,6 +183,7 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=rsize,
                 sub_type=sub_type,
+                create_time=datetime.datetime.now(),
             )
             o_res.save()
         except ValueError as err:
