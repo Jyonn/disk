@@ -398,7 +398,7 @@ class Resource(models.Model):
         if rname is None:
             rname = self.rname
         if description is None:
-            description = self.description
+            description = self.description or ''
         if status is None:
             status = self.status
         if visit_key is None:
