@@ -11,6 +11,14 @@ from Base.common import deprint
 from Base.error import Error
 
 
+class Method:
+    GET = 'GET'
+    POST = 'POST'
+    PUT = 'PUT'
+    DELETE = 'DELETE'
+    OPTIONS = 'OPTIONS'
+
+
 class Ret:
     """
     函数返回类
@@ -21,7 +29,7 @@ class Ret:
         self.append_msg = append_msg
 
 
-def response(code=0, msg="ok", body=None):
+def response(code=0, msg="ok", body=None, allow=False):
     """
     回复HTTP请求
     """
@@ -36,6 +44,11 @@ def response(code=0, msg="ok", body=None):
         status=200,
         content_type="application/json; encoding=utf-8",
     )
+    if allow and isinstance(body, dict):
+        allow_method_list = []
+        for item in body:
+            allow_method_list.append(item)
+        http_resp['Allow'] = ', '.join(allow_method_list)
     return http_resp
 
 

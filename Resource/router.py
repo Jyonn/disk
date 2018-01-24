@@ -3,7 +3,7 @@
 资源API路由
 """
 from Base.error import Error
-from Base.response import error_response
+from Base.response import error_response, response, Method
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
     upload_dlpath_redirect, modify_res, create_link, upload_cover_token, upload_cover_redirect, \
@@ -15,8 +15,14 @@ def rt_res(request):
 
     GET:    get_my_res, 获取我的资源根目录
     """
-    if request.method == "GET":
+    options = {
+        Method.GET: "获取我的资源根目录"
+    }
+    if request.method == Method.GET:
         return get_my_res(request)
+
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -25,8 +31,13 @@ def rt_res_token(request, parent_id):
 
     GET:    upload_res_token, 获取资源上传
     """
-    if request.method == "GET":
+    options = {
+        Method.GET: "获取资源上传",
+    }
+    if request.method == Method.GET:
         return upload_res_token(request, parent_id)
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -37,18 +48,24 @@ def rt_res_slug(request, slug):
     PUT:    modify_res, 修改资源信息
     DELETE: delete_res, 删除资源
     """
+    options = {
+        Method.GET: "获取资源信息",
+        Method.PUT: "修改资源信息",
+        Method.DELETE: "删除资源"
+    }
     ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:
         return error_response(ret)
     request.resource = ret.body
 
-    if request.method == "GET":
+    if request.method == Method.GET:
         return get_res_info(request)
-    if request.method == "PUT":
+    if request.method == Method.PUT:
         return modify_res(request)
-    if request.method == "DELETE":
+    if request.method == Method.DELETE:
         return delete_res(request)
-
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -57,9 +74,13 @@ def rt_res_folder(request, res_id):
 
     POST:   create_folder, 上传文件夹资源
     """
-    if request.method == "POST":
+    options = {
+        Method.POST: "上传文件夹资源",
+    }
+    if request.method == Method.POST:
         return create_folder(request, res_id)
-
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -68,9 +89,13 @@ def rt_res_link(request, res_id):
 
     POST:   create_link, 上传链接资源
     """
-    if request.method == "POST":
+    options = {
+        Method.POST: "上传链接资源",
+    }
+    if request.method == Method.POST:
         return create_link(request, res_id)
-
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -90,14 +115,18 @@ def rt_res_slug_dl(request, slug):
 
     GET:    get_dl_link, 获取资源下载链接
     """
+    options = {
+        Method.GET: "获取资源下载链接",
+    }
     ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:
         return error_response(ret)
     request.resource = ret.body
 
-    if request.method == "GET":
+    if request.method == Method.GET:
         return deal_dl_link(request)
-
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -106,8 +135,13 @@ def rt_res_cover(request, res_id):
 
     GET:    upload_cover_token, 获取七牛上传资源封面token
     """
-    if request.method == "GET":
+    options = {
+            Method.GET: "获取七牛上传资源封面token",
+    }
+    if request.method == Method.GET:
         return upload_cover_token(request, res_id)
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -117,10 +151,15 @@ def rt_dlpath_callback(request):
     # GET:    upload_dlpath_redirect, 七牛上传资源成功后的回调函数（303重定向）
     POST:   upload_dlpath_callback, 七牛上传资源成功后的回调函数
     """
-    # if request.method == "GET":
+    # if request.method == Method.GET:
     #     return upload_dlpath_redirect(request)
-    if request.method == "POST":
+    options = {
+        Method.POST: "七牛上传资源成功后的回调函数",
+    }
+    if request.method == Method.POST:
         return upload_dlpath_callback(request)
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -130,8 +169,13 @@ def rt_cover_callback(request):
     # GET:    upload_cover_redirect, 七牛上传资源封面成功后的回调函数（303重定向）
     POST:   upload_cover_callback, 七牛上传资源封面成功后的回调函数
     """
-    # if request.method == "GET":
+    # if request.method == Method.GET:
     #     return upload_cover_redirect(request)
-    if request.method == "POST":
+    options = {
+        Method.POST: "七牛上传资源封面成功后的回调函数",
+    }
+    if request.method == Method.POST:
         return upload_cover_callback(request)
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
