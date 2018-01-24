@@ -1,3 +1,13 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
+Base/__pycache__/
+Config/__pycache__/
+Resource/__pycache__/
+User/__pycache__/
+disk/__pycache__/
+
+Config/migrations/__pycache__/
+Resource/migrations/__pycache__/
+User/migrations/__pycache__/
+
 mysql.local.conf
