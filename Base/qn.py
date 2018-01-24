@@ -59,11 +59,12 @@ def get_resource_url(key, expires=3600):
     return _AUTH.private_download_url(url, expires=expires)
 
 
-def get_manage_info(key):
+def get_manage_info(key, action):
     entry = '%s:%s' % (BUCKET, key)
 
     encoded_entry = urlsafe_base64_encode(entry)
-    access_token = _AUTH.token_of_request(key, content_type='application/json')
+    target = '/%s/%s\n' % (encoded_entry, action)
+    access_token = _AUTH.token_of_request(target, content_type='application/json')
     return encoded_entry, access_token
 
 
@@ -71,7 +72,7 @@ def delete_res(key):
     if key is None:
         return
     print('key', key)
-    encoded_entry, access_token = get_manage_info(key)
+    encoded_entry, access_token = get_manage_info(key, 'delete')
     print('encoded-entry', encoded_entry)
     print('access-token', access_token)
     url = '%s/delete/%s' % ("https://rs.qiniu.com", encoded_entry)
