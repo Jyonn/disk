@@ -419,7 +419,7 @@ def upload_cover_token(request, res_id):
 
 
 @require_login
-def delete_res(request, res_id):
+def delete_res(request):
     """ DELETE /api/res/:slug
 
     删除资源
@@ -428,10 +428,7 @@ def delete_res(request, res_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_id(res_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
+    o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 
