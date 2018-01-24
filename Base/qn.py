@@ -64,6 +64,7 @@ def get_manage_info(key, action):
 
     encoded_entry = urlsafe_base64_encode(entry)
     target = '/%s/%s' % (encoded_entry, action)
+    print('target', target)
     access_token = _AUTH.token_of_request(target, content_type='application/json')
     return encoded_entry, access_token
 
@@ -85,6 +86,7 @@ def delete_res(key):
         r = requests.post(url, headers=headers)
     except requests.exceptions.RequestException:
         return Ret(Error.ERROR_REQUEST_QINIU)
-    print(r.text)
+    resp = r.text
+    print(resp)
     r.close()
     return Ret()
