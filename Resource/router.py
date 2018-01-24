@@ -36,6 +36,7 @@ def rt_res_slug(request, slug):
 
     GET:    get_res_info, 获取资源信息
     PUT:    modify_res, 修改资源信息
+    DELETE: delete_res, 删除资源
     """
     ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:

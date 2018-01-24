@@ -4,6 +4,7 @@
 """
 import json
 
+from django.http import HttpResponseRedirect
 from qiniu import urlsafe_base64_decode
 
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
@@ -157,11 +158,12 @@ def get_dl_link(request):
         return error_response(Error.NOT_READABLE)
 
     if o_res.rtype == Resource.RTYPE_LINK:
-        return response(body=dict(link=o_res.dlpath))
+        return HttpResponseRedirect(o_res.dlpath)
     if o_res.rtype != Resource.RTYPE_FILE:
         return error_response(Error.REQUIRE_FILE)
 
-    return response(body=dict(link=o_res.get_dl_url()))
+    return HttpResponseRedirect(o_res.get_dl_url())
+    # return response(body=dict(link=o_res.get_dl_url()))
 
 
 def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):
@@ -403,7 +405,7 @@ def upload_cover_token(request, res_id):
 
 @require_login
 def delete_res(request, res_id):
-    """ DELETE /api/res/:res_id
+    """ DELETE /api/res/:slug
 
     删除资源
     """
