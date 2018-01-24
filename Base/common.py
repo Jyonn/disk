@@ -9,3 +9,11 @@ def deprint(*args):
     """
     if DEBUG:
         print(*args)
+
+
+def md5(s):
+    """获取字符串的MD5"""
+    import hashlib
+    md5_ = hashlib.md5()
+    md5_.update(s.encode())
+    return md5_.hexdigest()

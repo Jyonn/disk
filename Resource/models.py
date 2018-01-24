@@ -314,7 +314,7 @@ class Resource(models.Model):
             status=self.status,
             create_time=self.create_time.timestamp(),
             dlcount=self.dlcount,
-            visit_key=self.visit_key,
+            visit_key=self.visit_key if self.status == Resource.STATUS_PROTECT else None,
         )
 
     def get_child_res_list(self):

@@ -6,9 +6,8 @@ from Base.error import Error
 from Base.response import error_response
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
-    get_visit_key, get_dl_link, upload_dlpath_redirect, modify_res, create_link, \
-    upload_cover_token, upload_cover_redirect, upload_dlpath_callback, upload_cover_callback, \
-    delete_res
+    upload_dlpath_redirect, modify_res, create_link, upload_cover_token, upload_cover_redirect, \
+    upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link
 
 
 def rt_res(request):
@@ -97,7 +96,7 @@ def rt_res_slug_dl(request, slug):
     request.resource = ret.body
 
     if request.method == "GET":
-        return get_dl_link(request)
+        return deal_dl_link(request)
 
     return error_response(Error.ERROR_METHOD)
 

@@ -12,16 +12,19 @@ from Base.response import Ret
 from disk.settings import SECRET_KEY, JWT_ENCODE_ALGO
 
 
-def jwt_e(dict_, expire_second=7 * 60 * 60 * 24):
+def jwt_e(dict_, replace=True, expire_second=7 * 60 * 60 * 24):
     """
     jwt签名加密
+    :param replace: 如果dict_中存在ctime或expire是否替换
     :param dict_: 被加密的字典数据
     :param expire_second: 过期时间
     """
     if not isinstance(dict_, dict):
         return Ret(Error.STRANGE)
-    dict_['ctime'] = datetime.datetime.now().timestamp()
-    dict_['expire'] = expire_second
+    if replace or 'ctime' not in dict_.keys():
+        dict_['ctime'] = datetime.datetime.now().timestamp()
+    if replace or 'expire' not in dict_.keys():
+        dict_['expire'] = expire_second
     encode_str = jwt.encode(dict_, SECRET_KEY, algorithm=JWT_ENCODE_ALGO).decode()
     return Ret(Error.OK, (encode_str, dict_))
 

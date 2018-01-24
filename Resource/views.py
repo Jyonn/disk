@@ -5,11 +5,13 @@
 import json
 
 from django.http import HttpResponseRedirect
-from qiniu import urlsafe_base64_decode
+from qiniu import urlsafe_base64_decode, urlsafe_base64_encode
 
+from Base.common import md5
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
     require_put, require_delete
 from Base.error import Error
+from Base.jtoken import jwt_e
 from Base.policy import get_res_policy, get_cover_policy
 from Base.qn import get_upload_token, qiniu_auth_callback, get_manage_info, delete_res
 from Base.response import response, error_response
@@ -164,6 +166,19 @@ def get_dl_link(request):
 
     return HttpResponseRedirect(o_res.get_dl_url())
     # return response(body=dict(link=o_res.get_dl_url()))
+
+
+@require_get([
+    ('token', None, None),
+    ('visit_key', None, None),
+])
+def deal_dl_link(request):
+    """ GET /api/res/:slug/dl
+
+    获取下载资源链接
+    """
+    request.META['HTTP_TOKEN'] = request.d.token
+    return get_dl_link(request)
 
 
 def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):

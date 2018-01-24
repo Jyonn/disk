@@ -144,11 +144,8 @@ class User(models.Model):
 
     @staticmethod
     def _hash(s):
-        """获取字符串的MD5"""
-        import hashlib
-        md5 = hashlib.md5()
-        md5.update(s.encode())
-        return md5.hexdigest()
+        from Base.common import md5
+        return md5(s)
 
     @staticmethod
     def get_user_by_username(username):
