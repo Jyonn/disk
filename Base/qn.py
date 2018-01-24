@@ -64,7 +64,6 @@ def get_manage_info(key, action):
 
     encoded_entry = urlsafe_base64_encode(entry)
     target = '/%s/%s' % (action, encoded_entry)
-    print('target', target)
     access_token = _AUTH.token_of_request(target, content_type='application/json')
     return encoded_entry, access_token
 
@@ -72,21 +71,22 @@ def get_manage_info(key, action):
 def delete_res(key):
     if key is None:
         return
-    print('key', key)
     encoded_entry, access_token = get_manage_info(key, 'delete')
-    print('encoded-entry', encoded_entry)
-    print('access-token', access_token)
+    # print('encoded-entry', encoded_entry)
+    # print('access-token', access_token)
     url = '%s/delete/%s' % ("https://rs.qiniu.com", encoded_entry)
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'QBox %s' % access_token,
     }
 
-    try:
-        r = requests.post(url, headers=headers)
-    except requests.exceptions.RequestException:
-        return Ret(Error.ERROR_REQUEST_QINIU)
-    resp = r.text
-    print(resp)
-    r.close()
+    print('url', url)
+    print('headers', headers)
+    # try:
+    #     r = requests.post(url, headers=headers)
+    # except requests.exceptions.RequestException:
+    #     return Ret(Error.ERROR_REQUEST_QINIU)
+    # resp = r.text
+    # print(resp)
+    # r.close()
     return Ret()
