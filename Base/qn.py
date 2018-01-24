@@ -3,7 +3,9 @@
 即将使用web前端直接上传到七牛 而无需通过服务器 减小服务器压力
 """
 import qiniu
+import requests
 from django.http import HttpRequest
+from qiniu import urlsafe_base64_encode
 
 from Base.common import deprint
 from Base.error import Error
@@ -41,7 +43,6 @@ def qiniu_auth_callback(request):
     if not isinstance(request, HttpRequest):
         return Ret(Error.STRANGE)
     auth_header = request.META.get('HTTP_AUTHORIZATION')
-    print('auth', auth_header)
     if auth_header is None:
         return Ret(Error.UNAUTH_CALLBACK)
     url = request.get_full_path()
@@ -58,5 +59,28 @@ def get_resource_url(key, expires=3600):
     return _AUTH.private_download_url(url, expires=expires)
 
 
-# def delete_resource(key):
-#     _AUTH
+def get_manage_info(key):
+    entry = '%s:%s' % (BUCKET, key)
+
+    encoded_entry = urlsafe_base64_encode(entry)
+    url = '%s/%s' % (CDN_HOST, key)
+    access_token = _AUTH.token_of_request(url, content_type='application/json')
+    return encoded_entry, access_token
+
+
+def delete_res(key):
+    if key is None:
+        return
+    encoded_entry, access_token = get_manage_info(key)
+    url = '%s/delete/%s' % (CDN_HOST, encoded_entry)
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'QBox %s' % access_token,
+    }
+
+    try:
+        r = requests.post(url, headers=headers)
+    except requests.exceptions.RequestException:
+        return Ret(Error.ERROR_REQUEST_QINIU)
+    print(r.text)
+    r.close()

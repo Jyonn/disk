@@ -2,8 +2,9 @@
 
 用户API处理函数
 """
-import base64
 import json
+
+from qiniu import urlsafe_base64_decode
 
 from Base.decorator import require_json, require_post, require_login, require_get, require_delete, \
     require_put
@@ -131,7 +132,7 @@ def auth_token(request):
 
     # save_user_to_session(request, o_user)
     # from Base.jtoken import jwt_e
-    ret = jwt_e(o_user.to_dict())
+    ret = jwt_e(dict(user_id=o_user.pk))
     if ret.error is not Error.OK:
         return error_response(ret)
     token, dict_ = ret.body
@@ -190,11 +191,9 @@ def upload_avatar_redirect(request):
     七牛上传用户头像303重定向
     """
     upload_ret = request.d.upload_ret
-    # print(upload_ret)
-    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    # print(upload_ret)
-    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-    # print(upload_ret)
+    upload_ret = urlsafe_base64_decode(upload_ret)
+    # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
     upload_ret = json.loads(upload_ret)
     # print(upload_ret)
     key = upload_ret['key']

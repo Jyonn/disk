@@ -192,7 +192,7 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_folder(cls, rname, o_user, o_parent):
+    def create_folder(cls, rname, o_user, o_parent, desc=None):
         """ 创建文件夹对象
 
         :param rname: 文件夹名
@@ -210,7 +210,7 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=Resource.RTYPE_FOLDER,
                 sub_type=Resource.STYPE_FOLDER,
-                description=None,
+                description=desc,
                 cover=None,
                 owner=o_user,
                 parent=o_parent,
@@ -420,10 +420,28 @@ class Resource(models.Model):
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
+        from Base.qn import delete_res
+        delete_res(self.cover)
         self.cover = cover
         self.save()
         return Ret()
 
+    def is_empty(self):
+        res_list = Resource.objects.filter(parent=self)
+        if res_list:
+            return False
+        return True
+
     def delete_(self):
-        # TODO: 删除资源
-        pass
+        from Base.qn import delete_res
+        delete_res(self.cover)
+        if self.rtype == Resource.RTYPE_FOLDER:
+            if not self.is_empty():
+                return Ret(Error.REQUIRE_EMPTY_FOLDER)
+            else:
+                self.delete()
+        elif self.rtype == Resource.RTYPE_LINK:
+            self.delete()
+        else:
+            delete_res(self.dlpath)
+        return Ret()

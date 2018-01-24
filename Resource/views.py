@@ -2,14 +2,15 @@
 
 资源API处理函数
 """
-import base64
 import json
+
+from qiniu import urlsafe_base64_decode
 
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
     require_put, require_delete
 from Base.error import Error
 from Base.policy import get_res_policy, get_cover_policy
-from Base.qn import get_upload_token, qiniu_auth_callback
+from Base.qn import get_upload_token, qiniu_auth_callback, get_manage_info, delete_res
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -227,8 +228,9 @@ def upload_dlpath_redirect(request):
     七牛上传资源成功后的回调函数
     """
     upload_ret = request.d.upload_ret
-    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+    upload_ret = urlsafe_base64_decode(upload_ret)
+    # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
     upload_ret = json.loads(upload_ret)
 
     key = upload_ret['key']
@@ -278,8 +280,9 @@ def upload_cover_redirect(request):
     七牛上传资源封面成功后的重定向
     """
     upload_ret = request.d.upload_ret
-    upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+    upload_ret = urlsafe_base64_decode(upload_ret)
+    # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+    # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
     upload_ret = json.loads(upload_ret)
 
     key = upload_ret['key']
@@ -396,3 +399,30 @@ def upload_cover_token(request, res_id):
     key = 'cover/%s/%s/%s' % (o_res.pk, crt_time, filename)
     qn_token, key = get_upload_token(key, get_cover_policy(o_res.pk))
     return response(body=dict(upload_token=qn_token, key=key))
+
+
+@require_login
+def delete_res(request, res_id):
+    """ DELETE /api/res/:res_id
+
+    删除资源
+    """
+    o_user = request.user
+    if not isinstance(o_user, User):
+        return error_response(Error.STRANGE)
+
+    ret = Resource.get_res_by_id(res_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_res = ret.body
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+
+    if not o_res.belong(o_user):
+        return error_response(Error.NOT_YOUR_RESOURCE)
+
+    if o_res.parent == Resource.ROOT_ID:
+        return error_response(Error.ERROR_DELETE_ROOT_FOLDER)
+
+    o_res.delete_()
+    return response()

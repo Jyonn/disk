@@ -5,6 +5,9 @@
 
 
 class Error:
+    ERROR_REQUEST_QINIU = 2031
+    ERROR_DELETE_ROOT_FOLDER = 2030
+    REQUIRE_EMPTY_FOLDER = 2029
     ERROR_RESOURCE_ID = 2028
     ERROR_CREATE_LINK = 2027
     NOT_YOUR_RESOURCE = 2026
@@ -50,6 +53,9 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (ERROR_REQUEST_QINIU, "七牛请求错误"),
+        (ERROR_DELETE_ROOT_FOLDER, "无法删除用户根目录"),
+        (REQUIRE_EMPTY_FOLDER, "非空目录无法删除"),
         (ERROR_RESOURCE_ID, "错误的资源ID"),
         (ERROR_CREATE_LINK, "创建链接错误"),
         (NOT_YOUR_RESOURCE, "没有操作权限"),

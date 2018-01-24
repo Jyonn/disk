@@ -16,11 +16,6 @@ class Ret:
     函数返回类
     """
     def __init__(self, error=Error.OK, body=None, append_msg=''):
-        # if isinstance(error, Ret):
-        #     r = error
-        #     self.error = r.error
-        #     self.body = r.body
-        #     self.append_msg = r.append_msg
         self.error = error
         self.body = body or []
         self.append_msg = append_msg
@@ -49,7 +44,6 @@ def error_response(error_id, append_msg=""):
     回复一个错误
     171216 当error_id为Ret类时，自动转换
     """
-    # deprint('error_id', error_id)
     if isinstance(error_id, Ret):
         append_msg = error_id.append_msg
         error_id = error_id.error
