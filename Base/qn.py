@@ -84,3 +84,4 @@ def delete_res(key):
         return Ret(Error.ERROR_REQUEST_QINIU)
     print(r.text)
     r.close()
+    return Ret()
