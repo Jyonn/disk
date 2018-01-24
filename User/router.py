@@ -19,15 +19,16 @@ def rt_user(request):
         Method.GET: "获取我的信息",
         Method.POST: "创建用户",
         Method.PUT: "修改用户",
-    },
+    }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     if request.method == Method.GET:
         return get_my_info(request)
     if request.method == Method.POST:
         return create_user(request)
     if request.method == Method.PUT:
         return modify_user(request)
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -39,10 +40,11 @@ def rt_user_token(request):
     options = {
         Method.POST: "获取登录token"
     }
-    if request.method == Method.POST:
-        return auth_token(request)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.POST:
+        return auth_token(request)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -54,10 +56,11 @@ def rt_user_avatar(request):
     options = {
         Method.GET: "获取用户上传头像到七牛的token",
     }
-    if request.method == Method.GET:
-        return upload_avatar_token(request)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.GET:
+        return upload_avatar_token(request)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -71,12 +74,13 @@ def rt_username(request, username):
         Method.GET: "获取用户信息",
         Method.DELETE: "删除用户",
     }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     if request.method == Method.GET:
         return get_user_info(request, username)
     if request.method == Method.DELETE:
         return delete_user(request, username)
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -91,6 +95,9 @@ def rt_avatar_callback(request):
     options = {
         Method.POST: "七牛上传用户头像的回调函数"
     }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     if request.method == Method.POST:
         return upload_avatar_callback(request)
     return error_response(Error.ERROR_METHOD)

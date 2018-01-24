@@ -18,11 +18,12 @@ def rt_res(request):
     options = {
         Method.GET: "获取我的资源根目录"
     }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     if request.method == Method.GET:
         return get_my_res(request)
 
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -34,10 +35,11 @@ def rt_res_token(request, parent_id):
     options = {
         Method.GET: "获取资源上传",
     }
-    if request.method == Method.GET:
-        return upload_res_token(request, parent_id)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.GET:
+        return upload_res_token(request, parent_id)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -53,6 +55,9 @@ def rt_res_slug(request, slug):
         Method.PUT: "修改资源信息",
         Method.DELETE: "删除资源"
     }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -64,8 +69,6 @@ def rt_res_slug(request, slug):
         return modify_res(request)
     if request.method == Method.DELETE:
         return delete_res(request)
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -77,10 +80,11 @@ def rt_res_folder(request, res_id):
     options = {
         Method.POST: "上传文件夹资源",
     }
-    if request.method == Method.POST:
-        return create_folder(request, res_id)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.POST:
+        return create_folder(request, res_id)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -92,10 +96,11 @@ def rt_res_link(request, res_id):
     options = {
         Method.POST: "上传链接资源",
     }
-    if request.method == Method.POST:
-        return create_link(request, res_id)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.POST:
+        return create_link(request, res_id)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -118,6 +123,9 @@ def rt_res_slug_dl(request, slug):
     options = {
         Method.GET: "获取资源下载链接",
     }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
     ret = Resource.decode_slug(slug)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -125,8 +133,6 @@ def rt_res_slug_dl(request, slug):
 
     if request.method == Method.GET:
         return deal_dl_link(request)
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -138,10 +144,11 @@ def rt_res_cover(request, res_id):
     options = {
             Method.GET: "获取七牛上传资源封面token",
     }
-    if request.method == Method.GET:
-        return upload_cover_token(request, res_id)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.GET:
+        return upload_cover_token(request, res_id)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -156,10 +163,11 @@ def rt_dlpath_callback(request):
     options = {
         Method.POST: "七牛上传资源成功后的回调函数",
     }
-    if request.method == Method.POST:
-        return upload_dlpath_callback(request)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.POST:
+        return upload_dlpath_callback(request)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -174,8 +182,9 @@ def rt_cover_callback(request):
     options = {
         Method.POST: "七牛上传资源封面成功后的回调函数",
     }
-    if request.method == Method.POST:
-        return upload_cover_callback(request)
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
+
+    if request.method == Method.POST:
+        return upload_cover_callback(request)
     return error_response(Error.ERROR_METHOD)
