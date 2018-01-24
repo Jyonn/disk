@@ -74,7 +74,7 @@ def delete_res(key):
     encoded_entry, access_token = get_manage_info(key)
     print('encoded-entry', encoded_entry)
     print('access-token', access_token)
-    url = '%s/delete/%s' % (CDN_HOST, encoded_entry)
+    url = '%s/delete/%s' % ("https://rs.qiniu.com", encoded_entry)
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'QBox %s' % access_token,
