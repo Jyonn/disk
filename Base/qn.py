@@ -71,7 +71,10 @@ def get_manage_info(key):
 def delete_res(key):
     if key is None:
         return
+    print('key', key)
     encoded_entry, access_token = get_manage_info(key)
+    print('encoded-entry', encoded_entry)
+    print('access-token', access_token)
     url = '%s/delete/%s' % (CDN_HOST, encoded_entry)
     headers = {
         'Content-Type': 'application/json',
