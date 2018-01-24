@@ -63,7 +63,7 @@ def get_manage_info(key, action):
     entry = '%s:%s' % (BUCKET, key)
 
     encoded_entry = urlsafe_base64_encode(entry)
-    target = '/%s/%s\n' % (encoded_entry, action)
+    target = '/%s/%s
     access_token = _AUTH.token_of_request(target, content_type='application/json')
     return encoded_entry, access_token
 
