@@ -27,6 +27,8 @@ _AUTH = qiniu.Auth(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
 _HOST = HOST
 _KEY_PREFIX = 'disk/'
 
+QINIU_MANAGE_HOST = "https://rs.qiniu.com"
+
 
 def get_upload_token(key, policy):
     """
@@ -59,34 +61,41 @@ def get_resource_url(key, expires=3600):
     return _AUTH.private_download_url(url, expires=expires)
 
 
-def get_manage_info(key, action):
-    entry = '%s:%s' % (BUCKET, key)
-
-    encoded_entry = urlsafe_base64_encode(entry)
-    target = '/%s/%s' % (action, encoded_entry)
-    access_token = _AUTH.token_of_request(target, content_type='application/json')
-    return encoded_entry, access_token
-
-
-def delete_res(key):
-    if key is None:
-        return
-    encoded_entry, access_token = get_manage_info(key, 'delete')
-    # print('encoded-entry', encoded_entry)
-    # print('access-token', access_token)
-    url = '%s/delete/%s' % ("https://rs.qiniu.com", encoded_entry)
+def deal_manage_res(target, access_token):
+    url = '%s%s' % (QINIU_MANAGE_HOST, target)
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'QBox %s' % access_token,
     }
 
-    print('url', url)
-    print('headers', headers)
-    # try:
-    #     r = requests.post(url, headers=headers)
-    # except requests.exceptions.RequestException:
-    #     return Ret(Error.ERROR_REQUEST_QINIU)
-    # resp = r.text
-    # print(resp)
-    # r.close()
-    return Ret()
+    try:
+        r = requests.post(url, headers=headers)
+    except requests.exceptions.RequestException:
+        return Ret(Error.ERROR_REQUEST_QINIU)
+    status = r.status_code
+    r.close()
+    if status == 200:
+        return Ret()
+    elif status == 401:
+        return Ret(Error.QINIU_UNAUTHORIZED)
+    else:
+        deprint(status)
+        return Ret(Error.FAIL_DELETE)
+
+
+def delete_res(key):
+    entry = '%s:%s' % (BUCKET, key)
+    encoded_entry = urlsafe_base64_encode(entry)
+    target = '/delete/%s' % encoded_entry
+    access_token = _AUTH.token_of_request(target, content_type='application/json')
+    return deal_manage_res(target, access_token)
+
+
+def move_res(key, new_key):
+    entry = '%s:%s' % (BUCKET, key)
+    encoded_entry = urlsafe_base64_encode(entry)
+    new_entry = '%s:%s' % (BUCKET, new_key)
+    encoded_new_entry = urlsafe_base64_encode(new_entry)
+    target = '/move/%s/%s' % (encoded_entry, encoded_new_entry)
+    access_token = _AUTH.token_of_request(target, content_type='application/json')
+    return deal_manage_res(target, access_token)

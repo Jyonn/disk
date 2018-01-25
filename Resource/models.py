@@ -387,6 +387,10 @@ class Resource(models.Model):
             o_res_parent = o_res_crt
         return Ret(Error.OK, o_res_parent)
 
+    def modify_rname(self, rname):
+        key = self.dlpath
+        new_key = '%s/%s' % (key[:key.rfind('/')], rname)
+
     def modify_info(self, rname, description, status, visit_key):
         """ 修改资源属性
 
@@ -407,7 +411,12 @@ class Resource(models.Model):
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
-        self.rname = rname
+        if self.rname != rname:
+            if self.rtype == Resource.RTYPE_FILE:
+                self.modify_rname(rname)
+            else:
+                self.rname = rname
+        # self.rname = rname
         self.description = description
         self.status = status
         if status == Resource.STATUS_PROTECT:
@@ -421,20 +430,30 @@ class Resource(models.Model):
         if ret.error is not Error.OK:
             return ret
         from Base.qn import delete_res
-        delete_res(self.cover)
+        if self.cover:
+            ret = delete_res(self.cover)
+            if ret.error is not Error.OK:
+                return ret
         self.cover = cover
         self.save()
         return Ret()
 
     def is_empty(self):
+        """ 资源是否为空（针对文件夹资源） """
         res_list = Resource.objects.filter(parent=self)
         if res_list:
             return False
         return True
 
     def delete_(self):
+        """ 删除资源 """
         from Base.qn import delete_res
-        delete_res(self.cover)
+        if self.cover:
+            ret = delete_res(self.cover)
+            if ret.error is not Error.OK:
+                return ret
+            self.cover = None
+            self.save()
         if self.rtype == Resource.RTYPE_FOLDER:
             if not self.is_empty():
                 return Ret(Error.REQUIRE_EMPTY_FOLDER)
@@ -443,5 +462,8 @@ class Resource(models.Model):
         elif self.rtype == Resource.RTYPE_LINK:
             self.delete()
         else:
-            delete_res(self.dlpath)
+            ret = delete_res(self.dlpath)
+            if ret.error is not Error.OK:
+                return ret
+            self.delete()
         return Ret()

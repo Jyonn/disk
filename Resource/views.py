@@ -5,15 +5,13 @@
 import json
 
 from django.http import HttpResponseRedirect
-from qiniu import urlsafe_base64_decode, urlsafe_base64_encode
+from qiniu import urlsafe_base64_decode
 
-from Base.common import md5
 from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
     require_put, require_delete
 from Base.error import Error
-from Base.jtoken import jwt_e
 from Base.policy import get_res_policy, get_cover_policy
-from Base.qn import get_upload_token, qiniu_auth_callback, get_manage_info, delete_res
+from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -438,5 +436,7 @@ def delete_res(request):
     if o_res.parent == Resource.ROOT_ID:
         return error_response(Error.ERROR_DELETE_ROOT_FOLDER)
 
-    o_res.delete_()
+    ret = o_res.delete_()
+    if ret.error is not Error.OK:
+        return error_response(ret)
     return response()
