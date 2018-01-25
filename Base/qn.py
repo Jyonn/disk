@@ -80,7 +80,7 @@ def deal_manage_res(target, access_token):
         return Ret(Error.QINIU_UNAUTHORIZED)
     else:
         deprint(status)
-        return Ret(Error.FAIL_DELETE)
+        return Ret(Error.FAIL_QINIU)
 
 
 def delete_res(key):

@@ -5,7 +5,7 @@
 
 
 class Error:
-    FAIL_DELETE = 2033
+    FAIL_QINIU = 2033
     QINIU_UNAUTHORIZED = 2032
     ERROR_REQUEST_QINIU = 2031
     ERROR_DELETE_ROOT_FOLDER = 2030
@@ -55,7 +55,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
-        (FAIL_DELETE, "未知原因导致的删除错误"),
+        (FAIL_QINIU, "未知原因导致的七牛端操作错误"),
         (QINIU_UNAUTHORIZED, "七牛端身份验证错误"),
         (ERROR_REQUEST_QINIU, "七牛请求错误"),
         (ERROR_DELETE_ROOT_FOLDER, "无法删除用户根目录"),
