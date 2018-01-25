@@ -447,6 +447,9 @@ class Resource(models.Model):
 
     def delete_(self):
         """ 删除资源 """
+        if self.rtype == Resource.RTYPE_FOLDER:
+            if not self.is_empty():
+                return Ret(Error.REQUIRE_EMPTY_FOLDER)
         from Base.qn import delete_res
         if self.cover:
             ret = delete_res(self.cover)
@@ -454,16 +457,9 @@ class Resource(models.Model):
                 return ret
             self.cover = None
             self.save()
-        if self.rtype == Resource.RTYPE_FOLDER:
-            if not self.is_empty():
-                return Ret(Error.REQUIRE_EMPTY_FOLDER)
-            else:
-                self.delete()
-        elif self.rtype == Resource.RTYPE_LINK:
-            self.delete()
-        else:
+        if self.rtype == Resource.RTYPE_FILE:
             ret = delete_res(self.dlpath)
             if ret.error is not Error.OK:
                 return ret
-            self.delete()
+        self.delete()
         return Ret()
