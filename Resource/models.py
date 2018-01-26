@@ -390,6 +390,8 @@ class Resource(models.Model):
     def modify_rname(self, rname):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
+        from Base.qn import move_res
+        return move_res(key, new_key)
 
     def modify_info(self, rname, description, status, visit_key):
         """ 修改资源属性
