@@ -391,7 +391,13 @@ class Resource(models.Model):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
         from Base.qn import move_res
-        return move_res(key, new_key)
+        ret = move_res(key, new_key)
+        if ret.error is not Error.OK:
+            return ret
+        self.rname = rname
+        self.dlpath = new_key
+        self.save()
+        return Ret()
 
     def modify_info(self, rname, description, status, visit_key):
         """ 修改资源属性
@@ -415,7 +421,9 @@ class Resource(models.Model):
             return ret
         if self.rname != rname:
             if self.rtype == Resource.RTYPE_FILE:
-                self.modify_rname(rname)
+                ret = self.modify_rname(rname)
+                if ret.error is not Error.OK:
+                    return ret
             else:
                 self.rname = rname
         # self.rname = rname
