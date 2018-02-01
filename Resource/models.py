@@ -28,6 +28,7 @@ class Resource(models.Model):
         'dlpath': 1024,
         'visit_key': 4,
         'cover': 1024,
+        'res_str_id': 6,
     }
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
@@ -120,10 +121,27 @@ class Resource(models.Model):
         verbose_name='download number',
         default=0,
     )
+    res_str_id = models.CharField(
+        verbose_name='唯一随机资源ID，弃用res_id',
+        default=None,
+        null=True,
+        blank=True,
+        max_length=L['res_str_id'],
+        unique=True,
+    )
     FIELD_LIST = [
         'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
-        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount'
+        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount', 'res_str_id',
     ]
+
+    @classmethod
+    def get_unique_res_str_id(cls):
+        while True:
+            res_str_id = get_random_string(length=cls.L['res_str_id'])
+            ret = cls.get_res_by_str_id(res_str_id)
+            if ret.error == Error.NOT_FOUND_RESOURCE:
+                return res_str_id
+            deprint('generate res_str_id: %s, conflict.' % res_str_id)
 
     @staticmethod
     def _valid_rname(rname):
@@ -184,6 +202,7 @@ class Resource(models.Model):
                 rsize=rsize,
                 sub_type=sub_type,
                 create_time=datetime.datetime.now(),
+                res_str_id=cls.get_unique_res_str_id(),
             )
             o_res.save()
         except ValueError as err:
@@ -220,6 +239,7 @@ class Resource(models.Model):
                 rsize=0,
                 dlcount=0,
                 create_time=datetime.datetime.now(),
+                res_str_id=cls.get_unique_res_str_id(),
             )
             o_res.save()
         except ValueError as err:
@@ -256,6 +276,7 @@ class Resource(models.Model):
                 visit_key=get_random_string(length=4),
                 rsize=0,
                 dlcount=0,
+                res_str_id=cls.get_unique_res_str_id(),
             )
             o_res.save()
         except ValueError as err:
@@ -263,12 +284,21 @@ class Resource(models.Model):
             return Ret(Error.ERROR_CREATE_LINK)
         return Ret(Error.OK, o_res)
 
-    @staticmethod
-    def get_res_by_id(res_id):
+    @classmethod
+    def get_res_by_str_id(cls, res_str_id):
+        try:
+            o_res = cls.objects.get(res_str_id=res_str_id)
+        except cls.DoesNotExist as err:
+            deprint(str(err))
+            return Ret(Error.NOT_FOUND_RESOURCE)
+        return Ret(Error.OK, o_res)
+
+    @classmethod
+    def get_res_by_id(cls, res_id):
         """根据资源id获取资源对象"""
         try:
-            o_res = Resource.objects.get(pk=res_id)
-        except Resource.DoesNotExist as err:
+            o_res = cls.objects.get(pk=res_id)
+        except cls.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_RESOURCE)
         return Ret(Error.OK, o_res)

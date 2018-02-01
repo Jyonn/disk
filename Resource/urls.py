@@ -4,6 +4,7 @@
 """
 from django.urls import path
 
+from Resource.dev import set_unique_res_key
 from Resource.router import rt_res_token, rt_dlpath_callback, rt_res_slug, \
     rt_res_slug_dl, rt_res, rt_res_folder, rt_res_link, rt_res_cover, rt_cover_callback
 
@@ -18,4 +19,6 @@ urlpatterns = [
     path('cover/callback', rt_cover_callback),
     path('<slug:slug>', rt_res_slug),
     path('<slug:slug>/dl', rt_res_slug_dl),
+
+    path('@set_unique_res_key', set_unique_res_key),
 ]
