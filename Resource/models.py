@@ -340,7 +340,7 @@ class Resource(models.Model):
             description=self.description,
             cover=self.get_cover_url(small=False),
             owner=self.owner.to_dict(),
-            parent_id=self.parent.res_str_id,
+            parent_str_id=self.parent.res_str_id,
             status=self.status,
             create_time=self.create_time.timestamp(),
             dlcount=self.dlcount,
