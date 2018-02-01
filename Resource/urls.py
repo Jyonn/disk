@@ -10,10 +10,10 @@ from Resource.router import rt_res_token, rt_dlpath_callback, rt_res_slug, \
 
 urlpatterns = [
     path('', rt_res),
-    path('<int:parent_id>/token', rt_res_token),
-    path('<int:res_id>/cover', rt_res_cover),
-    path('<int:res_id>/folder', rt_res_folder),
-    path('<int:res_id>/link', rt_res_link),
+    path('<str:parent_id>/token', rt_res_token),
+    path('<str:res_str_id>/cover', rt_res_cover),
+    path('<str:res_str_id>/folder', rt_res_folder),
+    path('<str:res_str_id>/link', rt_res_link),
     # path('<int:res_id>/vk', rt_res_vk),
     path('dlpath/callback', rt_dlpath_callback),
     path('cover/callback', rt_cover_callback),

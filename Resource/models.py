@@ -318,7 +318,7 @@ class Resource(models.Model):
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
         return dict(
-            res_id=self.pk,
+            res_str_id=self.res_str_id,
             rname=self.rname,
             rtype=self.rtype,
             # description=self.description,
@@ -332,7 +332,7 @@ class Resource(models.Model):
     def to_dict(self):
         """获取资源字典"""
         return dict(
-            res_id=self.pk,
+            res_str_id=self.res_str_id,
             rname=self.rname,
             rtype=self.rtype,
             rsize=self.rsize,
@@ -400,13 +400,13 @@ class Resource(models.Model):
             return ret
         o_res_parent = ret.body
 
-        for rid in slug_list:
-            try:
-                rid = int(rid)
-            except ValueError as err:
-                deprint(str(err))
-                return Ret(Error.ERROR_RESOURCE_ID)
-            ret = Resource.get_res_by_id(rid)
+        for res_str_id in slug_list:
+            # try:
+            #     res_str_id = int(res_str_id)
+            # except ValueError as err:
+            #     deprint(str(err))
+            #     return Ret(Error.ERROR_RESOURCE_ID)
+            ret = Resource.get_res_by_str_id(res_str_id)
             if ret.error is not Error.OK:
                 return ret
             o_res_crt = ret.body

@@ -20,8 +20,8 @@ from User.models import User
 @require_json
 @require_post(['folder_name'])
 @require_login
-def create_folder(request, res_id):
-    """ POST /api/res/:res_id/folder
+def create_folder(request, res_str_id):
+    """ POST /api/res/:res_str_id/folder
 
     上传文件夹资源
     """
@@ -30,7 +30,7 @@ def create_folder(request, res_id):
     folder_name = request.d.folder_name
 
     # get parent folder
-    ret = Resource.get_res_by_id(res_id)
+    ret = Resource.get_res_by_str_id(res_str_id)
     o_parent = ret.body
 
     if not o_parent.belong(o_user):
@@ -48,8 +48,8 @@ def create_folder(request, res_id):
 @require_json
 @require_post(['link_name', 'description', 'link'])
 @require_login
-def create_link(request, res_id):
-    """ POST /api/res/:res_id/link
+def create_link(request, res_str_id):
+    """ POST /api/res/:res_str_id/link
 
     上传链接资源
     """
@@ -59,7 +59,7 @@ def create_link(request, res_id):
     desc = request.d.description
     link = request.d.link
 
-    ret = Resource.get_res_by_id(res_id)
+    ret = Resource.get_res_by_str_id(res_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_parent = ret.body
@@ -120,14 +120,14 @@ def get_res_info(request):
 
 @require_get()
 @require_login
-def get_visit_key(request, res_id):
-    """ GET /api/res/:res_id/vk
+def get_visit_key(request, res_str_id):
+    """ GET /api/res/:res_str_id/vk
 
     获取加密密钥
     """
     o_user = request.user
 
-    ret = Resource.get_res_by_id(res_id)
+    ret = Resource.get_res_by_str_id(res_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
@@ -179,7 +179,7 @@ def deal_dl_link(request):
     return get_dl_link(request)
 
 
-def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):
+def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
     if ftype.find('video') == 0:
         sub_type = Resource.STYPE_VIDEO
     elif ftype.find('image') == 0:
@@ -196,7 +196,7 @@ def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_id(parent_id)
+    ret = Resource.get_res_by_str_id(parent_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_parent = ret.body
@@ -216,7 +216,7 @@ def deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype):
 
 
 @require_json
-@require_post(['key', 'user_id', 'fsize', 'fname', 'parent_id', 'ftype'])
+@require_post(['key', 'user_id', 'fsize', 'fname', 'parent_str_id', 'ftype'])
 def upload_dlpath_callback(request):
     """ POST /api/res/dlpath/callback
 
@@ -230,10 +230,10 @@ def upload_dlpath_callback(request):
     user_id = request.d.user_id
     fsize = request.d.fsize
     fname = request.d.fname
-    parent_id = request.d.parent_id
+    parent_str_id = request.d.parent_str_id
     ftype = request.d.ftype
 
-    return deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype)
+    return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
 
 
 @require_get(['upload_ret'])
@@ -252,14 +252,14 @@ def upload_dlpath_redirect(request):
     user_id = upload_ret['user_id']
     fsize = upload_ret['fsize']
     fname = upload_ret['fname']
-    parent_id = upload_ret['parent_id']
+    parent_str_id = upload_ret['parent_str_id']
     ftype = upload_ret['ftype']
 
-    return deal_upload_dlpath(key, user_id, fsize, fname, parent_id, ftype)
+    return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
 
 
-def deal_cover_dlpath(key, res_id):
-    ret = Resource.get_res_by_id(res_id)
+def deal_cover_dlpath(key, res_str_id):
+    ret = Resource.get_res_by_str_id(res_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
@@ -271,7 +271,7 @@ def deal_cover_dlpath(key, res_id):
 
 
 @require_json
-@require_post(['key', 'res_id'])
+@require_post(['key', 'res_str_id'])
 def upload_cover_callback(request):
     """ POST /api/res/cover/callback
 
@@ -283,9 +283,9 @@ def upload_cover_callback(request):
         return error_response(ret)
 
     key = request.d.key
-    res_id = request.d.res_id
+    res_str_id = request.d.res_str_id
 
-    return deal_cover_dlpath(key, res_id)
+    return deal_cover_dlpath(key, res_str_id)
 
 
 @require_get(['upload_ret'])
@@ -301,9 +301,9 @@ def upload_cover_redirect(request):
     upload_ret = json.loads(upload_ret)
 
     key = upload_ret['key']
-    res_id = upload_ret['res_id']
+    res_str_id = upload_ret['res_str_id']
 
-    return deal_cover_dlpath(key, res_id)
+    return deal_cover_dlpath(key, res_str_id)
 
 
 @require_json
@@ -358,8 +358,8 @@ def delete_res(request):
 
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
-def upload_res_token(request, parent_id):
-    """ GET /api/res/:res_id/token
+def upload_res_token(request, parent_str_id):
+    """ GET /api/res/:res_str_id/token
 
     获取七牛上传资源token
     """
@@ -369,7 +369,7 @@ def upload_res_token(request, parent_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_id(parent_id)
+    ret = Resource.get_res_by_str_id(parent_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_parent = ret.body
@@ -382,14 +382,14 @@ def upload_res_token(request, parent_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
-    qn_token, key = get_upload_token(key, get_res_policy(o_user.pk, o_parent.pk))
+    qn_token, key = get_upload_token(key, get_res_policy(o_user.pk, o_parent.res_str_id))
     return response(body=dict(upload_token=qn_token, key=key))
 
 
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
-def upload_cover_token(request, res_id):
-    """ GET /api/res/:res_id/cover
+def upload_cover_token(request, res_str_id):
+    """ GET /api/res/:res_str_id/cover
 
     获取七牛上传资源封面token
     """
@@ -399,7 +399,7 @@ def upload_cover_token(request, res_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_id(res_id)
+    ret = Resource.get_res_by_str_id(res_str_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
@@ -412,7 +412,7 @@ def upload_cover_token(request, res_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'cover/%s/%s/%s' % (o_res.pk, crt_time, filename)
-    qn_token, key = get_upload_token(key, get_cover_policy(o_res.pk))
+    qn_token, key = get_upload_token(key, get_cover_policy(o_res.res_str_id))
     return response(body=dict(upload_token=qn_token, key=key))
 
 

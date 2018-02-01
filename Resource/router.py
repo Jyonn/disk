@@ -27,7 +27,7 @@ def rt_res(request):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_res_token(request, parent_id):
+def rt_res_token(request, parent_str_id):
     """ /api/res/token
 
     GET:    upload_res_token, 获取资源上传
@@ -39,7 +39,7 @@ def rt_res_token(request, parent_id):
         return response(body=options, allow=True)
 
     if request.method == Method.GET:
-        return upload_res_token(request, parent_id)
+        return upload_res_token(request, parent_str_id)
     return error_response(Error.ERROR_METHOD)
 
 
@@ -72,8 +72,8 @@ def rt_res_slug(request, slug):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_res_folder(request, res_id):
-    """ /api/res/:res_id/folder
+def rt_res_folder(request, res_str_id):
+    """ /api/res/:res_str_id/folder
 
     POST:   create_folder, 上传文件夹资源
     """
@@ -84,12 +84,12 @@ def rt_res_folder(request, res_id):
         return response(body=options, allow=True)
 
     if request.method == Method.POST:
-        return create_folder(request, res_id)
+        return create_folder(request, res_str_id)
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_res_link(request, res_id):
-    """ /api/res/:res_id/link
+def rt_res_link(request, res_str_id):
+    """ /api/res/:res_str_id/link
 
     POST:   create_link, 上传链接资源
     """
@@ -100,17 +100,17 @@ def rt_res_link(request, res_id):
         return response(body=options, allow=True)
 
     if request.method == Method.POST:
-        return create_link(request, res_id)
+        return create_link(request, res_str_id)
     return error_response(Error.ERROR_METHOD)
 
 
-# def rt_res_vk(request, res_id):
-#     """ /api/res/:res_id/vk
+# def rt_res_vk(request, res_str_id):
+#     """ /api/res/:res_str_id/vk
 #
 #     GET:    get_visit_key, 获取加密密钥
 #     """
 #     if request.method == 'GET':
-#         return get_visit_key(request, res_id)
+#         return get_visit_key(request, res_str_id)
 #
 #     return error_response(Error.ERROR_METHOD)
 #
@@ -136,8 +136,8 @@ def rt_res_slug_dl(request, slug):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_res_cover(request, res_id):
-    """ /api/res/:res_id/cover
+def rt_res_cover(request, res_str_id):
+    """ /api/res/:res_str_id/cover
 
     GET:    upload_cover_token, 获取七牛上传资源封面token
     """
@@ -148,7 +148,7 @@ def rt_res_cover(request, res_id):
         return response(body=options, allow=True)
 
     if request.method == Method.GET:
-        return upload_cover_token(request, res_id)
+        return upload_cover_token(request, res_str_id)
     return error_response(Error.ERROR_METHOD)
 
 
