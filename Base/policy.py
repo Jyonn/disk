@@ -68,14 +68,15 @@ COVER_POLICY = dict(
 #     """获取用户上传文件policy"""
 #     policy = FILE_POLICY
 #     policy['returnBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
-#                            '"parent_str_id":%s,"ftype": "$(mimeType)"}' % (user_id, parent_str_id)
+#                            '"parent_str_id":"%s","ftype": "$(mimeType)"}' \
+#                            % (user_id, parent_str_id)
 #     return policy
 #
 #
 # def get_cover_policy(res_str_id):
 #     """获取用户上传文件封面policy"""
 #     policy = COVER_POLICY
-#     policy['returnBody'] = '{"key":"$(key)", "res_str_id":%s}' % res_str_id
+#     policy['returnBody'] = '{"key":"$(key)", "res_str_id":"%s"}' % res_str_id
 #     return policy
 
 
@@ -88,11 +89,12 @@ def get_avatar_policy(user_id):
 def get_res_policy(user_id, parent_str_id):
     policy = FILE_POLICY
     policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"$(fname)",' \
-                             '"parent_str_id":%s,"ftype":"$(mimeType)"}' % (user_id, parent_str_id)
+                             '"parent_str_id":"%s","ftype":"$(mimeType)"}' \
+                             % (user_id, parent_str_id)
     return policy
 
 
 def get_cover_policy(res_str_id):
     policy = COVER_POLICY
-    policy['callbackBody'] = '{"key":"$(key)","res_str_id":%s}' % res_str_id
+    policy['callbackBody'] = '{"key":"$(key)","res_str_id":"%s"}' % res_str_id
     return policy
