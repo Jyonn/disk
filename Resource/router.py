@@ -7,7 +7,7 @@ from Base.response import error_response, response, Method
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
     upload_dlpath_redirect, modify_res, create_link, upload_cover_token, upload_cover_redirect, \
-    upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link
+    upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link, get_res_base_info
 
 
 def rt_res(request):
@@ -133,6 +133,27 @@ def rt_res_slug_dl(request, slug):
 
     if request.method == Method.GET:
         return deal_dl_link(request)
+    return error_response(Error.ERROR_METHOD)
+
+
+def rt_res_slug_base(request, slug):
+    """ /api/res/:slug/status
+
+    GET:    get_status, 获取资源公开信息
+    """
+    options = {
+        Method.GET: "获取资源公开信息",
+    }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
+    ret = Resource.decode_slug(slug)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    request.resource = ret.body
+
+    if request.method == Method.GET:
+        return get_res_base_info(request)
     return error_response(Error.ERROR_METHOD)
 
 

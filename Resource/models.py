@@ -348,6 +348,16 @@ class Resource(models.Model):
             is_home=self.parent_id == Resource.ROOT_ID,
         )
 
+    def to_base_dict(self):
+        """获取资源最基本信息"""
+        return dict(
+            cover=self.get_cover_url(small=False),
+            status=self.status,
+            is_home=self.parent_id == Resource.ROOT_ID,
+            owner=self.owner.to_base_dict(),
+            create_time=self.create_time.timestamp(),
+        )
+
     def get_child_res_list(self):
         """获取目录的子资源列表"""
         _res_list = Resource.objects.filter(parent=self)

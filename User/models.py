@@ -176,6 +176,13 @@ class User(models.Model):
             nickname=self.nickname,
         )
 
+    def to_base_dict(self):
+        """基本字典信息"""
+        return dict(
+            nickname=self.username[:-3]+'***',
+            avatar=self.get_avatar_url(),
+        )
+
     @staticmethod
     def authenticate(username, password):
         """验证用户名和密码是否匹配"""

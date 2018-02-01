@@ -179,6 +179,19 @@ def deal_dl_link(request):
     return get_dl_link(request)
 
 
+@require_get()
+def get_res_base_info(request):
+    """ GET /api/res/:slug/status
+
+    获取资源公开信息
+    """
+    o_res = request.resource
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+    return response(body=o_res.to_base_dict())
+
+
+
 def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
     if ftype.find('video') == 0:
         sub_type = Resource.STYPE_VIDEO
