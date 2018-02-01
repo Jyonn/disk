@@ -10,7 +10,7 @@ from Resource.router import rt_res_token, rt_dlpath_callback, rt_res_slug, \
 
 urlpatterns = [
     path('', rt_res),
-    path('<str:parent_id>/token', rt_res_token),
+    path('<str:parent_str_id>/token', rt_res_token),
     path('<str:res_str_id>/cover', rt_res_cover),
     path('<str:res_str_id>/folder', rt_res_folder),
     path('<str:res_str_id>/link', rt_res_link),
