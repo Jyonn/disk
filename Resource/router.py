@@ -186,5 +186,6 @@ def rt_cover_callback(request):
         return response(body=options, allow=True)
 
     if request.method == Method.POST:
+        print(request.body)
         return upload_cover_callback(request)
     return error_response(Error.ERROR_METHOD)
