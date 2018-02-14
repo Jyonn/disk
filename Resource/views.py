@@ -180,16 +180,22 @@ def deal_dl_link(request):
 
 
 @require_get()
+@maybe_login
 def get_res_base_info(request):
-    """ GET /api/res/:slug/status
+    """ GET /api/res/:slug/base
 
     获取资源公开信息
     """
+    o_user = request.user
+
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-    return response(body=o_res.to_base_dict())
 
+    return response(body=dict(
+        info=o_res.to_base_dict(),
+        readable=o_res.readable(o_user, None)
+    ))
 
 
 def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):

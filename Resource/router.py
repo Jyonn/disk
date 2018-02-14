@@ -137,7 +137,7 @@ def rt_res_slug_dl(request, slug):
 
 
 def rt_res_slug_base(request, slug):
-    """ /api/res/:slug/status
+    """ /api/res/:slug/base
 
     GET:    get_status, 获取资源公开信息
     """
