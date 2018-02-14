@@ -5,6 +5,8 @@
 
 
 class Error:
+    ERROR_CREATE_RIGHT = 2035
+    NOT_FOUND_RIGHT = 2034
     FAIL_QINIU = 2033
     QINIU_UNAUTHORIZED = 2032
     ERROR_REQUEST_QINIU = 2031
@@ -55,13 +57,15 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (ERROR_CREATE_RIGHT, "存储读取权限错误"),
+        (NOT_FOUND_RIGHT, "不存在的读取权限"),
         (FAIL_QINIU, "未知原因导致的七牛端操作错误"),
         (QINIU_UNAUTHORIZED, "七牛端身份验证错误"),
         (ERROR_REQUEST_QINIU, "七牛请求错误"),
         (ERROR_DELETE_ROOT_FOLDER, "无法删除用户根目录"),
         (REQUIRE_EMPTY_FOLDER, "非空目录无法删除"),
         (ERROR_RESOURCE_ID, "错误的资源ID"),
-        (ERROR_CREATE_LINK, "创建链接错误"),
+        (ERROR_CREATE_LINK, "存储链接错误"),
         (NOT_YOUR_RESOURCE, "没有操作权限"),
         (REQUIRE_FATHER_OR_ROOT_DELETE, "不是管理员或父用户，无法删除"),
         (PASSWORD_CHANGED, "密码已改变，需要重新获取token"),
@@ -72,7 +76,7 @@ class Error:
         (INVALID_RNAME, "资源名称不能包含非法字符（\\/*:\'\"|<>?等）"),
         (REQUIRE_FILE, "需要文件资源"),
         (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
-        (PARENT_NOT_BELONG, "无法在他人目录下创建"),
+        (PARENT_NOT_BELONG, "无法在他人目录下存储"),
         (NOT_READABLE, "没有读取权限"),
         (ERROR_FILE_PARENT, "文件资源不能成为父目录"),
         (NOT_FOUND_RESOURCE, "不存在的资源"),
@@ -83,10 +87,10 @@ class Error:
         (ERROR_JWT_FORMAT, "身份认证token错误"),
         (JWT_PARAM_INCOMPLETE, "身份认证token缺少参数"),
         (REQUIRE_DICT, "需要字典数据"),
-        (ERROR_CREATE_USER, "创建用户错误"),
-        (REQUIRE_GRANT, "需要可创建用户权限"),
-        (ERROR_CREATE_FOLDER, "创建目录错误"),
-        (ERROR_CREATE_FILE, "创建文件错误"),
+        (ERROR_CREATE_USER, "存储用户错误"),
+        (REQUIRE_GRANT, "需要可存储用户权限"),
+        (ERROR_CREATE_FOLDER, "存储目录错误"),
+        (ERROR_CREATE_FILE, "存储文件错误"),
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 

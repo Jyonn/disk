@@ -99,7 +99,7 @@ def create_user(request):
         o_user.username,
         o_user,
         o_root,
-        '# %s Disk Home' % o_user.username
+        '# %s的盒子' % o_user.username
     )
     if ret.error is not Error.OK:
         return error_response(ret)

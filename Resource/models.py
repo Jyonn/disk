@@ -116,6 +116,11 @@ class Resource(models.Model):
         max_length=L['visit_key'],
         verbose_name='当status为2时有效',
     )
+    vk_change_time = models.FloatField(
+        null=True,
+        blank=True,
+        default=0,
+    )
     create_time = models.DateTimeField()
     dlcount = models.IntegerField(
         verbose_name='download number',
@@ -173,6 +178,27 @@ class Resource(models.Model):
         return field_validator(dict_, Resource)
 
     @classmethod
+    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type):
+        crt_time = datetime.datetime.now()
+        return cls(
+            rname=rname,
+            rtype=rtype,
+            description=desc,
+            cover=None,
+            owner=o_user,
+            parent=o_parent,
+            dlpath=dlpath,
+            status=cls.STATUS_PRIVATE,
+            visit_key=get_random_string(length=4),
+            create_time=crt_time,
+            vk_change_time=crt_time.timestamp(),
+            rsize=rsize,
+            sub_type=sub_type,
+            res_str_id=cls.get_unique_res_str_id(),
+            dlcount=0,
+        )
+
+    @classmethod
     def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type):
         """ 创建文件对象
 
@@ -189,20 +215,15 @@ class Resource(models.Model):
             return ret
 
         try:
-            o_res = cls(
+            o_res = cls.create_abstract(
                 rname=rname,
-                rtype=Resource.RTYPE_FILE,
-                description=None,
-                cover=None,
-                owner=o_user,
-                parent=o_parent,
+                rtype=cls.RTYPE_FILE,
+                desc=None,
+                o_user=o_user,
+                o_parent=o_parent,
                 dlpath=dlpath,
-                status=Resource.STATUS_PRIVATE,
-                visit_key=get_random_string(length=4),
                 rsize=rsize,
                 sub_type=sub_type,
-                create_time=datetime.datetime.now(),
-                res_str_id=cls.get_unique_res_str_id(),
             )
             o_res.save()
         except ValueError as err:
@@ -225,21 +246,15 @@ class Resource(models.Model):
             return ret
 
         try:
-            o_res = cls(
+            o_res = cls.create_abstract(
                 rname=rname,
-                rtype=Resource.RTYPE_FOLDER,
-                sub_type=Resource.STYPE_FOLDER,
-                description=desc,
-                cover=None,
-                owner=o_user,
-                parent=o_parent,
+                rtype=cls.RTYPE_FOLDER,
+                desc=desc,
+                o_user=o_user,
+                o_parent=o_parent,
                 dlpath=None,
-                status=Resource.STATUS_PRIVATE,
-                visit_key=get_random_string(length=4),
                 rsize=0,
-                dlcount=0,
-                create_time=datetime.datetime.now(),
-                res_str_id=cls.get_unique_res_str_id(),
+                sub_type=cls.STYPE_FOLDER,
             )
             o_res.save()
         except ValueError as err:
@@ -263,20 +278,15 @@ class Resource(models.Model):
             return ret
 
         try:
-            o_res = cls(
+            o_res = cls.create_abstract(
                 rname=rname,
-                rtype=Resource.RTYPE_LINK,
-                sub_type=Resource.STYPE_LINK,
-                description=desc,
-                cover=None,
-                owner=o_user,
-                parent=o_parent,
+                rtype=cls.RTYPE_LINK,
+                desc=desc,
+                o_user=o_user,
+                o_parent=o_parent,
                 dlpath=dlpath,
-                status=Resource.STATUS_PRIVATE,
-                visit_key=get_random_string(length=4),
                 rsize=0,
-                dlcount=0,
-                res_str_id=cls.get_unique_res_str_id(),
+                sub_type=cls.STYPE_LINK,
             )
             o_res.save()
         except ValueError as err:
@@ -383,6 +393,9 @@ class Resource(models.Model):
         if self.owner == o_user or self.status == Resource.STATUS_PUBLIC:
             return True
         if self.status == Resource.STATUS_PROTECT and self.visit_key == visit_key:
+            UserRight.update(o_user, self)
+            return True
+        if self.status == Resource.STATUS_PROTECT and UserRight.verify(o_user, self):
             return True
         return False
 
@@ -412,11 +425,6 @@ class Resource(models.Model):
         o_res_parent = ret.body
 
         for res_str_id in slug_list:
-            # try:
-            #     res_str_id = int(res_str_id)
-            # except ValueError as err:
-            #     deprint(str(err))
-            #     return Ret(Error.ERROR_RESOURCE_ID)
             ret = Resource.get_res_by_str_id(res_str_id)
             if ret.error is not Error.OK:
                 return ret
@@ -471,7 +479,9 @@ class Resource(models.Model):
         self.description = description
         self.status = status
         if status == Resource.STATUS_PROTECT:
-            self.visit_key = visit_key
+            if self.visit_key != visit_key:
+                self.visit_key = visit_key
+                self.vk_change_time = datetime.datetime.now().timestamp()
         self.save()
         return Ret()
 
@@ -514,3 +524,70 @@ class Resource(models.Model):
                 return ret
         self.delete()
         return Ret()
+
+
+class UserRight(models.Model):
+    """
+    用户可读资源权限表（记录加密资源可读性）
+    """
+    user = models.ForeignKey(
+        'User.User',
+        on_delete=models.CASCADE,
+    )
+    res = models.ForeignKey(
+        'Resource.Resource',
+        on_delete=models.CASCADE,
+    )
+    verify_time = models.FloatField(
+        default=0,
+    )
+
+    @classmethod
+    def update(cls, o_user, o_res):
+        if not isinstance(o_user, User):
+            return Ret(Error.STRANGE)
+        if not isinstance(o_res, Resource):
+            return Ret(Error.STRANGE)
+        ret = cls.get_right(o_user, o_res)
+        if ret.error is Error.OK:
+            o_right = ret.body
+            if not isinstance(o_right, UserRight):
+                return Ret(Error.STRANGE)
+            o_right.verify_time = datetime.datetime.now().timestamp()
+            o_right.save()
+            return Ret(Error.OK, o_right)
+        try:
+            o_right = cls(
+                user=o_user,
+                res=o_res,
+                verify_time=datetime.datetime.now().timestamp()
+            )
+            o_right.save()
+        except ValueError as err:
+            deprint(str(err))
+            return Ret(Error.ERROR_CREATE_RIGHT)
+        return Ret(Error.OK, o_right)
+
+    @classmethod
+    def get_right(cls, o_user, o_res):
+        try:
+            o_right = cls.objects.get(user=o_user, res=o_res)
+        except cls.DoesNotExist:
+            return Ret(Error.NOT_FOUND_RIGHT)
+        return Ret(Error.OK, o_right)
+
+    @classmethod
+    def verify(cls, o_user, o_res):
+        if not isinstance(o_res, Resource):
+            return False
+        ret = cls.get_right(o_user, o_res)
+        if ret.error is not Error.OK:
+            return False
+        o_right = ret.body
+        if not isinstance(o_right, UserRight):
+            return False
+        if o_right.verify_time > o_res.vk_change_time:
+            return True
+        else:
+            o_right.delete()
+            return False
