@@ -343,7 +343,7 @@ class Resource(models.Model):
             create_time=self.create_time.timestamp(),
             sub_type=self.sub_type,
             dlcount=self.dlcount,
-            right_bubble=self.right_bubble,
+            # right_bubble=self.right_bubble,
         )
 
     def to_dict(self):
@@ -364,6 +364,7 @@ class Resource(models.Model):
             visit_key=self.visit_key if self.status == Resource.STATUS_PROTECT else None,
             is_home=self.parent_id == Resource.ROOT_ID,
             right_bubble=self.right_bubble,
+            secure_env=self.secure_env()
         )
 
     def to_base_dict(self):
@@ -395,6 +396,17 @@ class Resource(models.Model):
             deprint(str(err))
             return Ret(Error.ERROR_GET_ROOT_FOLDER)
         return Ret(Error.OK, o_res)
+
+    def secure_env(self):
+        if self.pk == Resource.ROOT_ID or not self.right_bubble:
+            return False
+        o_res = self.parent
+        while o_res.pk != Resource.ROOT_ID:
+            if o_res.status == Resource.STATUS_PUBLIC:
+                return o_res.rname
+            if not o_res.right_bubble:
+                break
+        return False
 
     def readable(self, o_user, visit_key):
         """判断当前资源是否被当前用户可读"""
