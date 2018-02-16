@@ -2,6 +2,8 @@
 
 资源API路由
 """
+from django.views.decorators.gzip import gzip_page
+
 from Base.error import Error
 from Base.response import error_response, response, Method
 from Resource.models import Resource
@@ -10,6 +12,7 @@ from Resource.views import get_my_res, upload_res_token, get_res_info, create_fo
     upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link, get_res_base_info
 
 
+@gzip_page
 def rt_res(request):
     """ /api/res
 
@@ -27,6 +30,7 @@ def rt_res(request):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_token(request, parent_str_id):
     """ /api/res/token
 
@@ -43,6 +47,7 @@ def rt_res_token(request, parent_str_id):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_slug(request, slug):
     """ /api/res/:slug/
 
@@ -72,6 +77,7 @@ def rt_res_slug(request, slug):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_folder(request, res_str_id):
     """ /api/res/:res_str_id/folder
 
@@ -88,6 +94,7 @@ def rt_res_folder(request, res_str_id):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_link(request, res_str_id):
     """ /api/res/:res_str_id/link
 
@@ -104,17 +111,7 @@ def rt_res_link(request, res_str_id):
     return error_response(Error.ERROR_METHOD)
 
 
-# def rt_res_vk(request, res_str_id):
-#     """ /api/res/:res_str_id/vk
-#
-#     GET:    get_visit_key, 获取加密密钥
-#     """
-#     if request.method == 'GET':
-#         return get_visit_key(request, res_str_id)
-#
-#     return error_response(Error.ERROR_METHOD)
-#
-#
+@gzip_page
 def rt_res_slug_dl(request, slug):
     """ /api/res/:slug/dl
 
@@ -136,6 +133,7 @@ def rt_res_slug_dl(request, slug):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_slug_base(request, slug):
     """ /api/res/:slug/base
 
@@ -157,6 +155,7 @@ def rt_res_slug_base(request, slug):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_res_cover(request, res_str_id):
     """ /api/res/:res_str_id/cover
 
@@ -173,6 +172,7 @@ def rt_res_cover(request, res_str_id):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_dlpath_callback(request):
     """ /api/res/dlpath/callback
 
@@ -192,6 +192,7 @@ def rt_dlpath_callback(request):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_cover_callback(request):
     """ /api/res/cover/callback
 

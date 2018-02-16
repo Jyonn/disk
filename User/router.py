@@ -2,12 +2,15 @@
 
 用户API路由
 """
+from django.views.decorators.gzip import gzip_page
+
 from Base.error import Error
 from Base.response import error_response, response, Method
 from User.views import create_user, auth_token, upload_avatar_token, \
     get_user_info, delete_user, modify_user, get_my_info, upload_avatar_redirect, upload_avatar_callback
 
 
+@gzip_page
 def rt_user(request):
     """ /api/user/
 
@@ -32,6 +35,7 @@ def rt_user(request):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_user_token(request):
     """ /api/user/token
 
@@ -48,6 +52,7 @@ def rt_user_token(request):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_user_avatar(request):
     """ /api/user/avatar
 
@@ -64,6 +69,7 @@ def rt_user_avatar(request):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_username(request, username):
     """ /api/user/@:username
 
@@ -84,6 +90,7 @@ def rt_username(request, username):
     return error_response(Error.ERROR_METHOD)
 
 
+@gzip_page
 def rt_avatar_callback(request):
     """ /api/user/avatar/callback
 
