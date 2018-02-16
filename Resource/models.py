@@ -134,9 +134,14 @@ class Resource(models.Model):
         max_length=L['res_str_id'],
         unique=True,
     )
+    right_bubble = models.NullBooleanField(
+        verbose_name='读取权限向上冒泡',
+        default=True,
+    )
     FIELD_LIST = [
         'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
-        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount', 'res_str_id',
+        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount',
+        'res_str_id', 'right_bubble',
     ]
 
     @classmethod
@@ -196,6 +201,7 @@ class Resource(models.Model):
             sub_type=sub_type,
             res_str_id=cls.get_unique_res_str_id(),
             dlcount=0,
+            right_bubble=True,
         )
 
     @classmethod
@@ -390,13 +396,19 @@ class Resource(models.Model):
 
     def readable(self, o_user, visit_key):
         """判断当前资源是否被当前用户可读"""
-        if self.owner == o_user or self.status == Resource.STATUS_PUBLIC:
-            return True
-        if self.status == Resource.STATUS_PROTECT and self.visit_key == visit_key:
-            UserRight.update(o_user, self)
-            return True
-        if self.status == Resource.STATUS_PROTECT and UserRight.verify(o_user, self):
-            return True
+        o_res = self
+        while o_res.pk != Resource.ROOT_ID:
+            if o_res.owner == o_user or o_res.status == Resource.STATUS_PUBLIC:
+                return True
+            if o_res.status == Resource.STATUS_PROTECT and o_res.visit_key == visit_key:
+                UserRight.update(o_user, o_res)
+                return True
+            if o_res.status == Resource.STATUS_PROTECT and UserRight.verify(o_user, o_res):
+                return True
+            if not o_res.right_bubble:
+                break
+            o_res = o_res.parent
+            visit_key = None
         return False
 
     def get_dl_url(self):
