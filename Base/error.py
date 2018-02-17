@@ -5,6 +5,7 @@
 
 
 class Error:
+    VISIT_KEY_LEN = 2036
     ERROR_CREATE_RIGHT = 2035
     NOT_FOUND_RIGHT = 2034
     FAIL_QINIU = 2033
@@ -57,6 +58,7 @@ class Error:
     OK = 0
 
     ERROR_DICT = [
+        (VISIT_KEY_LEN, "资源密码至少需要3个字符"),
         (ERROR_CREATE_RIGHT, "存储读取权限错误"),
         (NOT_FOUND_RIGHT, "不存在的读取权限"),
         (FAIL_QINIU, "未知原因导致的七牛端操作错误"),

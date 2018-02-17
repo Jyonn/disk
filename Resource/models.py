@@ -159,7 +159,7 @@ class Resource(models.Model):
         invalid_chars = '\\/*:\'"|<>?'
         for char in invalid_chars:
             if char in rname:
-                print(char)
+                # print(char)
                 return Ret(Error.INVALID_RNAME)
         return Ret()
 
@@ -175,6 +175,12 @@ class Resource(models.Model):
             return Ret(Error.STRANGE)
         if o_parent.rtype != Resource.RTYPE_FOLDER:
             return Ret(Error.ERROR_FILE_PARENT)
+        return Ret()
+
+    @staticmethod
+    def _valid_visit_key(visit_key):
+        if len(visit_key) < 3:
+            return Ret(Error.VISIT_KEY_LEN)
         return Ret()
 
     @classmethod
