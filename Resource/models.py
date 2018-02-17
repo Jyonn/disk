@@ -398,7 +398,9 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     def secure_env(self):
-        if self.pk == Resource.ROOT_ID or not self.right_bubble:
+        if self.pk == Resource.ROOT_ID or \
+                not self.right_bubble or \
+                self.status == Resource.STATUS_PUBLIC:
             return True
         o_res = self.parent
         while o_res.pk != Resource.ROOT_ID:
