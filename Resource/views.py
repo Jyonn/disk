@@ -330,7 +330,8 @@ def upload_cover_redirect(request):
         ('rname', None, None),
         ('status', None, None),
         ('description', None, None),
-        ('visit_key', None, None)
+        ('visit_key', None, None),
+        ('right_bubble', None, None),
     ]
 )
 @require_login
@@ -344,13 +345,14 @@ def modify_res(request):
     description = request.d.description
     status = request.d.status
     visit_key = request.d.visit_key
+    right_bubble = request.d.right_bubble
 
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     if not o_res.belong(o_user):
         return error_response(Error.NOT_YOUR_RESOURCE)
-    ret = o_res.modify_info(rname, description, status, visit_key)
+    ret = o_res.modify_info(rname, description, status, visit_key, right_bubble)
     if ret.error is not Error.OK:
         return error_response(ret)
     return response(body=o_res.to_dict())

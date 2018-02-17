@@ -26,7 +26,7 @@ class Resource(models.Model):
         'description': 1024,
         'manager': 255,
         'dlpath': 1024,
-        'visit_key': 4,
+        'visit_key': 16,
         'cover': 1024,
         'res_str_id': 6,
     }
@@ -476,13 +476,14 @@ class Resource(models.Model):
         self.save()
         return Ret()
 
-    def modify_info(self, rname, description, status, visit_key):
+    def modify_info(self, rname, description, status, visit_key, right_bubble):
         """ 修改资源属性
 
         :param rname: 资源名称
         :param description: 资源介绍
         :param status: 资源分享类型（公开、私有、加密）
         :param visit_key: 资源加密密钥
+        :param right_bubble: 资源读取权限是否向上查询
         :return: Ret对象，错误返回错误代码，成功返回资源对象
         """
         if rname is None:
@@ -493,6 +494,8 @@ class Resource(models.Model):
             status = self.status
         if visit_key is None:
             visit_key = get_random_string(length=4)
+        if right_bubble is None:
+            right_bubble = self.right_bubble
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -506,6 +509,7 @@ class Resource(models.Model):
         # self.rname = rname
         self.description = description
         self.status = status
+        self.right_bubble = right_bubble
         if status == Resource.STATUS_PROTECT:
             if self.visit_key != visit_key:
                 self.visit_key = visit_key
