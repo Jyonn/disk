@@ -399,14 +399,14 @@ class Resource(models.Model):
 
     def secure_env(self):
         if self.pk == Resource.ROOT_ID or not self.right_bubble:
-            return False
+            return True
         o_res = self.parent
         while o_res.pk != Resource.ROOT_ID:
             if o_res.status == Resource.STATUS_PUBLIC:
                 return o_res.rname
             if not o_res.right_bubble:
                 break
-        return False
+        return True
 
     def readable(self, o_user, visit_key):
         """判断当前资源是否被当前用户可读"""
