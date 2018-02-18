@@ -137,6 +137,7 @@ def auth_token(request):
         return error_response(ret)
     token, dict_ = ret.body
     dict_['token'] = token
+    dict_['avatar'] = o_user.get_avatar_url()
 
     return response(body=dict_)
 
