@@ -390,7 +390,6 @@ class Resource(models.Model):
         res_list = []
         for o_res in _res_list:
             res_list.append(o_res.to_dict_for_child())
-
         return Ret(Error.OK, res_list)
 
     @staticmethod
@@ -414,6 +413,7 @@ class Resource(models.Model):
                 return o_res.rname
             if not o_res.right_bubble:
                 break
+            o_res = o_res.parent
         return True
 
     def readable(self, o_user, visit_key):
