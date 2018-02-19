@@ -14,26 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.urls import path, include
-from django.shortcuts import render
-
-from Base.decorator import require_get
-from Base.qn import get_resource_url
-from Base.response import response
-
-
-def index(request):
-    """上传测试"""
-    return render(request, 'upload.html')
-
-
-# @require_get(['key'])
-# def dl(request):
-#     """URL测试"""
-#     return response(body=get_resource_url(request.d.key))
 
 
 urlpatterns = [
     path('api/', include('disk.api_urls')),
-    path('upload', index),
-    # path('dl', dl),
 ]
