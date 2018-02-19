@@ -13,9 +13,16 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+from django.http import HttpResponseRedirect
 from django.urls import path, include
+
+
+def page_not_found(request):
+    return HttpResponseRedirect('https://github.com/lqj679ssn/disk')
 
 
 urlpatterns = [
     path('api/', include('disk.api_urls')),
 ]
+
+handler404 = page_not_found
