@@ -46,7 +46,7 @@ def create_folder(request, res_str_id):
 
 
 @require_json
-@require_post(['link_name', 'description', 'link'])
+@require_post(['link_name', 'link'])
 @require_login
 def create_link(request, res_str_id):
     """ POST /api/res/:res_str_id/link
@@ -56,7 +56,6 @@ def create_link(request, res_str_id):
     o_user = request.user
 
     link_name = request.d.link_name
-    desc = request.d.description
     link = request.d.link
 
     ret = Resource.get_res_by_str_id(res_str_id)
@@ -67,7 +66,7 @@ def create_link(request, res_str_id):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
-    ret = Resource.create_link(link_name, o_user, o_parent, desc, link)
+    ret = Resource.create_link(link_name, o_user, o_parent, link)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body

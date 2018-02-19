@@ -275,13 +275,12 @@ class Resource(models.Model):
         return Ret(Error.OK, o_res)
 
     @classmethod
-    def create_link(cls, rname, o_user, o_parent, desc, dlpath):
+    def create_link(cls, rname, o_user, o_parent, dlpath):
         """ 创建链接对象
 
         :param rname: 链接名称
         :param o_user: 所属用户
         :param o_parent: 所在目录
-        :param desc: 介绍说明
         :param dlpath: 链接地址
         :return: Ret对象，错误返回错误代码，成功返回链接对象
         """
@@ -293,7 +292,7 @@ class Resource(models.Model):
             o_res = cls.create_abstract(
                 rname=rname,
                 rtype=cls.RTYPE_LINK,
-                desc=desc,
+                desc=None,
                 o_user=o_user,
                 o_parent=o_parent,
                 dlpath=dlpath,
