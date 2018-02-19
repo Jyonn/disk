@@ -26,3 +26,4 @@ urlpatterns = [
 ]
 
 handler404 = page_not_found
+handler500 = page_not_found
