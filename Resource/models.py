@@ -618,6 +618,8 @@ class UserRight(models.Model):
     def verify(cls, o_user, o_res):
         if not isinstance(o_res, Resource):
             return False
+        if not isinstance(o_user, User):
+            return False
         ret = cls.get_right(o_user, o_res)
         if ret.error is not Error.OK:
             return False

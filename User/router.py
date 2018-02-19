@@ -16,12 +16,12 @@ def rt_user(request):
 
     GET:    get_my_info, 获取我的信息
     POST:   create_user, 创建用户
-    PUT:    modify_user, 修改用户
+    PUT:    modify_user, 修改用户信息
     """
     options = {
         Method.GET: "获取我的信息",
         Method.POST: "创建用户",
-        Method.PUT: "修改用户",
+        Method.PUT: "修改用户信息",
     }
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
