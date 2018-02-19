@@ -9,7 +9,8 @@ from Base.response import error_response, response, Method
 from Resource.models import Resource
 from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
     upload_dlpath_redirect, modify_res, create_link, upload_cover_token, upload_cover_redirect, \
-    upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link, get_res_base_info
+    upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link, get_res_base_info, \
+    direct_link
 
 
 @gzip_page
@@ -225,6 +226,14 @@ def rt_direct_link(request, res_str_id):
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
 
+    find_dot = res_str_id.find('.')
+    if find_dot != -1:
+        res_str_id = res_str_id[:find_dot]
+    ret = Resource.get_res_by_str_id(res_str_id)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+
+    request.resource = ret.body
     if request.method == Method.GET:
         return direct_link(request)
     return error_response(Error.ERROR_METHOD)

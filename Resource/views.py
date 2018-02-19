@@ -461,17 +461,9 @@ def delete_res(request):
     return response()
 
 
-def direct_link(request, res_str_id):
+def direct_link(request):
     """ GET /l/:res_str_id
 
     直链解析，允许在资源ID后加扩展名
     """
-    find_dot = res_str_id.find('.')
-    if find_dot != -1:
-        res_str_id = res_str_id[:find_dot]
-    ret = Resource.get_res_by_str_id(res_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-
-    request.resource = ret.body
     return get_dl_link(request)
