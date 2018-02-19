@@ -211,3 +211,20 @@ def rt_cover_callback(request):
         # print(request.body)
         return upload_cover_callback(request)
     return error_response(Error.ERROR_METHOD)
+
+
+def rt_direct_link(request, res_str_id):
+    """ /s/:res_str_id
+
+    GET: direct_link, 直链分享解析
+    """
+
+    options = {
+        Method.GET: "直链分享解析",
+    }
+    if request.method == Method.OPTIONS:
+        return response(body=options, allow=True)
+
+    if request.method == Method.GET:
+        return direct_link(request)
+    return error_response(Error.ERROR_METHOD)
