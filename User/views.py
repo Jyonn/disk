@@ -21,11 +21,14 @@ from User.models import User
 
 
 try:
+    print('real')
     excepted_bc = Config.objects.get('beta-code').value
     print(excepted_bc)
 except Exception as err:
+    print('error')
     deprint(str(err))
     excepted_bc = 'EXCEPTED_BC'
+    print(excepted_bc)
 
 
 def get_token_info(o_user):
@@ -98,7 +101,7 @@ def create_user(request):
     username = request.d.username
     password = request.d.password
     beta_code = request.d.beta_code
-    print(beta_code)
+    print('input', beta_code)
     if beta_code != excepted_bc:
         return error_response(Error.BETA_CODE_ERROR)
 
