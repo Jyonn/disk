@@ -22,6 +22,7 @@ from User.models import User
 
 try:
     excepted_bc = Config.objects.get('beta-code').value
+    print(excepted_bc)
 except Exception as err:
     deprint(str(err))
     excepted_bc = 'EXCEPTED_BC'
@@ -97,6 +98,7 @@ def create_user(request):
     username = request.d.username
     password = request.d.password
     beta_code = request.d.beta_code
+    print(beta_code)
     if beta_code != excepted_bc:
         return error_response(Error.BETA_CODE_ERROR)
 
