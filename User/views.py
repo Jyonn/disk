@@ -6,6 +6,7 @@ import json
 
 from qiniu import urlsafe_base64_decode
 
+from Base.common import deprint
 from Base.decorator import require_json, require_post, require_login, require_get, require_delete, \
     require_put
 from Base.error import Error
@@ -13,9 +14,27 @@ from Base.jtoken import jwt_e
 from Base.policy import get_avatar_policy
 from Base.qn import get_upload_token, qiniu_auth_callback
 from Base.response import response, error_response
+from Config.models import Config
 
 from Resource.models import Resource
 from User.models import User
+
+
+try:
+    excepted_bc = Config.objects.get('beta-code').value
+except Exception as err:
+    deprint(str(err))
+    excepted_bc = 'EXCEPTED_BC'
+
+
+def get_token_info(o_user):
+    ret = jwt_e(dict(user_id=o_user.pk))
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    token, dict_ = ret.body
+    dict_['token'] = token
+    dict_['avatar'] = o_user.get_avatar_url()
+    return dict_
 
 
 @require_get()
@@ -68,8 +87,8 @@ def delete_user(request, username):
 
 
 @require_json
-@require_post(['username', 'password', 'nickname'])
-@require_login
+@require_post(['username', 'password', 'beta_code'])
+# @require_login
 def create_user(request):
     """ POST /api/user/
 
@@ -77,13 +96,21 @@ def create_user(request):
     """
     username = request.d.username
     password = request.d.password
-    nickname = request.d.nickname
+    beta_code = request.d.beta_code
+    if beta_code != excepted_bc:
+        return error_response(Error.BETA_CODE_ERROR)
 
-    o_parent = request.user
+    # o_parent = request.user
+    # if not isinstance(o_parent, User):
+    #     return error_response(Error.STRANGE)
+    ret = User.get_user_by_id(User.ROOT_ID)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    o_parent = ret.body
     if not isinstance(o_parent, User):
         return error_response(Error.STRANGE)
 
-    ret = User.create(username, password, nickname, o_parent)
+    ret = User.create(username, password, o_parent)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_user = ret.body
@@ -110,7 +137,8 @@ def create_user(request):
     # token, dict_ = ret.body
     # dict_['token'] = token
     #
-    return response(body=o_user.to_dict())
+    # return response(body=o_user.to_dict())
+    return response(body=get_token_info(o_user))
 
 
 @require_json
@@ -130,16 +158,15 @@ def auth_token(request):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    # save_user_to_session(request, o_user)
-    # from Base.jtoken import jwt_e
-    ret = jwt_e(dict(user_id=o_user.pk))
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    token, dict_ = ret.body
-    dict_['token'] = token
-    dict_['avatar'] = o_user.get_avatar_url()
-
-    return response(body=dict_)
+    # ret = jwt_e(dict(user_id=o_user.pk))
+    # if ret.error is not Error.OK:
+    #     return error_response(ret)
+    # token, dict_ = ret.body
+    # dict_['token'] = token
+    # dict_['avatar'] = o_user.get_avatar_url()
+    #
+    # return response(body=dict_)
+    return response(body=get_token_info(o_user))
 
 
 @require_get([('filename', Resource.pub_valid_rname)])

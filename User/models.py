@@ -95,12 +95,11 @@ class User(models.Model):
         return field_validator(dict_, cls)
 
     @classmethod
-    def create(cls, username, password, nickname, o_parent):
+    def create(cls, username, password, o_parent):
         """ 创建用户
 
         :param username: 用户名
         :param password: 密码
-        :param nickname: 昵称
         :param o_parent: 父用户
         :return: Ret对象，错误返回错误代码，成功返回用户对象
         """
@@ -120,7 +119,7 @@ class User(models.Model):
                 parent=o_parent,
                 avatar=None,
                 grant=False,
-                nickname=nickname,
+                nickname=None,
             )
             o_user.save()
         except ValueError as err:

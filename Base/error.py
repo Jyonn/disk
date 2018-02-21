@@ -43,6 +43,7 @@ class Error:
     ERROR_PASSWORD = 2001
     NOT_FOUND_USER = 2000
 
+    BETA_CODE_ERROR = 1012
     ERROR_PROCESS_FUNC = 1011
     ERROR_TUPLE_FORMAT = 1010
     REQUIRE_ROOT = 1009
@@ -96,6 +97,7 @@ class Error:
         (ERROR_PASSWORD, "错误的用户名或密码"),
         (NOT_FOUND_USER, "不存在的用户"),
 
+        (BETA_CODE_ERROR, "内测码错误"),
         (ERROR_PROCESS_FUNC, "参数预处理函数错误"),
         (ERROR_TUPLE_FORMAT, "属性元组格式错误"),
         (REQUIRE_ROOT, "需要管理员登录"),
