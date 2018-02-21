@@ -20,17 +20,6 @@ from Resource.models import Resource
 from User.models import User
 
 
-try:
-    print('real')
-    excepted_bc = Config.objects.get('beta-code').value
-    print(excepted_bc)
-except Exception as err:
-    print('error')
-    deprint(str(err))
-    excepted_bc = 'EXCEPTED_BC'
-    print(excepted_bc)
-
-
 def get_token_info(o_user):
     ret = jwt_e(dict(user_id=o_user.pk))
     if ret.error is not Error.OK:
@@ -101,7 +90,13 @@ def create_user(request):
     username = request.d.username
     password = request.d.password
     beta_code = request.d.beta_code
-    print('input', beta_code)
+
+    try:
+        excepted_bc = Config.objects.get('beta-code').value
+    except Exception as err:
+        deprint(str(err))
+        excepted_bc = 'EXCEPTED_BC'
+
     if beta_code != excepted_bc:
         return error_response(Error.BETA_CODE_ERROR)
 
