@@ -119,7 +119,7 @@ class User(models.Model):
                 parent=o_parent,
                 avatar=None,
                 grant=False,
-                nickname=username,
+                nickname='',
             )
             o_user.save()
         except ValueError as err:
