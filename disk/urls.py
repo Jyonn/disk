@@ -19,14 +19,14 @@ from django.urls import path, include
 from Resource.router import rt_direct_link
 
 
-# def page_not_found(request):
-#     return HttpResponseRedirect('https://github.com/lqj679ssn/disk')
-#
-#
+def page_not_found(request):
+    return HttpResponseRedirect('https://github.com/lqj679ssn/disk')
+
+
 urlpatterns = [
     path('api/', include('disk.api_urls')),
     path('s/<str:res_str_id>', rt_direct_link),
 ]
 
-# handler404 = page_not_found
-# handler500 = page_not_found
+handler404 = page_not_found
+handler500 = page_not_found
