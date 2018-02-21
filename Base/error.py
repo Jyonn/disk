@@ -75,7 +75,7 @@ class Error:
         (ERROR_RESOURCE_RELATION, "错误的资源逻辑关系"),
         (ERROR_RESOURCE_TYPE, "错误的资源类型"),
         (INVALID_PASSWORD, "密码长度应在6-16个字符之内且无非法字符"),
-        (INVALID_USERNAME, "用户名只能包含字母数字和下划线"),
+        (INVALID_USERNAME, "用户名只能是包含字母数字和下划线的3-32位字符串"),
         (INVALID_RNAME, "资源名称不能包含非法字符（\\/*:\'\"|<>?等）"),
         (REQUIRE_FILE, "需要文件资源"),
         (ERROR_GET_ROOT_FOLDER, "无法读取根目录"),
