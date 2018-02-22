@@ -19,11 +19,11 @@ from Config.models import Config
 from Resource.models import Resource
 from User.models import User
 
-ret = Config.get_config_by_key('beta-code')
-if ret.error is not Error.OK:
+ret_ = Config.get_config_by_key('beta-code')
+if ret_.error is not Error.OK:
     excepted_bc = 'EXCEPTED_BC'
 else:
-    excepted_bc = ret.body.value
+    excepted_bc = ret_.body.value
 
 
 def get_token_info(o_user):
