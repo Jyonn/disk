@@ -14,8 +14,8 @@ class Config(models.Model):
     系统配置，如七牛密钥等
     """
     L = {
-        'key': 512,
-        'value': 1024,
+        'key': 255,
+        'value': 255,
     }
     key = models.CharField(
         max_length=L['key'],
@@ -29,7 +29,10 @@ class Config(models.Model):
     def get_config_by_key(cls, key):
         try:
             o_config = cls.objects.get(key=key)
-        except ValueError as err:
+        except Config.DoesNotExist as err:
+            deprint(str(err))
+            return Ret(Error.NOT_FOUND_CONFIG)
+        except Exception as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_CONFIG)
         return Ret(o_config)
