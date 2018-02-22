@@ -5,6 +5,7 @@
 from django.db import models
 
 from Base.common import deprint
+from Base.decorator import field_validator
 from Base.error import Error
 from Base.response import Ret
 
@@ -24,9 +25,16 @@ class Config(models.Model):
     value = models.CharField(
         max_length=L['value'],
     )
+    FIELD_LIST = ['key', 'value']
+
+    @classmethod
+    def _validate(cls, dict_):
+        """验证传入参数是否合法"""
+        return field_validator(dict_, Config)
 
     @classmethod
     def get_config_by_key(cls, key):
+        ret = cls._validate(locals())
         try:
             o_config = cls.objects.get(key=key)
         except Config.DoesNotExist as err:
