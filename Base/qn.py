@@ -13,15 +13,23 @@ from Base.response import Ret
 from Config.models import Config
 from disk.settings import HOST, CDN_HOST
 
-try:
-    ACCESS_KEY = Config.objects.get(key='qiniu-access-key').value
-    SECRET_KEY = Config.objects.get(key='qiniu-secret-key').value
-    BUCKET = Config.objects.get(key='qiniu-bucket').value
-except Exception as err:
-    deprint(str(err))
+ret = Config.get_config_by_key('qiniu-access-key')
+if ret.error is not Error.OK:
     ACCESS_KEY = 'ACCESSKEY'
+else:
+    ACCESS_KEY = ret.body.value
+
+ret = Config.get_config_by_key('qiniu-secret-key')
+if ret.error is not Error.OK:
     SECRET_KEY = 'SECRETKEY'
+else:
+    SECRET_KEY = ret.body.value
+
+ret = Config.get_config_by_key('qiniu-bucket')
+if ret.error is not Error.OK:
     BUCKET = 'BUCKET'
+else:
+    BUCKET = ret.body.value
 
 _AUTH = qiniu.Auth(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
 _HOST = HOST
@@ -52,7 +60,7 @@ def qiniu_auth_callback(request):
     verified = _AUTH.verify_callback(auth_header, url, body, content_type='application/json')
     if not verified:
         return Ret(Error.UNAUTH_CALLBACK)
-    return Ret(Error.OK)
+    return Ret()
 
 
 def get_resource_url(key, expires=3600):

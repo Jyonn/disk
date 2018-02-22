@@ -241,7 +241,7 @@ class Resource(models.Model):
         except ValueError as err:
             deprint(str(err))
             return Ret(Error.ERROR_CREATE_FILE)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     @classmethod
     def create_folder(cls, rname, o_user, o_parent, desc=None):
@@ -272,7 +272,7 @@ class Resource(models.Model):
         except ValueError as err:
             deprint(str(err))
             return Ret(Error.ERROR_CREATE_FOLDER)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     @classmethod
     def create_link(cls, rname, o_user, o_parent, dlpath):
@@ -303,7 +303,7 @@ class Resource(models.Model):
         except ValueError as err:
             deprint(str(err))
             return Ret(Error.ERROR_CREATE_LINK)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     @classmethod
     def get_res_by_str_id(cls, res_str_id):
@@ -312,7 +312,7 @@ class Resource(models.Model):
         except cls.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_RESOURCE)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     @classmethod
     def get_res_by_id(cls, res_id):
@@ -322,7 +322,7 @@ class Resource(models.Model):
         except cls.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_RESOURCE)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     def belong(self, o_user):
         """判断资源是否属于用户"""
@@ -389,7 +389,7 @@ class Resource(models.Model):
         res_list = []
         for o_res in _res_list:
             res_list.append(o_res.to_dict_for_child())
-        return Ret(Error.OK, res_list)
+        return Ret(res_list)
 
     @staticmethod
     def get_root_folder(o_user):
@@ -399,7 +399,7 @@ class Resource(models.Model):
         except Resource.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.ERROR_GET_ROOT_FOLDER)
-        return Ret(Error.OK, o_res)
+        return Ret(o_res)
 
     def secure_env(self):
         if self.pk == Resource.ROOT_ID or \
@@ -467,7 +467,7 @@ class Resource(models.Model):
             if o_res_crt.parent != o_res_parent:
                 return Ret(Error.ERROR_RESOURCE_RELATION)
             o_res_parent = o_res_crt
-        return Ret(Error.OK, o_res_parent)
+        return Ret(o_res_parent)
 
     def modify_rname(self, rname):
         key = self.dlpath
@@ -592,7 +592,7 @@ class UserRight(models.Model):
                 return Ret(Error.STRANGE)
             o_right.verify_time = datetime.datetime.now().timestamp()
             o_right.save()
-            return Ret(Error.OK, o_right)
+            return Ret(o_right)
         try:
             o_right = cls(
                 user=o_user,
@@ -603,7 +603,7 @@ class UserRight(models.Model):
         except ValueError as err:
             deprint(str(err))
             return Ret(Error.ERROR_CREATE_RIGHT)
-        return Ret(Error.OK, o_right)
+        return Ret(o_right)
 
     @classmethod
     def get_right(cls, o_user, o_res):
@@ -611,7 +611,7 @@ class UserRight(models.Model):
             o_right = cls.objects.get(user=o_user, res=o_res)
         except cls.DoesNotExist:
             return Ret(Error.NOT_FOUND_RIGHT)
-        return Ret(Error.OK, o_right)
+        return Ret(o_right)
 
     @classmethod
     def verify(cls, o_user, o_res):

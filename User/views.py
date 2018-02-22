@@ -19,11 +19,11 @@ from Config.models import Config
 from Resource.models import Resource
 from User.models import User
 
-try:
-    excepted_bc = Config.objects.get(key='beta-code').value
-except Exception as err:
-    deprint(str(err))
+ret = Config.get_config_by_key('beta-code')
+if ret.error is not Error.OK:
     excepted_bc = 'EXCEPTED_BC'
+else:
+    excepted_bc = ret.body.value
 
 
 def get_token_info(o_user):

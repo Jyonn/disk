@@ -8,7 +8,7 @@ import json
 from django.http import HttpResponse
 
 from Base.common import deprint
-from Base.error import Error
+from Base.error import Error, E
 
 
 class Method:
@@ -24,17 +24,20 @@ class Ret:
     函数返回类
     """
     def __init__(self, error=Error.OK, body=None, append_msg=''):
+        if not isinstance(error, E):
+            body = error
+            error = Error.OK
         self.error = error
         self.body = body or []
         self.append_msg = append_msg
 
 
-def response(code=0, msg="ok", body=None, allow=False):
+def response(eid=Error.OK, msg="ok", body=None, allow=False):
     """
     回复HTTP请求
     """
     resp = {
-        "code": code,
+        "code": eid.eid,
         "msg": msg,
         "body": body or [],
     }
@@ -60,8 +63,10 @@ def error_response(error_id, append_msg=""):
     if isinstance(error_id, Ret):
         append_msg = error_id.append_msg
         error_id = error_id.error
+    if not isinstance(error_id, E):
+        deprint(error_id)
+        return error_response(Error.STRANGE, append_msg='error_response error_id not E')
     for error in Error.ERROR_DICT:
         if error_id == error[0]:
-            return response(code=error_id, msg=error[1]+append_msg)
-    deprint('Error Not Found: ', error_id)
-    return error_response(Error.ERROR_NOT_FOUND)
+            return response(eid=error_id, msg=error[1] + append_msg)
+    return error_response(Error.ERROR_NOT_FOUND, append_msg=str(error_id))

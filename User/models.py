@@ -125,7 +125,7 @@ class User(models.Model):
         except ValueError as err:
             deprint(str(err))
             return Ret(Error.ERROR_CREATE_USER)
-        return Ret(Error.OK, o_user)
+        return Ret(o_user)
 
     def change_password(self, password, old_password):
         """修改密码"""
@@ -154,7 +154,7 @@ class User(models.Model):
         except User.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
-        return Ret(Error.OK, o_user)
+        return Ret(o_user)
 
     @staticmethod
     def get_user_by_id(user_id):
@@ -164,7 +164,7 @@ class User(models.Model):
         except User.DoesNotExist as err:
             deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
-        return Ret(Error.OK, o_user)
+        return Ret(o_user)
 
     def to_dict(self):
         """把用户对象转换为字典"""
@@ -194,7 +194,7 @@ class User(models.Model):
             deprint(str(err))
             return Ret(Error.NOT_FOUND_USER)
         if User._hash(password) == o_user.password:
-            return Ret(Error.OK, o_user)
+            return Ret(o_user)
         return Ret(Error.ERROR_PASSWORD)
 
     def get_avatar_url(self, small=True):

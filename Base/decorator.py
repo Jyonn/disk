@@ -92,7 +92,7 @@ def validate_params(r_param_valid_list, g_params):
             except Exception as err:
                 deprint(str(err))
                 return Ret(Error.ERROR_PROCESS_FUNC)
-    return Ret(Error.OK, g_params)
+    return Ret(g_params)
 
 
 def field_validator(dict_, cls):

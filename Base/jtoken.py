@@ -26,7 +26,7 @@ def jwt_e(dict_, replace=True, expire_second=7 * 60 * 60 * 24):
     if replace or 'expire' not in dict_.keys():
         dict_['expire'] = expire_second
     encode_str = jwt.encode(dict_, SECRET_KEY, algorithm=JWT_ENCODE_ALGO).decode()
-    return Ret(Error.OK, (encode_str, dict_))
+    return Ret((encode_str, dict_))
 
 
 def jwt_d(str_):
@@ -48,4 +48,4 @@ def jwt_d(str_):
         return Ret(Error.JWT_PARAM_INCOMPLETE)
     if datetime.datetime.now().timestamp() > dict_['ctime'] + dict_['expire']:
         return Ret(Error.JWT_EXPIRED)
-    return Ret(Error.OK, dict_)
+    return Ret(dict_)
