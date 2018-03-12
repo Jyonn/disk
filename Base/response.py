@@ -9,6 +9,7 @@ from django.http import HttpResponse
 
 from Base.common import deprint
 from Base.error import Error, E
+from disk.settings import DEBUG
 
 
 class Method:
@@ -66,4 +67,7 @@ def error_response(e, append_msg=""):
     if not isinstance(e, E):
         deprint(str(e))
         return error_response(Error.STRANGE, append_msg='error_response error_id not E')
+
+    if not DEBUG and e.release:
+        e = e.release
     return response(e=e, msg=e.msg + append_msg)
