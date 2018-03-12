@@ -16,13 +16,14 @@ class E:
 
 
 class Error:
+    # Debug 错误
+    OK = E("没有错误")
+
     # Release 错误
     ERROR_PARAM = E("参数错误")
     SYSTEM_ERROR = E("系统错误")
     REQUIRE_UNAVAILABLE = E("请求错误")
 
-    # Debug 错误
-    OK = E("没有错误")
     ERROR_NOT_FOUND = E("不存在的错误", SYSTEM_ERROR)
     REQUIRE_PARAM = E("缺少参数", ERROR_PARAM)
     REQUIRE_JSON = E("需要JSON数据", ERROR_PARAM)
