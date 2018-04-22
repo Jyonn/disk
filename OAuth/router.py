@@ -16,6 +16,6 @@ def rt_qtb_callback(request):
     if request.method == Method.OPTIONS:
         return response(body=options, allow=True)
 
-    if request.method == Method.POST:
+    if request.method == Method.GET:
         return oauth_qtb_callback(request)
     return error_response(Error.ERROR_METHOD)
