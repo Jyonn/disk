@@ -260,8 +260,6 @@ def require_login_func(request):
     if not isinstance(o_user, User):
         return Ret(Error.STRANGE)
 
-    if float(dict_['ctime']) < float(o_user.pwd_change_time):
-        return Ret(Error.PASSWORD_CHANGED)
     request.user = o_user
     return Ret()
 

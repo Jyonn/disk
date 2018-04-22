@@ -76,6 +76,8 @@ class Error:
     ERROR_CREATE_FILE = E("存储文件错误", SYSTEM_ERROR)
     ERROR_PASSWORD = E("错误的用户名或密码")
     NOT_FOUND_USER = E("不存在的用户")
+    QTB_AUTH_FAIL = E("齐天簿身份认证失败")
+    QTB_GET_INFO_FAIL = E("齐天簿获取用户信息失败")
 
     @classmethod
     def get_error_dict(cls):

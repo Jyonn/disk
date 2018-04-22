@@ -11,7 +11,7 @@ from Base.decorator import require_get, require_login, require_json, require_pos
     require_put, require_delete
 from Base.error import Error
 from Base.policy import get_res_policy, get_cover_policy
-from Base.qn import get_upload_token, qiniu_auth_callback
+from Base.qn import QN_RES_MANAGER
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -240,7 +240,7 @@ def upload_dlpath_callback(request):
 
     七牛上传资源回调函数
     """
-    ret = qiniu_auth_callback(request)
+    ret = QN_RES_MANAGER.qiniu_auth_callback(request)
     if ret.error is not Error.OK:
         return error_response(ret)
 
@@ -295,7 +295,7 @@ def upload_cover_callback(request):
 
     七牛上传资源封面成功后的回调函数
     """
-    ret = qiniu_auth_callback(request)
+    ret = QN_RES_MANAGER.qiniu_auth_callback(request)
     if ret.error is not Error.OK:
         return error_response(ret)
 
@@ -401,7 +401,7 @@ def upload_res_token(request, parent_str_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
-    qn_token, key = get_upload_token(key, get_res_policy(o_user.pk, o_parent.res_str_id))
+    qn_token, key = QN_RES_MANAGER.get_upload_token(key, get_res_policy(o_user.pk, o_parent.res_str_id))
     return response(body=dict(upload_token=qn_token, key=key))
 
 
@@ -431,7 +431,7 @@ def upload_cover_token(request, res_str_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'cover/%s/%s/%s' % (o_res.pk, crt_time, filename)
-    qn_token, key = get_upload_token(key, get_cover_policy(o_res.res_str_id))
+    qn_token, key = QN_RES_MANAGER.get_upload_token(key, get_cover_policy(o_res.res_str_id))
     return response(body=dict(upload_token=qn_token, key=key))
 
 
