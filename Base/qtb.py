@@ -26,6 +26,9 @@ def get_qtb_user_token(code):
         return Ret(Error.QTB_AUTH_FAIL)
 
     print(res['code'], Error.OK.eid)
+    print(type(res['code']))
+    print(type(Error.OK.eid))
+    print(res['code'] == Error.OK.eid)
     if res['code'] != Error.OK.eid:
         return Ret(Error.QTB_AUTH_FAIL, append_msg='，%s' % res['msg'])
 
