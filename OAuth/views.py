@@ -16,6 +16,7 @@ def oauth_qtb_callback(request):
     body = ret.body
     token = body['token']
     qt_user_app_id = body['user_app_id']
+    print('token', token)
 
     ret = User.create(qt_user_app_id, token)
     if ret.error is not Error.OK:
