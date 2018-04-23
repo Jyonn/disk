@@ -3,6 +3,7 @@ from Base.error import Error
 from Base.qtb import get_qtb_user_token
 from Base.response import error_response, response
 from User.models import User
+from User.views import get_token_info
 
 
 @require_get(['code'])
@@ -26,4 +27,4 @@ def oauth_qtb_callback(request):
     ret = o_user.update()
     if ret.error is not Error.OK:
         return error_response(ret)
-    return response(body=o_user.to_dict())
+    return response(body=get_token_info(o_user)['token'])

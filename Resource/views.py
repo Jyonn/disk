@@ -75,22 +75,22 @@ def create_link(request, res_str_id):
     return response(body=o_res.to_dict())
 
 
-@require_get()
-@require_login
-def get_my_res(request):
-    """ GET /api/res/
-
-    获取我的资源根目录
-    """
-    o_user = request.user
-    ret = Resource.get_root_folder(o_user)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    request.resource = o_res
-    return get_res_info(request)
+# @require_get()
+# @require_login
+# def get_my_res(request):
+#     """ GET /api/res/
+#
+#     获取我的资源根目录
+#     """
+#     o_user = request.user
+#     ret = Resource.get_root_folder(o_user)
+#     if ret.error is not Error.OK:
+#         return error_response(ret)
+#     o_res = ret.body
+#     if not isinstance(o_res, Resource):
+#         return error_response(Error.STRANGE)
+#     request.resource = o_res
+#     return get_res_info(request)
 
 
 @require_get([('visit_key', None, None)])

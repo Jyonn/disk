@@ -19,8 +19,8 @@ def jwt_e(dict_, replace=True, expire_second=7 * 60 * 60 * 24):
     :param dict_: 被加密的字典数据
     :param expire_second: 过期时间
     """
-    if not isinstance(dict_, dict):
-        return Ret(Error.STRANGE)
+    # if not isinstance(dict_, dict):
+    #     return Ret(Error.STRANGE)
     if replace or 'ctime' not in dict_.keys():
         dict_['ctime'] = datetime.datetime.now().timestamp()
     if replace or 'expire' not in dict_.keys():

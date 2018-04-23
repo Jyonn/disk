@@ -13,11 +13,11 @@ from User.models import User
 
 def get_token_info(o_user):
     ret = jwt_e(dict(user_id=o_user.pk))
-    if ret.error is not Error.OK:
-        return error_response(ret)
+    # if ret.error is not Error.OK:
+    #     return error_response(ret)
     token, dict_ = ret.body
     dict_['token'] = token
-    dict_['avatar'] = o_user.get_avatar_url()
+    dict_['avatar'] = o_user.avatar
     return dict_
 
 
@@ -29,7 +29,7 @@ def get_my_info(request):
     获取我的信息
     """
     o_user = request.user
-    return get_user_info(request, o_user.username)
+    return get_user_info(request, o_user.qt_user_app_id)
 
 
 @require_get()

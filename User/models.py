@@ -84,10 +84,21 @@ class User(models.Model):
 
     def to_dict(self):
         """把用户对象转换为字典"""
+        from Resource.models import Resource
+        ret = Resource.get_root_folder(self)
+        if ret.error is not Error.OK:
+            root_res = None
+        else:
+            o_res = ret.body
+            if not isinstance(o_res, Resource):
+                root_res = None
+            else:
+                root_res = o_res.res_str_id
         return dict(
             user_id=self.pk,
             avatar=self.avatar,
             nickname=self.nickname,
+            root_res=root_res
         )
 
     @classmethod

@@ -13,22 +13,22 @@ from Resource.views import get_my_res, upload_res_token, get_res_info, create_fo
     direct_link
 
 
-@gzip_page
-def rt_res(request):
-    """ /api/res
-
-    GET:    get_my_res, 获取我的资源根目录
-    """
-    options = {
-        Method.GET: "获取我的资源根目录"
-    }
-    if request.method == Method.OPTIONS:
-        return response(body=options, allow=True)
-
-    if request.method == Method.GET:
-        return get_my_res(request)
-
-    return error_response(Error.ERROR_METHOD)
+# @gzip_page
+# def rt_res(request):
+#     """ /api/res
+#
+#     GET:    get_my_res, 获取我的资源根目录
+#     """
+#     options = {
+#         Method.GET: "获取我的资源根目录"
+#     }
+#     if request.method == Method.OPTIONS:
+#         return response(body=options, allow=True)
+#
+#     if request.method == Method.GET:
+#         return get_my_res(request)
+#
+#     return error_response(Error.ERROR_METHOD)
 
 
 @gzip_page
