@@ -7,7 +7,7 @@ from django.views.decorators.gzip import gzip_page
 from Base.error import Error
 from Base.response import error_response, response, Method
 from Resource.models import Resource
-from Resource.views import get_my_res, upload_res_token, get_res_info, create_folder, \
+from Resource.views import upload_res_token, get_res_info, create_folder, \
     upload_dlpath_redirect, modify_res, create_link, upload_cover_token, upload_cover_redirect, \
     upload_dlpath_callback, upload_cover_callback, delete_res, deal_dl_link, get_res_base_info, \
     direct_link
