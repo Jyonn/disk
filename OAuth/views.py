@@ -27,4 +27,4 @@ def oauth_qtb_callback(request):
     ret = o_user.update()
     if ret.error is not Error.OK:
         return error_response(ret)
-    return response(body=get_token_info(o_user)['token'])
+    return response(body=get_token_info(o_user))
