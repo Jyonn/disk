@@ -33,12 +33,12 @@ def get_my_info(request):
 
 
 @require_get()
-def get_user_info(request, username):
-    """ GET /api/user/@:username
+def get_user_info(request, qt_user_app_id):
+    """ GET /api/user/@:qt_user_app_id
 
     获取用户信息
     """
-    ret = User.get_user_by_username(username)
+    ret = User.get_user_by_qt_user_app_id(qt_user_app_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_user = ret.body
@@ -49,13 +49,13 @@ def get_user_info(request, username):
 
 @require_delete()
 @require_root
-def delete_user(request, username):
-    """ DELETE /api/user/@:username
+def delete_user(request, qt_user_app_id):
+    """ DELETE /api/user/@:qt_user_app_id
 
     删除用户
     """
 
-    ret = User.get_user_by_username(username)
+    ret = User.get_user_by_qt_user_app_id(qt_user_app_id)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_user = ret.body

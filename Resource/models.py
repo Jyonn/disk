@@ -332,9 +332,9 @@ class Resource(models.Model):
         """获取封面链接"""
         if self.cover is None:
             return None
-        from Base.qn import get_resource_url
+        from Base.qn import QN_RES_MANAGER
         key = "%s-small" % self.cover if small else self.cover
-        return get_resource_url(key)
+        return QN_RES_MANAGER.get_resource_url(key)
 
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
@@ -378,7 +378,7 @@ class Resource(models.Model):
             cover=self.get_cover_url(small=False),
             status=self.status,
             is_home=self.parent_id == Resource.ROOT_ID,
-            owner=self.owner.to_base_dict(),
+            owner=self.owner.to_dict(),
             create_time=self.create_time.timestamp(),
         )
 
@@ -438,8 +438,8 @@ class Resource(models.Model):
             return None
         self.dlcount += 1
         self.save()
-        from Base.qn import get_resource_url
-        return get_resource_url(self.dlpath)
+        from Base.qn import QN_RES_MANAGER
+        return QN_RES_MANAGER.get_resource_url(self.dlpath)
 
     def get_visit_key(self):
         """获取当前资源的访问密码"""
@@ -472,8 +472,8 @@ class Resource(models.Model):
     def modify_rname(self, rname):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
-        from Base.qn import move_res
-        ret = move_res(key, new_key)
+        from Base.qn import QN_RES_MANAGER
+        ret = QN_RES_MANAGER.move_res(key, new_key)
         if ret.error is not Error.OK:
             return ret
         self.rname = rname
@@ -527,9 +527,9 @@ class Resource(models.Model):
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
-        from Base.qn import delete_res
+        from Base.qn import QN_RES_MANAGER
         if self.cover:
-            ret = delete_res(self.cover)
+            ret = QN_RES_MANAGER.delete_res(self.cover)
             if ret.error is not Error.OK:
                 return ret
         self.cover = cover
@@ -548,15 +548,15 @@ class Resource(models.Model):
         if self.rtype == Resource.RTYPE_FOLDER:
             if not self.is_empty():
                 return Ret(Error.REQUIRE_EMPTY_FOLDER)
-        from Base.qn import delete_res
+        from Base.qn import QN_RES_MANAGER
         if self.cover:
-            ret = delete_res(self.cover)
+            ret = QN_RES_MANAGER.delete_res(self.cover)
             if ret.error is not Error.OK:
                 return ret
             self.cover = None
             self.save()
         if self.rtype == Resource.RTYPE_FILE:
-            ret = delete_res(self.dlpath)
+            ret = QN_RES_MANAGER.delete_res(self.dlpath)
             if ret.error is not Error.OK:
                 return ret
         self.delete()

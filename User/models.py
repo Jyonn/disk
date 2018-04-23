@@ -17,7 +17,6 @@ class User(models.Model):
     """
     ROOT_ID = 1
     L = {
-        'username': 32,
         'password': 32,
         'nickname': 10,
         'avatar': 1024,
@@ -25,10 +24,6 @@ class User(models.Model):
         'qtb_token': 256,
         'description': 20,
     }
-    username = models.CharField(
-        max_length=L['username'],
-        unique=True,
-    )
     avatar = models.CharField(
         default=None,
         null=True,
@@ -38,6 +33,8 @@ class User(models.Model):
     nickname = models.CharField(
         max_length=L['nickname'],
         default=None,
+        blank=True,
+        null=True,
     )
     qt_user_app_id = models.CharField(
         default=None,
@@ -53,7 +50,7 @@ class User(models.Model):
         blank=True,
         null=True,
     )
-    FIELD_LIST = ['username', 'avatar', 'nickname', 'qt_user_app_id', 'description']
+    FIELD_LIST = ['avatar', 'nickname', 'qt_user_app_id', 'description']
 
     @classmethod
     def _validate(cls, dict_):
@@ -64,16 +61,6 @@ class User(models.Model):
     def _hash(s):
         from Base.common import md5
         return md5(s)
-
-    @staticmethod
-    def get_user_by_username(username):
-        """根据用户名获取用户对象"""
-        try:
-            o_user = User.objects.get(username=username)
-        except User.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.NOT_FOUND_USER)
-        return Ret(o_user)
 
     @staticmethod
     def get_user_by_id(user_id):
@@ -99,16 +86,8 @@ class User(models.Model):
         """把用户对象转换为字典"""
         return dict(
             user_id=self.pk,
-            username=self.username,
             avatar=self.avatar,
             nickname=self.nickname,
-        )
-
-    def to_base_dict(self):
-        """基本字典信息"""
-        return dict(
-            nickname=self.username[:-3]+'***',
-            avatar=self.avatar,
         )
 
     @classmethod
