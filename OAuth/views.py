@@ -11,8 +11,9 @@ def oauth_qtb_callback(request):
 
     ret = get_qtb_user_token(code)
     if ret.error is not Error.OK:
+        print("why")
         return error_response(ret)
-
+    print("success")
     body = ret.body
     token = body['token']
     qt_user_app_id = body['user_app_id']
