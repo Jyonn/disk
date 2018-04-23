@@ -27,7 +27,6 @@ def get_qtb_user_token(code):
 
     if res['code'] != Error.OK.eid:
         return Ret(Error.QTB_AUTH_FAIL, append_msg='，%s' % res['msg'])
-    print(res['body'])
     return Ret(res['body'])
 
 
@@ -45,7 +44,7 @@ def update_user_info(token):
         deprint(str(err))
         return Ret(Error.QTB_GET_INFO_FAIL)
 
-    if res['code'] != Error.OK:
+    if res['code'] != Error.OK.eid:
         return Ret(Error.QTB_GET_INFO_FAIL, append_msg='，%s' % res['msg'])
 
     return Ret(res['body'])
