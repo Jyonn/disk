@@ -16,9 +16,11 @@ def get_token_info(o_user):
     # if ret.error is not Error.OK:
     #     return error_response(ret)
     token, dict_ = ret.body
-    dict_['token'] = token
-    dict_['avatar'] = o_user.avatar
-    return dict_
+    user_dict = o_user.to_dict()
+    user_dict['token'] = token
+    user_dict['ctime'] = dict_['ctime']
+    user_dict['expire'] = dict_['expire']
+    return user_dict
 
 
 @require_get()
