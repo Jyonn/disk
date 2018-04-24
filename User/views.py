@@ -18,8 +18,6 @@ def get_token_info(o_user):
     token, dict_ = ret.body
     user_dict = o_user.to_dict()
     user_dict['token'] = token
-    user_dict['ctime'] = dict_['ctime']
-    user_dict['expire'] = dict_['expire']
     return user_dict
 
 
