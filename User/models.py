@@ -106,6 +106,8 @@ class User(models.Model):
         ret = cls.get_user_by_qt_user_app_id(qt_user_app_id)
         if ret.error is Error.OK:
             o_user = ret.body
+            o_user.qtb_token = token
+            o_user.save()
             return Ret(o_user)
         try:
             o_user = cls(
