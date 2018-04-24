@@ -32,6 +32,7 @@ def get_qtb_user_token(code):
 
 def update_user_info(token):
     update_info_uri = '%s/api/user/' % QTB_HOST
+    print('token', token)
     req = requests.get(update_info_uri, headers=dict(
         token=token,
     ), timeout=3)
