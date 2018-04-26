@@ -4,9 +4,9 @@
 """
 from django.urls import path
 
-from User.router import rt_user, rt_username
+from User.router import rt_user, rt_qt_user_app_id
 
 urlpatterns = [
     path('', rt_user),
-    path('@<str:username>', rt_username),
+    path('@<str:qt_user_app_id>', rt_qt_user_app_id),
 ]

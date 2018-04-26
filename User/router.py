@@ -30,7 +30,7 @@ def rt_user(request):
     return error_response(Error.ERROR_METHOD)
 
 @gzip_page
-def rt_username(request, username):
+def rt_qt_user_app_id(request, qt_user_app_id):
     """ /api/user/@:username
 
     GET:    get_user_info, 获取用户信息
@@ -44,7 +44,7 @@ def rt_username(request, username):
         return response(body=options, allow=True)
 
     if request.method == Method.GET:
-        return get_user_info(request, username)
+        return get_user_info(request, qt_user_app_id)
     if request.method == Method.DELETE:
-        return delete_user(request, username)
+        return delete_user(request, qt_user_app_id)
     return error_response(Error.ERROR_METHOD)
