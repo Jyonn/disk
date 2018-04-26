@@ -36,7 +36,7 @@ def oauth_qtb_callback(request):
             o_user.qt_user_app_id,
             o_user,
             o_root,
-            '# 齐天用户%s的盒子' % o_user.qt_user_app_id
+            '# 我的浑天匣'
         )
         if ret.error is not Error.OK:
             return error_response(ret)
