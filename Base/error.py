@@ -78,6 +78,7 @@ class Error:
     NOT_FOUND_USER = E("不存在的用户")
     QTB_AUTH_FAIL = E("齐天簿身份认证失败")
     QTB_GET_INFO_FAIL = E("齐天簿获取用户信息失败")
+    EMPTY = E("")
 
     @classmethod
     def get_error_dict(cls):
