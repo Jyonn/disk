@@ -4,7 +4,7 @@ from Base.common import deprint
 from Base.error import Error
 from Base.response import Ret
 
-QTB_OAUTH_MS = 'http://oauth'
+QTB_OAUTH_MS = 'http://oauth:5000'
 
 
 def get_qtb_user_token(code):

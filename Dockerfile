@@ -5,6 +5,8 @@ RUN \
   apt-get upgrade -y && \
   apt-get install -y python python-dev python3-pip git
 
+RUN apt-get install -y libmysqlclient-dev curl lsof
+
 RUN pip3 install --upgrade pip
 
 WORKDIR /
