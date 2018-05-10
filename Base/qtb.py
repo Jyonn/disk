@@ -32,7 +32,7 @@ def get_qtb_user_token(code):
 def update_user_info(token):
     uri = QTB_OAUTH_MS + '/info'
     try:
-        req = requests.get(uri, headers=dict(
+        req = requests.post(uri, headers=dict(
             token=token,
         ), timeout=20)
     except TimeoutError as err:
