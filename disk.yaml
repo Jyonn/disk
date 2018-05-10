@@ -1,0 +1,104 @@
+# Copyright 2017 Istio Authors
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##################################################################################################
+# Details service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth
+  labels:
+    app: oauth
+spec:
+  ports:
+  - port: 5000
+    name: http
+  selector:
+    app: oauth
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: oauth-v1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: oauth
+        version: v1
+    spec:
+      containers:
+      - name: oauth
+        image: lqj679ssn/diskoauth
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+---
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: disk
+  labels:
+    app: disk
+spec:
+  ports:
+  - port: 8000
+    name: http
+  selector:
+    app: disk
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: disk-v1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: disk
+        version: v1
+    spec:
+      containers:
+      - name: disk
+        image: lqj679ssn/disk
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+---
+###########################################################################
+# Ingress resource (gateway)
+##########################################################################
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gateway
+  annotations:
+    kubernetes.io/ingress.class: "istio"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/.*
+        backend:
+          serviceName: disk
+          servicePort: 8000
+      - path: /s/.*
+        backend:
+          serviceName: disk
+          servicePort: 8000
+---
