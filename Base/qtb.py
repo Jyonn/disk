@@ -9,9 +9,13 @@ QTB_OAUTH_MS = 'http://oauth:5000'
 
 def get_qtb_user_token(code):
     uri = QTB_OAUTH_MS + '/token'
-    req = requests.post(uri, json=dict(
-        code=code,
-    ), timeout=3)
+    try:
+        req = requests.post(uri, json=dict(
+            code=code,
+        ), timeout=20)
+    except TimeoutError as err:
+        deprint(str(err))
+        return Ret(Error.QTB_AUTH_FAIL)
     if req.status_code != requests.codes.ok:
         return Ret(Error.QTB_AUTH_FAIL)
     try:
@@ -27,9 +31,13 @@ def get_qtb_user_token(code):
 
 def update_user_info(token):
     uri = QTB_OAUTH_MS + '/info'
-    req = requests.get(uri, headers=dict(
-        token=token,
-    ), timeout=3)
+    try:
+        req = requests.get(uri, headers=dict(
+            token=token,
+        ), timeout=20)
+    except TimeoutError as err:
+        deprint(str(err))
+        return Ret(Error.QTB_GET_INFO_FAIL)
     if req.status_code != requests.codes.ok:
         return Ret(Error.QTB_GET_INFO_FAIL)
 
