@@ -401,7 +401,8 @@ def upload_res_token(request, parent_str_id):
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
-    qn_token, key = QN_RES_MANAGER.get_upload_token(key, get_res_policy(o_user.pk, o_parent.res_str_id))
+    qn_token, key = QN_RES_MANAGER.get_upload_token(
+        key, get_res_policy(filename, o_user.pk, o_parent.res_str_id))
     return response(body=dict(upload_token=qn_token, key=key))
 
 
