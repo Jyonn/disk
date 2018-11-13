@@ -36,8 +36,7 @@ class Error:
     REQUIRE_ROOT = E("需要管理员权限")
     ERROR_TUPLE_FORMAT = E("属性元组格式错误", ERROR_PARAM)
     ERROR_PROCESS_FUNC = E("参数预处理函数错误", ERROR_PARAM)
-    BETA_CODE_ERROR = E("内测码错误")
-    
+
     NOT_FOUND_CONFIG = E("不存在的配置", REQUIRE_UNAVAILABLE)
     VISIT_KEY_LEN = E("资源密码至少需要3个字符")
     ERROR_CREATE_RIGHT = E("存储读取权限错误", REQUIRE_UNAVAILABLE)

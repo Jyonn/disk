@@ -361,6 +361,7 @@ class Resource(models.Model):
             sub_type=self.sub_type,
             description=self.description,
             cover=self.get_cover_url(small=False),
+            cover_small=self.get_cover_url(),
             owner=self.owner.to_dict(),
             parent_str_id=self.parent.res_str_id,
             status=self.status,
