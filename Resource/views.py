@@ -357,24 +357,6 @@ def modify_res(request):
     return response(body=o_res.to_dict())
 
 
-@require_delete()
-@require_login
-def delete_res(request):
-    """ DELETE /api/res/:slug/
-
-    删除资源
-    """
-    # TODO: 删除资源
-    o_user = request.user
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    if not o_res.belong(o_user):
-        return error_response(Error.NOT_YOUR_RESOURCE)
-    o_res.delete_()
-    return response()
-
-
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
 def upload_res_token(request, parent_str_id):

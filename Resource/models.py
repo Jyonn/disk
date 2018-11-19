@@ -499,7 +499,7 @@ class Resource(models.Model):
         if status is None:
             status = self.status
         if visit_key is None:
-            visit_key = get_random_string(length=4)
+            visit_key = self.visit_key
         if right_bubble is None:
             right_bubble = self.right_bubble
         ret = self._validate(locals())
