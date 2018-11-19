@@ -377,6 +377,7 @@ class Resource(models.Model):
         """获取资源最基本信息"""
         return dict(
             cover=self.get_cover_url(small=False),
+            cover_small=self.get_cover_url(),
             status=self.status,
             is_home=self.parent_id == Resource.ROOT_ID,
             owner=self.owner.to_dict(),
