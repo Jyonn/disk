@@ -418,6 +418,7 @@ def upload_cover_token(request, res_str_id):
     return response(body=dict(upload_token=qn_token, key=key))
 
 
+@require_delete()
 @require_login
 def delete_res(request):
     """ DELETE /api/res/:slug
