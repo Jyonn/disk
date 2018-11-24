@@ -331,6 +331,7 @@ def upload_cover_redirect(request):
         ('description', None, None),
         ('visit_key', None, None),
         ('right_bubble', None, None),
+        ('parent_str_id', None, None),
     ]
 )
 @require_login
@@ -345,13 +346,29 @@ def modify_res(request):
     status = request.d.status
     visit_key = request.d.visit_key
     right_bubble = request.d.right_bubble
+    parent_str_id = request.d.parent_str_id
 
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     if not o_res.belong(o_user):
         return error_response(Error.NOT_YOUR_RESOURCE)
-    ret = o_res.modify_info(rname, description, status, visit_key, right_bubble)
+
+    if parent_str_id:
+        ret = Resource.get_res_by_str_id(parent_str_id)
+        if ret.error is not Error.OK:
+            return error_response(ret)
+        o_parent = ret.body
+        if not isinstance(o_parent, Resource):
+            return error_response(Error.STRANGE)
+        if not o_parent.belong(o_user):
+            return error_response(Error.NOT_YOUR_RESOURCE)
+        if not o_parent.rtype != Resource.RTYPE_FOLDER:
+            return error_response(Error.REQUIRE_FOLDER)
+    else:
+        o_parent = None
+
+    ret = o_res.modify_info(rname, description, status, visit_key, right_bubble, o_parent)
     if ret.error is not Error.OK:
         return error_response(ret)
     return response(body=o_res.to_dict())

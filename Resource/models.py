@@ -483,7 +483,7 @@ class Resource(models.Model):
         self.save()
         return Ret()
 
-    def modify_info(self, rname, description, status, visit_key, right_bubble):
+    def modify_info(self, rname, description, status, visit_key, right_bubble, o_parent):
         """ 修改资源属性
 
         :param rname: 资源名称
@@ -491,18 +491,22 @@ class Resource(models.Model):
         :param status: 资源分享类型（公开、私有、加密）
         :param visit_key: 资源加密密钥
         :param right_bubble: 资源读取权限是否向上查询
+        :param o_parent: 移动后的新父目录
         :return: Ret对象，错误返回错误代码，成功返回资源对象
         """
-        if rname is None:
+        if not rname:
             rname = self.rname
-        if description is None:
+        if not description:
             description = self.description or ''
-        if status is None:
+        if not status:
             status = self.status
-        if visit_key is None:
+        if not visit_key:
             visit_key = self.visit_key
-        if right_bubble is None:
+        if not right_bubble:
             right_bubble = self.right_bubble
+        if not o_parent:
+            o_parent = self.parent
+
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
@@ -517,6 +521,7 @@ class Resource(models.Model):
         self.description = description
         self.status = status
         self.right_bubble = right_bubble
+        self.parent = o_parent
         if status == Resource.STATUS_PROTECT:
             if self.visit_key != visit_key:
                 self.visit_key = visit_key
