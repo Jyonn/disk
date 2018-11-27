@@ -382,6 +382,7 @@ class Resource(models.Model):
             is_home=self.parent_id == Resource.ROOT_ID,
             owner=self.owner.to_dict(),
             create_time=self.create_time.timestamp(),
+            right_bubble=self.right_bubble,
         )
 
     def get_child_res_list(self):

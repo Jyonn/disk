@@ -20,7 +20,7 @@ from User.models import User
 @require_json
 @require_post(['folder_name'])
 @require_login
-def create_folder(request, res_str_id):
+def create_folder(request):
     """ POST /api/res/:res_str_id/folder
 
     上传文件夹资源
@@ -30,8 +30,9 @@ def create_folder(request, res_str_id):
     folder_name = request.d.folder_name
 
     # get parent folder
-    ret = Resource.get_res_by_str_id(res_str_id)
-    o_parent = ret.body
+    o_parent = request.resource
+    if not isinstance(o_parent, Resource):
+        return error_response(Error.STRANGE)
 
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
@@ -48,7 +49,7 @@ def create_folder(request, res_str_id):
 @require_json
 @require_post(['link_name', 'link'])
 @require_login
-def create_link(request, res_str_id):
+def create_link(request):
     """ POST /api/res/:res_str_id/link
 
     上传链接资源
@@ -58,10 +59,9 @@ def create_link(request, res_str_id):
     link_name = request.d.link_name
     link = request.d.link
 
-    ret = Resource.get_res_by_str_id(res_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_parent = ret.body
+    o_parent = request.resource
+    if not isinstance(o_parent, Resource):
+        return error_response(Error.STRANGE)
 
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
@@ -170,7 +170,7 @@ def get_dl_link(request):
     ('visit_key', None, None),
 ])
 def deal_dl_link(request):
-    """ GET /api/res/:slug/dl
+    """ GET /api/res/:res_str_id/dl
 
     获取下载资源链接
     """
@@ -181,7 +181,7 @@ def deal_dl_link(request):
 @require_get()
 @maybe_login
 def get_res_base_info(request):
-    """ GET /api/res/:slug/base
+    """ GET /api/res/:res_str_id/base
 
     获取资源公开信息
     """
@@ -376,7 +376,7 @@ def modify_res(request):
 
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
-def upload_res_token(request, parent_str_id):
+def upload_res_token(request):
     """ GET /api/res/:res_str_id/token
 
     获取七牛上传资源token
@@ -387,10 +387,7 @@ def upload_res_token(request, parent_str_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_str_id(parent_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_parent = ret.body
+    o_parent = request.resource
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
 
@@ -407,7 +404,7 @@ def upload_res_token(request, parent_str_id):
 
 @require_get([('filename', Resource.pub_valid_rname)])
 @require_login
-def upload_cover_token(request, res_str_id):
+def upload_cover_token(request):
     """ GET /api/res/:res_str_id/cover
 
     获取七牛上传资源封面token
@@ -418,10 +415,7 @@ def upload_cover_token(request, res_str_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
 
-    ret = Resource.get_res_by_str_id(res_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
+    o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 

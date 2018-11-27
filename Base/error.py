@@ -49,7 +49,7 @@ class Error:
     REQUIRE_FOLDER = E("目标需要为目录资源")
     ERROR_RESOURCE_ID = E("错误的资源ID", REQUIRE_UNAVAILABLE)
     ERROR_CREATE_LINK = E("存储链接错误")
-    NOT_YOUR_RESOURCE = E("没有操作权限", REQUIRE_UNAVAILABLE)
+    NOT_YOUR_RESOURCE = E("没有操作权限")
     REQUIRE_FATHER_OR_ROOT_DELETE = E("不是管理员或父用户，无法删除", REQUIRE_UNAVAILABLE)
     PASSWORD_CHANGED = E("您已改过密码，请重新登录")
     ERROR_RESOURCE_RELATION = E("错误的资源逻辑关系", REQUIRE_UNAVAILABLE)
@@ -78,6 +78,7 @@ class Error:
     NOT_FOUND_USER = E("不存在的用户")
     QTB_AUTH_FAIL = E("齐天簿身份认证失败")
     QTB_GET_INFO_FAIL = E("齐天簿获取用户信息失败")
+    UNREACHABLE_API = E("不存在的API请求")
 
     @classmethod
     def get_error_dict(cls):
