@@ -79,13 +79,14 @@ class Error:
     QTB_AUTH_FAIL = E("齐天簿身份认证失败")
     QTB_GET_INFO_FAIL = E("齐天簿获取用户信息失败")
     UNREACHABLE_API = E("不存在的API请求")
+    REQUIRE_RELOGIN = E("应用权限变更，需要重新授权")
 
-    @classmethod
-    def get_error_dict(cls):
-        error_dict = dict()
-        for k in cls.__dict__:
-            if k[0] != '_':
-                e = getattr(cls, k)
-                if isinstance(e, E):
-                    error_dict[k] = dict(eid=e.eid, msg=e.msg)
-        return error_dict
+
+ERROR_DICT = dict()
+REVERSED_ERROR_DICT = dict()
+for k in Error.__dict__:
+    if k[0] != '_':
+        e = getattr(Error, k)
+        if isinstance(e, E):
+            ERROR_DICT[k] = dict(eid=e.eid, msg=e.msg)
+            REVERSED_ERROR_DICT[e.eid] = k

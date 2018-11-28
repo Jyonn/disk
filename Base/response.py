@@ -8,7 +8,7 @@ import json
 from django.http import HttpResponse
 
 from Base.common import deprint
-from Base.error import Error, E
+from Base.error import Error, E, REVERSED_ERROR_DICT
 from disk.settings import DEBUG
 
 
@@ -39,6 +39,7 @@ def response(e=Error.OK, msg=Error.OK.msg, body=None, allow=False):
     """
     resp = {
         "status": 'debug' if DEBUG else 'release',
+        "identifier": REVERSED_ERROR_DICT[e.eid],
         "code": e.eid,
         "msg": msg,
         "body": body or [],
