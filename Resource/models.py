@@ -526,17 +526,17 @@ class Resource(models.Model):
         :param o_parent: 移动后的新父目录
         :return: Ret对象，错误返回错误代码，成功返回资源对象
         """
-        if not rname:
+        if rname is None:
             rname = self.rname
-        if not description:
+        if description is None:
             description = self.description or ''
-        if not status:
+        if status is None:
             status = self.status
-        if not visit_key:
+        if visit_key is None:
             visit_key = self.visit_key
-        if not right_bubble:
+        if right_bubble is None:
             right_bubble = self.right_bubble
-        if not o_parent:
+        if o_parent is None:
             o_parent = self.parent
 
         ret = self._validate(locals())
