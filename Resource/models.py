@@ -60,6 +60,14 @@ class Resource(models.Model):
         (STYPE_FILE, 'normal file'),
         (STYPE_LINK, 'link'),
     )
+    COVER_UPLOAD = 0
+    COVER_PARENT = 1
+    COVER_OUTLNK = 2
+    COVER_TUPLE = (
+        (COVER_UPLOAD, 'upload cover'),
+        (COVER_PARENT, 'same as parent'),
+        (COVER_OUTLNK, 'use outsize link'),
+    )
     rname = models.CharField(
         verbose_name='resource name',
         max_length=L['rname'],
@@ -138,10 +146,18 @@ class Resource(models.Model):
         verbose_name='读取权限向上冒泡',
         default=True,
     )
+    cover_type = models.IntegerField(
+        choices=COVER_TUPLE,
+        verbose_name='封面类型 0 上传图片 1 与父资源相同 2 与指定资源相同 3 外部URI链接',
+        default=COVER_UPLOAD,
+        null=0,
+        blank=0,
+    )
+
     FIELD_LIST = [
         'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
         'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount',
-        'res_str_id', 'right_bubble',
+        'res_str_id', 'right_bubble', 'cover_type',
     ]
 
     @classmethod
@@ -328,23 +344,34 @@ class Resource(models.Model):
         """判断资源是否属于用户"""
         return self.owner == o_user
 
-    def get_cover_url(self, small=True):
+    def get_cover_urls(self):
         """获取封面链接"""
-        if self.cover is None:
-            return None
-        from Base.qn import QN_RES_MANAGER
-        key = "%s-small" % self.cover if small else self.cover
-        return QN_RES_MANAGER.get_resource_url(key)
+        o_res = self
+        cover = None
+        while o_res.pk != Resource.ROOT_ID:
+            if o_res.cover_type == Resource.COVER_PARENT:
+                o_res = o_res.parent
+            else:
+                cover = o_res.cover
+        if cover is None:
+            return None, None
+        if o_res.cover_type == Resource.COVER_UPLOAD:
+            from Base.qn import QN_RES_MANAGER
+            return (QN_RES_MANAGER.get_resource_url(cover),
+                    QN_RES_MANAGER.get_resource_url("%s-small", cover))
+        else:
+            return cover, cover
 
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
+        cover_urls = self.get_cover_urls()
         return dict(
             res_str_id=self.res_str_id,
             rname=self.rname,
             rtype=self.rtype,
             # description=self.description,
-            cover=self.get_cover_url(small=False),
-            cover_small=self.get_cover_url(),
+            cover=cover_urls[0],
+            cover_small=cover_urls[1],
             status=self.status,
             create_time=self.create_time.timestamp(),
             sub_type=self.sub_type,
@@ -352,8 +379,9 @@ class Resource(models.Model):
             # right_bubble=self.right_bubble,
         )
 
-    def to_dict(self):
+    def to_dict(self, o_user=None):
         """获取资源字典"""
+        cover_urls = self.get_cover_urls()
         return dict(
             res_str_id=self.res_str_id,
             rname=self.rname,
@@ -361,8 +389,8 @@ class Resource(models.Model):
             rsize=self.rsize,
             sub_type=self.sub_type,
             description=self.description,
-            cover=self.get_cover_url(small=False),
-            cover_small=self.get_cover_url(),
+            cover=cover_urls[0],
+            cover_small=cover_urls[1],
             owner=self.owner.to_dict(),
             parent_str_id=self.parent.res_str_id,
             status=self.status,
@@ -376,9 +404,10 @@ class Resource(models.Model):
 
     def to_base_dict(self):
         """获取资源最基本信息"""
+        cover_urls = self.get_cover_urls()
         return dict(
-            cover=self.get_cover_url(small=False),
-            cover_small=self.get_cover_url(),
+            cover=cover_urls[0],
+            cover_small=cover_urls[1],
             status=self.status,
             is_home=self.parent_id == Resource.ROOT_ID,
             owner=self.owner.to_dict(),

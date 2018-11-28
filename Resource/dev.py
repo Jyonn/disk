@@ -13,3 +13,11 @@ def set_unique_res_key(request):
             o_res.res_str_id = get_random_string(length=6)
             o_res.save()
     return response()
+
+
+@require_root
+@require_post()
+def set_default_cover_type(request):
+    for o_res in Resource.objects.all():
+        if not o_res.cover_type:
+            o_res.cover_type = Resource.COVER_UPLOAD
