@@ -353,6 +353,7 @@ class Resource(models.Model):
                 o_res = o_res.parent
             else:
                 cover = o_res.cover
+                break
         if cover is None:
             return None, None
         if o_res.cover_type == Resource.COVER_UPLOAD:
