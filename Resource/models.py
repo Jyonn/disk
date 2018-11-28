@@ -359,7 +359,7 @@ class Resource(models.Model):
         if o_res.cover_type == Resource.COVER_UPLOAD:
             from Base.qn import QN_RES_MANAGER
             return (QN_RES_MANAGER.get_resource_url(cover),
-                    QN_RES_MANAGER.get_resource_url("%s-small", cover))
+                    QN_RES_MANAGER.get_resource_url("%s-small" % cover))
         else:
             return cover, cover
 
