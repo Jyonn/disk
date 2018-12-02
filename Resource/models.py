@@ -371,7 +371,7 @@ class Resource(models.Model):
             rname=self.rname,
             rtype=self.rtype,
             # description=self.description,
-            cover=cover_urls[0],
+            # cover=cover_urls[0],
             cover_small=cover_urls[1],
             status=self.status,
             create_time=self.create_time.timestamp(),
