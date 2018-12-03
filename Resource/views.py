@@ -304,7 +304,7 @@ def modify_cover(request):
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 
-    if cover_type != Resource.COVER_UPLOAD:
+    if cover_type == Resource.COVER_UPLOAD:
         return error_response(Error.NOT_ALLOWED_COVER_UPLOAD)
 
     ret = o_res.modify_cover(cover, cover_type)
