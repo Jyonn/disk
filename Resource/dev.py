@@ -23,3 +23,5 @@ def set_default_cover_type(request):
             o_res.cover_type = Resource.COVER_UPLOAD
         else:
             o_res.cover_type = Resource.COVER_RANDOM
+        o_res.save()
+    return response()
