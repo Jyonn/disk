@@ -64,7 +64,7 @@ class Resource(models.Model):
     COVER_UPLOAD = 1
     COVER_PARENT = 2
     COVER_OUTLNK = 3
-    COVER_TUPLE = (
+    COVER_TYPE_TUPLE = (
         (COVER_RANDOM, 'random cover'),
         (COVER_UPLOAD, 'upload cover'),
         (COVER_PARENT, 'same as parent'),
@@ -149,7 +149,7 @@ class Resource(models.Model):
         default=True,
     )
     cover_type = models.IntegerField(
-        choices=COVER_TUPLE,
+        choices=COVER_TYPE_TUPLE,
         verbose_name='封面类型 0 上传图片 1 与父资源相同 2 与指定资源相同 3 外部URI链接',
         default=COVER_RANDOM,
         null=0,
