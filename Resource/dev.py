@@ -19,5 +19,7 @@ def set_unique_res_key(request):
 @require_post()
 def set_default_cover_type(request):
     for o_res in Resource.objects.all():
-        if not o_res.cover_type:
+        if o_res.cover:
             o_res.cover_type = Resource.COVER_UPLOAD
+        else:
+            o_res.cover_type = Resource.COVER_RANDOM

@@ -284,8 +284,33 @@ def deal_cover_dlpath(key, res_str_id):
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 
-    o_res.modify_cover(key)
-    return response(body=o_res.to_dict())
+    ret = o_res.modify_cover(key, Resource.COVER_UPLOAD)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    return response(o_res.to_dict())
+
+
+@require_json
+@require_put(['cover', 'cover_type'])
+def modify_cover(request):
+    """ PUT /api/res/:res_str_id/cover
+
+    修改封面信息
+    """
+    cover = request.d.cover
+    cover_type = request.d.cover_type
+
+    o_res = request.resource
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+
+    if cover_type != Resource.COVER_UPLOAD:
+        return error_response(Error.NOT_ALLOWED_COVER_UPLOAD)
+
+    ret = o_res.modify_cover(cover, cover_type)
+    if ret.error is not Error.OK:
+        return error_response(ret)
+    return response(o_res.to_dict())
 
 
 @require_json

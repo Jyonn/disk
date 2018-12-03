@@ -60,10 +60,12 @@ class Resource(models.Model):
         (STYPE_FILE, 'normal file'),
         (STYPE_LINK, 'link'),
     )
-    COVER_UPLOAD = 0
-    COVER_PARENT = 1
-    COVER_OUTLNK = 2
+    COVER_RANDOM = 0
+    COVER_UPLOAD = 1
+    COVER_PARENT = 2
+    COVER_OUTLNK = 3
     COVER_TUPLE = (
+        (COVER_RANDOM, 'random cover'),
         (COVER_UPLOAD, 'upload cover'),
         (COVER_PARENT, 'same as parent'),
         (COVER_OUTLNK, 'use outsize link'),
@@ -149,7 +151,7 @@ class Resource(models.Model):
     cover_type = models.IntegerField(
         choices=COVER_TUPLE,
         verbose_name='封面类型 0 上传图片 1 与父资源相同 2 与指定资源相同 3 外部URI链接',
-        default=COVER_UPLOAD,
+        default=COVER_RANDOM,
         null=0,
         blank=0,
     )
@@ -212,6 +214,7 @@ class Resource(models.Model):
             rtype=rtype,
             description=desc,
             cover=None,
+            cover_type=cls.COVER_RANDOM,
             owner=o_user,
             parent=o_parent,
             dlpath=dlpath,
@@ -392,6 +395,7 @@ class Resource(models.Model):
             description=self.description,
             cover=cover_urls[0],
             cover_small=cover_urls[1],
+            cover_type=self.cover_type,
             owner=self.owner.to_dict(),
             parent_str_id=self.parent.res_str_id,
             status=self.status,
@@ -481,28 +485,6 @@ class Resource(models.Model):
             return self.visit_key
         return None
 
-    @staticmethod
-    def decode_slug(slug):
-        """解码slug并获取资源对象"""
-        slug_list = slug.split('-')
-
-        ret = Resource.get_res_by_id(Resource.ROOT_ID)
-        if ret.error is not Error.OK:
-            return ret
-        o_res_parent = ret.body
-
-        for res_str_id in slug_list:
-            ret = Resource.get_res_by_str_id(res_str_id)
-            if ret.error is not Error.OK:
-                return ret
-            o_res_crt = ret.body
-            if not isinstance(o_res_crt, Resource):
-                return Ret(Error.STRANGE)
-            if o_res_crt.parent != o_res_parent:
-                return Ret(Error.ERROR_RESOURCE_RELATION)
-            o_res_parent = o_res_crt
-        return Ret(o_res_parent)
-
     def modify_rname(self, rname):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
@@ -561,19 +543,20 @@ class Resource(models.Model):
         self.save()
         return Ret()
 
-    def modify_cover(self, cover):
+    def modify_cover(self, cover, cover_type):
         """修改资源封面"""
         ret = self._validate(locals())
         if ret.error is not Error.OK:
             return ret
         from Base.qn import QN_RES_MANAGER
-        if self.cover:
+        if self.cover_type == self.COVER_UPLOAD:
             ret = QN_RES_MANAGER.delete_res(self.cover)
             if ret.error is not Error.OK:
                 return ret
         self.cover = cover
+        self.cover_type = cover_type
         self.save()
-        return Ret()
+        return Ret(self)
 
     def is_empty(self):
         """ 资源是否为空（针对文件夹资源） """

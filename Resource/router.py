@@ -9,7 +9,7 @@ from Base.response import error_response, response, Method
 from Resource.models import Resource
 from Resource.views import upload_res_token, get_res_info, create_folder, modify_res, \
     create_link, upload_cover_token, upload_dlpath_callback, upload_cover_callback, \
-    delete_res, deal_dl_link, get_res_base_info, direct_link
+    delete_res, deal_dl_link, get_res_base_info, direct_link, modify_cover
 
 
 @gzip_page
@@ -83,7 +83,11 @@ SUFFIX_DICT = {
         Method.GET: {
             'desc': "获取七牛上传资源封面token",
             'func': upload_cover_token,
-        }
+        },
+        Method.PUT: {
+            'desc': "修改封面信息",
+            'func': modify_cover,
+        },
     },
     'folder': {
         Method.POST: {

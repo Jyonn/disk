@@ -37,6 +37,12 @@ def response(e=Error.OK, msg=Error.OK.msg, body=None, allow=False):
     """
     回复HTTP请求
     """
+
+    if not isinstance(e, E):
+        body = e
+        e = Error.OK
+        msg = Error.OK.msg
+
     resp = {
         "status": 'debug' if DEBUG else 'release',
         "identifier": REVERSED_ERROR_DICT[e.eid],

@@ -4,11 +4,12 @@
 """
 from django.urls import path
 
-from Resource.dev import set_unique_res_key
+from Resource.dev import set_unique_res_key, set_default_cover_type
 from Resource.router import rt_dlpath_callback, rt_cover_callback, rt_res
 
 urlpatterns = [
     path('@set_unique_res_key', set_unique_res_key),
+    path('@set_cover_type', set_default_cover_type),
 
     path('dlpath/callback', rt_dlpath_callback),
     path('cover/callback', rt_cover_callback),
