@@ -281,6 +281,8 @@ def require_root_func(request):
         return Ret(Error.STRANGE)
     from Config.models import Config
     admin_qitian = Config.get_value_by_key('admin-qitian', 'ADMIN-QITIAN')
+    print(admin_qitian)
+    print(o_user.qt_user_app_id)
     if o_user.qt_user_app_id != admin_qitian:
         return Ret(Error.REQUIRE_ROOT)
     return Ret()
