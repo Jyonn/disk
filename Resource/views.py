@@ -306,6 +306,8 @@ def modify_cover(request):
 
     if cover_type == Resource.COVER_UPLOAD:
         return error_response(Error.NOT_ALLOWED_COVER_UPLOAD)
+    if cover_type == Resource.COVER_SELF and o_res.sub_type != Resource.STYPE_IMAGE:
+        return error_response(Error.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE)
 
     ret = o_res.modify_cover(cover, cover_type)
     if ret.error is not Error.OK:
