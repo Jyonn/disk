@@ -431,7 +431,7 @@ class Resource(models.Model):
         )
 
     def to_dict_with_children(self):
-        _child_list = self.objects.filter(parent=self)
+        _child_list = Resource.objects.filter(parent=self)
 
         child_list = []
         for o_child in _child_list:
@@ -443,7 +443,7 @@ class Resource(models.Model):
         )
 
     def to_dict_for_selector(self):
-        _child_list = self.objects.filter(parent=self)
+        _child_list = Resource.objects.filter(parent=self)
 
         child_list = []
         for o_child in _child_list:
