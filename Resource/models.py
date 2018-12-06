@@ -216,7 +216,7 @@ class Resource(models.Model):
             rtype=rtype,
             description=desc,
             cover=None,
-            cover_type=cls.COVER_RANDOM,
+            cover_type=cls.COVER_SELF if sub_type == cls.STYPE_IMAGE else cls.COVER_RANDOM,
             owner=o_user,
             parent=o_parent,
             dlpath=dlpath,
