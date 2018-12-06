@@ -350,7 +350,7 @@ class Resource(models.Model):
         return self.owner == o_user
 
     def is_home(self):
-        return self.parent == self.ROOT_ID
+        return self.parent.pk == Resource.ROOT_ID
 
     def get_cover_urls(self):
         """获取封面链接"""
