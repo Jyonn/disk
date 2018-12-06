@@ -349,6 +349,9 @@ class Resource(models.Model):
         """判断资源是否属于用户"""
         return self.owner == o_user
 
+    def is_home(self):
+        return self.parent == self.ROOT_ID
+
     def get_cover_urls(self):
         """获取封面链接"""
         o_res = self
@@ -409,7 +412,7 @@ class Resource(models.Model):
             create_time=self.create_time.timestamp(),
             dlcount=self.dlcount,
             visit_key=self.visit_key if self.status == Resource.STATUS_PROTECT else None,
-            is_home=self.parent_id == Resource.ROOT_ID,
+            is_home=self.is_home(),
             right_bubble=self.right_bubble,
             secure_env=self.secure_env()
         )
@@ -421,20 +424,45 @@ class Resource(models.Model):
             cover=cover_urls[0],
             cover_small=cover_urls[1],
             status=self.status,
-            is_home=self.parent_id == Resource.ROOT_ID,
+            is_home=self.is_home(),
             owner=self.owner.to_dict(),
             create_time=self.create_time.timestamp(),
             right_bubble=self.right_bubble,
         )
 
-    def get_child_res_list(self):
-        """获取目录的子资源列表"""
-        _res_list = Resource.objects.filter(parent=self)
+    def to_dict_with_children(self):
+        _child_list = self.objects.filter(parent=self)
 
-        res_list = []
-        for o_res in _res_list:
-            res_list.append(o_res.to_dict_for_child())
-        return Ret(res_list)
+        child_list = []
+        for o_child in _child_list:
+            child_list.append(o_child.to_dict_for_child())
+
+        return dict(
+            info=self.to_dict(),
+            child_list=child_list,
+        )
+
+    def to_dict_for_selector(self):
+        _child_list = self.objects.filter(parent=self)
+
+        child_list = []
+        for o_child in _child_list:
+            child_list.append(dict(
+                res_str_id=o_child.res_str_id,
+                rname=o_child.rname,
+                rtype=o_child.rtype,
+                sub_type=o_child.sub_type,
+            ))
+
+        return dict(
+            info=dict(
+                is_home=self.is_home(),
+                res_str_id=self.res_str_id,
+                rname=self.rname,
+                parent_str_id=self.parent.res_str_id,
+            ),
+            child_list=child_list,
+        )
 
     @staticmethod
     def get_root_folder(o_user):

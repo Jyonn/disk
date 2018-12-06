@@ -286,6 +286,28 @@ def require_root_func(request):
     return Ret()
 
 
+def require_owner_func(request):
+    ret = require_login_func(request)
+    if ret.error is not Error.OK:
+        return ret
+
+    o_user = request.user
+    from User.models import User
+    if not isinstance(o_user, User):
+        return Ret(Error.STRANGE)
+
+    o_res = request.resource
+    from Resource.models import Resource
+    if not isinstance(o_res, Resource):
+        return Ret(Error.STRANGE)
+
+    if not o_res.belong(o_user):
+        return Ret(Error.NOT_YOUR_RESOURCE)
+
+    return Ret()
+
+
 require_login = decorator_generator(require_login_func)
 maybe_login = decorator_generator(maybe_login_func)
 require_root = decorator_generator(require_root_func)
+require_owner = decorator_generator(require_owner_func)

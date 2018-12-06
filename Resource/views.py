@@ -7,8 +7,8 @@ import json
 from django.http import HttpResponseRedirect
 from qiniu import urlsafe_base64_decode
 
-from Base.decorator import require_get, require_login, require_json, require_post, maybe_login, \
-    require_put, require_delete
+from Base.decorator import require_get, require_json, require_post, maybe_login, \
+    require_put, require_delete, require_owner
 from Base.error import Error
 from Base.policy import get_res_policy, get_cover_policy
 from Base.qn import QN_RES_MANAGER
@@ -19,7 +19,7 @@ from User.models import User
 
 @require_json
 @require_post(['folder_name'])
-@require_login
+@require_owner
 def create_folder(request):
     """ POST /api/res/:res_str_id/folder
 
@@ -34,9 +34,6 @@ def create_folder(request):
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
 
-    if not o_parent.belong(o_user):
-        return error_response(Error.PARENT_NOT_BELONG)
-
     ret = Resource.create_folder(folder_name, o_user, o_parent)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -48,7 +45,7 @@ def create_folder(request):
 
 @require_json
 @require_post(['link_name', 'link'])
-@require_login
+@require_owner
 def create_link(request):
     """ POST /api/res/:res_str_id/link
 
@@ -63,9 +60,6 @@ def create_link(request):
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
 
-    if not o_parent.belong(o_user):
-        return error_response(Error.PARENT_NOT_BELONG)
-
     ret = Resource.create_link(link_name, o_user, o_parent, link)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -73,24 +67,6 @@ def create_link(request):
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
     return response(body=o_res.to_dict())
-
-
-# @require_get()
-# @require_login
-# def get_my_res(request):
-#     """ GET /api/res/
-#
-#     获取我的资源根目录
-#     """
-#     o_user = request.user
-#     ret = Resource.get_root_folder(o_user)
-#     if ret.error is not Error.OK:
-#         return error_response(ret)
-#     o_res = ret.body
-#     if not isinstance(o_res, Resource):
-#         return error_response(Error.STRANGE)
-#     request.resource = o_res
-#     return get_res_info(request)
 
 
 @require_get([('visit_key', None, None)])
@@ -110,33 +86,16 @@ def get_res_info(request):
     if not o_res.readable(o_user, visit_key):
         return error_response(Error.NOT_READABLE)
 
-    ret = o_res.get_child_res_list()
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    res_list = ret.body
-    return response(body=dict(info=o_res.to_dict(), child_list=res_list))
+    return response(o_res.to_dict_with_children())
 
 
 @require_get()
-@require_login
-def get_visit_key(request, res_str_id):
-    """ GET /api/res/:res_str_id/vk
-
-    获取加密密钥
-    """
-    o_user = request.user
-
-    ret = Resource.get_res_by_str_id(res_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-
+@require_owner
+def get_res_info_for_selector(request):
+    o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-
-    if not o_res.belong(o_user):
-        return error_response(Error.NOT_READABLE)
-    return response(body=dict(visit_key=o_res.get_visit_key(), status=o_res.status))
+    return response(o_res.to_dict_for_selector())
 
 
 @require_get([('visit_key', None, None)])
@@ -361,7 +320,7 @@ def upload_cover_redirect(request):
         ('parent_str_id', None, None),
     ]
 )
-@require_login
+@require_owner
 def modify_res(request):
     """ PUT /api/res/:slug/
 
@@ -378,8 +337,6 @@ def modify_res(request):
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-    if not o_res.belong(o_user):
-        return error_response(Error.NOT_YOUR_RESOURCE)
 
     if parent_str_id:
         ret = Resource.get_res_by_str_id(parent_str_id)
@@ -402,7 +359,7 @@ def modify_res(request):
 
 
 @require_get([('filename', Resource.pub_valid_rname)])
-@require_login
+@require_owner
 def upload_res_token(request):
     """ GET /api/res/:res_str_id/token
 
@@ -418,9 +375,6 @@ def upload_res_token(request):
     if not isinstance(o_parent, Resource):
         return error_response(Error.STRANGE)
 
-    if not o_parent.belong(o_user):
-        return error_response(Error.PARENT_NOT_BELONG)
-
     import datetime
     crt_time = datetime.datetime.now().timestamp()
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
@@ -430,24 +384,17 @@ def upload_res_token(request):
 
 
 @require_get([('filename', Resource.pub_valid_rname)])
-@require_login
+@require_owner
 def upload_cover_token(request):
     """ GET /api/res/:res_str_id/cover
 
     获取七牛上传资源封面token
     """
-    o_user = request.user
     filename = request.d.filename
-
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
 
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-
-    if not o_res.belong(o_user):
-        return error_response(Error.NOT_YOUR_RESOURCE)
 
     import datetime
     crt_time = datetime.datetime.now().timestamp()
@@ -457,22 +404,15 @@ def upload_cover_token(request):
 
 
 @require_delete()
-@require_login
+@require_owner
 def delete_res(request):
     """ DELETE /api/res/:slug
 
     删除资源
     """
-    o_user = request.user
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-
-    if not o_res.belong(o_user):
-        return error_response(Error.NOT_YOUR_RESOURCE)
 
     if o_res.parent == Resource.ROOT_ID:
         return error_response(Error.ERROR_DELETE_ROOT_FOLDER)
