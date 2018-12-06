@@ -64,11 +64,13 @@ class Resource(models.Model):
     COVER_UPLOAD = 1
     COVER_PARENT = 2
     COVER_OUTLNK = 3
+    COVER_SELF = 4
     COVER_TYPE_TUPLE = (
         (COVER_RANDOM, 'random cover'),
         (COVER_UPLOAD, 'upload cover'),
         (COVER_PARENT, 'same as parent'),
         (COVER_OUTLNK, 'use outsize link'),
+        (COVER_SELF, 'use self file'),
     )
     rname = models.CharField(
         verbose_name='resource name',
@@ -357,6 +359,11 @@ class Resource(models.Model):
             else:
                 cover = o_res.cover
                 break
+        if o_res.cover_type == Resource.COVER_SELF:
+            if o_res.sub_type == Resource.STYPE_IMAGE:
+                from Base.qn import QN_RES_MANAGER
+                return (QN_RES_MANAGER.get_resource_url(o_res.dlpath),
+                        QN_RES_MANAGER.get_resource_url("%s-small" % o_res.dlpath))
         if cover is None:
             return None, None
         if o_res.cover_type == Resource.COVER_UPLOAD:
