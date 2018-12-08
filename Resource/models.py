@@ -350,10 +350,6 @@ class Resource(models.Model):
         return self.owner == o_user
 
     def is_home(self):
-        print(Resource.ROOT_ID)
-        print(self.res_str_id)
-        print(self.parent.pk)
-        print(self.parent.res_str_id)
         return self.parent.pk == Resource.ROOT_ID
 
     def get_cover_urls(self):
