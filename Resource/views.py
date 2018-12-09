@@ -349,6 +349,11 @@ def modify_res(request):
             return error_response(Error.NOT_YOUR_RESOURCE)
         if not o_parent.rtype != Resource.RTYPE_FOLDER:
             return error_response(Error.REQUIRE_FOLDER)
+        o_temp = o_parent
+        while o_temp.pk != Resource.ROOT_ID:
+            if o_temp.pk == o_res.pk:
+                return error_response(Error.RESOURCE_CIRCLE)
+            o_temp = o_temp.parent
     else:
         o_parent = None
 
