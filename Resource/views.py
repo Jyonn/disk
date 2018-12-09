@@ -347,6 +347,9 @@ def modify_res(request):
             return error_response(Error.STRANGE)
         if not o_parent.belong(o_user):
             return error_response(Error.NOT_YOUR_RESOURCE)
+        print(o_parent.rname)
+        print(o_parent.rtype)
+        print(Resource.RTYPE_FOLDER)
         if not o_parent.rtype != Resource.RTYPE_FOLDER:
             return error_response(Error.REQUIRE_FOLDER)
         o_temp = o_parent
