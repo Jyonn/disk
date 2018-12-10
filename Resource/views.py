@@ -106,6 +106,8 @@ def get_res_path(request):
         return error_response(Error.STRANGE)
     res_path = []
     while o_res.pk != Resource.ROOT_ID:
+        if o_res.res_str_id in res_path:
+            return error_response(Error.RESOURCE_CIRCLE)
         res_path.append(o_res.res_str_id)
         o_res = o_res.parent
     return response(res_path)
