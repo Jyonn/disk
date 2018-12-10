@@ -366,7 +366,7 @@ class Resource(models.Model):
                 if ret.error is not Error.OK:
                     return None, None
                 o_res = ret.body
-                if not o_res.owner.belong(self.owner):
+                if not o_res.belong(self.owner):
                     return None, None
             else:
                 cover = o_res.cover
