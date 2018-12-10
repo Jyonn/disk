@@ -10,7 +10,7 @@ from Resource.models import Resource
 from Resource.views import upload_res_token, get_res_info, create_folder, modify_res, \
     create_link, upload_cover_token, upload_dlpath_callback, upload_cover_callback, \
     delete_res, deal_dl_link, get_res_base_info, direct_link, modify_cover, \
-    get_res_info_for_selector
+    get_res_info_for_selector, get_res_path
 
 
 @gzip_page
@@ -74,6 +74,12 @@ def rt_direct_link(request, res_str_id):
 
 
 SUFFIX_DICT = {
+    'path': {
+        Method.GET: {
+            'desc': '获取资源向上路径',
+            'func': get_res_path,
+        }
+    },
     'selector': {
         Method.GET: {
             'desc': '文件选择器，获取基本信息',

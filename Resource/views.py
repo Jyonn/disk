@@ -98,6 +98,19 @@ def get_res_info_for_selector(request):
     return response(o_res.to_dict_for_selector())
 
 
+@require_get()
+@require_owner
+def get_res_path(request):
+    o_res = request.resource
+    if not isinstance(o_res, Resource):
+        return error_response(Error.STRANGE)
+    res_path = []
+    while o_res.pk != Resource.ROOT_ID:
+        res_path.append(o_res.res_str_id)
+        o_res = o_res.parent
+    return response(res_path)
+
+
 @require_get([('visit_key', None, None)])
 @maybe_login
 def get_dl_link(request):
