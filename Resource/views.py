@@ -251,6 +251,7 @@ def deal_cover_dlpath(key, res_str_id):
 
 @require_json
 @require_put(['cover', 'cover_type'])
+@require_owner
 def modify_cover(request):
     """ PUT /api/res/:res_str_id/cover
 
@@ -260,6 +261,8 @@ def modify_cover(request):
     cover_type = request.d.cover_type
 
     o_res = request.resource
+    o_user = request.user
+
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
 
@@ -267,6 +270,24 @@ def modify_cover(request):
         return error_response(Error.NOT_ALLOWED_COVER_UPLOAD)
     if cover_type == Resource.COVER_SELF and o_res.sub_type != Resource.STYPE_IMAGE:
         return error_response(Error.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE)
+    if cover_type == Resource.COVER_RESOURCE:
+        resource_chain = [cover]
+        next_str_id = cover
+        while True:
+            ret = Resource.get_res_by_str_id(next_str_id)
+            if ret.error is not Error.OK:
+                return error_response(ret)
+            o_chain = ret.body
+            if o_chain.res_str_id == o_res.res_str_id:
+                return error_response(Error.RESOURCE_CIRCLE)
+            if not o_chain.belong(o_user):
+                return error_response(Error.NOT_YOUR_RESOURCE)
+            if o_chain.cover_type != Resource.COVER_RESOURCE:
+                break
+            next_str_id = o_chain.cover
+            if next_str_id in resource_chain:
+                return error_response(Error.RESOURCE_CIRCLE)
+            resource_chain.append(next_str_id)
 
     ret = o_res.modify_cover(cover, cover_type)
     if ret.error is not Error.OK:

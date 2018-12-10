@@ -65,12 +65,14 @@ class Resource(models.Model):
     COVER_PARENT = 2
     COVER_OUTLNK = 3
     COVER_SELF = 4
+    COVER_RESOURCE = 5
     COVER_TYPE_TUPLE = (
         (COVER_RANDOM, 'random cover'),
         (COVER_UPLOAD, 'upload cover'),
         (COVER_PARENT, 'same as parent'),
         (COVER_OUTLNK, 'use outsize link'),
         (COVER_SELF, 'use self file'),
+        (COVER_RESOURCE, 'use another resource'),
     )
     rname = models.CharField(
         verbose_name='resource name',
@@ -347,7 +349,7 @@ class Resource(models.Model):
 
     def belong(self, o_user):
         """判断资源是否属于用户"""
-        return self.owner == o_user
+        return self.owner.pk == o_user.pk
 
     def is_home(self):
         return self.parent.pk == Resource.ROOT_ID
@@ -359,6 +361,13 @@ class Resource(models.Model):
         while o_res.pk != Resource.ROOT_ID:
             if o_res.cover_type == Resource.COVER_PARENT:
                 o_res = o_res.parent
+            elif o_res.cover_type == Resource.COVER_RESOURCE:
+                ret = Resource.get_res_by_str_id(o_res.cover)
+                if ret.error is not Error.OK:
+                    return None, None
+                o_res = ret.body
+                if not o_res.owner.belong(self.owner):
+                    return None, None
             else:
                 cover = o_res.cover
                 break
