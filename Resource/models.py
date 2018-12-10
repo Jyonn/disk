@@ -392,14 +392,11 @@ class Resource(models.Model):
             res_str_id=self.res_str_id,
             rname=self.rname,
             rtype=self.rtype,
-            # description=self.description,
-            # cover=cover_urls[0],
             cover_small=cover_urls[1],
             status=self.status,
             create_time=self.create_time.timestamp(),
             sub_type=self.sub_type,
             dlcount=self.dlcount,
-            # right_bubble=self.right_bubble,
         )
 
     def to_dict(self, o_user=None):
@@ -423,7 +420,8 @@ class Resource(models.Model):
             visit_key=self.visit_key if self.status == Resource.STATUS_PROTECT else None,
             is_home=self.is_home(),
             right_bubble=self.right_bubble,
-            secure_env=self.secure_env()
+            secure_env=self.secure_env(),
+            raw_cover=self.cover,
         )
 
     def to_base_dict(self):
