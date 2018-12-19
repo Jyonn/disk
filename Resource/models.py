@@ -613,7 +613,7 @@ class Resource(models.Model):
             if not self.is_empty():
                 return Ret(Error.REQUIRE_EMPTY_FOLDER)
         from Base.qn import QN_RES_MANAGER
-        if self.cover:
+        if self.cover and self.cover_type == Resource.COVER_UPLOAD:
             ret = QN_RES_MANAGER.delete_res(self.cover)
             if ret.error is not Error.OK:
                 return ret
