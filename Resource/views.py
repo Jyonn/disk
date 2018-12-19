@@ -202,7 +202,7 @@ def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
     o_res = ret.body
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
-    return response(body=o_res.to_dict())
+    return response(body=o_res.to_dict_for_child())
 
 
 @require_json
