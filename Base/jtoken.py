@@ -12,7 +12,7 @@ from Base.response import Ret
 from disk.settings import SECRET_KEY, JWT_ENCODE_ALGO
 
 
-def jwt_e(dict_, replace=True, expire_second=7 * 60 * 60 * 24):
+def jwt_e(dict_, replace=True, expire_second=30 * 60 * 60 * 24):
     """
     jwt签名加密
     :param replace: 如果dict_中存在ctime或expire是否替换
