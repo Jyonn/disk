@@ -130,9 +130,7 @@ def get_dl_link(request):
     if not o_res.readable(o_user, visit_key):
         return error_response(Error.NOT_READABLE)
 
-    if o_res.rtype == Resource.RTYPE_LINK:
-        return HttpResponseRedirect(o_res.dlpath)
-    if o_res.rtype != Resource.RTYPE_FILE:
+    if o_res.rtype == Resource.RTYPE_FOLDER:
         return error_response(Error.REQUIRE_FILE)
 
     return HttpResponseRedirect(o_res.get_dl_url())

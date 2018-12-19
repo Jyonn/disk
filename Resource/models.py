@@ -514,10 +514,10 @@ class Resource(models.Model):
 
     def get_dl_url(self):
         """获取当前资源的下载链接"""
-        if self.rtype != Resource.RTYPE_FILE:
-            return None
         self.dlcount += 1
         self.save()
+        if self.rtype == Resource.RTYPE_LINK:
+            return self.dlpath
         from Base.qn import QN_RES_MANAGER
         return QN_RES_MANAGER.get_resource_url(self.dlpath)
 
