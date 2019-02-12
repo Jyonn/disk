@@ -48,7 +48,7 @@ def rt_cover_callback(request):
     return error_response(Error.ERROR_METHOD)
 
 
-def rt_direct_link(request, res_str_id):
+def rt_direct_link(request, res_str_id, *args, **kwargs):
     """ /s/:res_str_id
 
     GET: direct_link, 直链分享解析
