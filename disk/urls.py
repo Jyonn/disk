@@ -25,7 +25,8 @@ from Resource.router import rt_direct_link
 
 urlpatterns = [
     path('api/', include('disk.api_urls')),
-    path('s/<str:res_str_id>/@/<str:_>', rt_direct_link),
+    path('s/<str:res_str_id>/', rt_direct_link),
+    path('s/<str:res_str_id>/<str:_>', rt_direct_link),
     path('s/<str:res_str_id>', rt_direct_link),
 ]
 
