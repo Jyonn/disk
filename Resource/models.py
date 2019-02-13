@@ -23,7 +23,7 @@ class Resource(models.Model):
     ROOT_ID = 1
     L = {
         'rname': 256,
-        'description': 1024,
+        # 'description': 1024,
         'manager': 255,
         'dlpath': 1024,
         'visit_key': 16,
@@ -90,9 +90,9 @@ class Resource(models.Model):
         choices=SUB_TYPE_TUPLE,
         default=STYPE_FOLDER,
     )
-    description = models.CharField(
+    description = models.TextField(
         verbose_name='description in Markdown',
-        max_length=L['description'],
+        # max_length=L['description'],
         null=True,
         blank=True,
         default=None,

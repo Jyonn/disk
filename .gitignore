@@ -11,3 +11,7 @@ Resource/migrations/__pycache__/
 User/migrations/__pycache__/
 
 mysql.local.conf
+
+Resource/migrations/*
+User/migrations/*
+Config/migrations/*
