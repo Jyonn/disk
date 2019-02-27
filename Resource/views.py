@@ -291,13 +291,18 @@ def modify_cover(request):
             if ret.error is not Error.OK:
                 return error_response(ret)
             o_chain = ret.body
+            if not isinstance(o_chain, Resource):
+                return error_response(Error.STRANGE)
             if o_chain.res_str_id == o_res.res_str_id:
                 return error_response(Error.RESOURCE_CIRCLE)
             if not o_chain.belong(o_user):
                 return error_response(Error.NOT_YOUR_RESOURCE)
-            if o_chain.cover_type != Resource.COVER_RESOURCE:
+            if o_chain.cover_type == Resource.COVER_RESOURCE:
+                next_str_id = o_chain.cover
+            elif o_chain.cover_type == Resource.COVER_PARENT:
+                next_str_id = o_chain.parent.res_str_id
+            else:
                 break
-            next_str_id = o_chain.cover
             if next_str_id in resource_chain:
                 return error_response(Error.RESOURCE_CIRCLE)
             resource_chain.append(next_str_id)
