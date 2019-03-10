@@ -82,7 +82,7 @@ class Error:
     QTB_AUTH_FAIL = E("齐天簿身份认证失败")
     QTB_GET_INFO_FAIL = E("齐天簿获取用户信息失败")
     UNREACHABLE_API = E("不存在的API请求")
-    REQUIRE_RELOGIN = E("应用权限变更，需要重新授权")
+    REQUIRE_RE_LOGIN = E("应用权限变更，需要重新授权")
 
 
 ERROR_DICT = dict()

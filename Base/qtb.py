@@ -45,7 +45,7 @@ def update_user_info(token):
         return Ret(Error.QTB_GET_INFO_FAIL)
 
     if res['identifier'] == 'APP_FIELD_CHANGE':
-        return Ret(Error.REQUIRE_RELOGIN)
+        return Ret(Error.REQUIRE_RE_LOGIN)
     if res['code'] != Error.OK.eid:
         return Ret(Error.QTB_GET_INFO_FAIL, append_msg='，%s' % res['msg'])
 

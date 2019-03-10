@@ -45,7 +45,7 @@ def get_user_info(request, qt_user_app_id):
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
     ret = o_user.update()
-    if ret.error is Error.REQUIRE_RELOGIN:
+    if ret.error is Error.REQUIRE_RE_LOGIN:
         return error_response(ret)
     return response(body=o_user.to_dict())
 
