@@ -7,6 +7,26 @@ from User.models import User
 from User.views import get_token_info
 
 
+ROOT_DESC = '''
+# 我的盒子简介
+
+## “介绍”使用介绍
+
+### 1. 点击右上角的铅笔按钮修改介绍
+
+- 进入编辑状态后，需要点击“修改”，才能更新介绍内容
+
+### 2. 介绍内容支持以Markdown格式编辑
+
+> 所有行前的特殊符号都需要加上空格后才能接正文
+
+- 行前`#`符号表示层级标题，`#`越多表示层级越深
+- 行前`-`/`*`符号表示列举
+- 行前`>`符号表示引用
+- 跳转页面可以使用`[跳转](页面链接)`的格式，例如：[更多Markdown格式](http://www.markdown.cn/)
+'''
+
+
 @require_get(['code'])
 def oauth_qtb_callback(request):
     code = request.d.code
@@ -36,7 +56,7 @@ def oauth_qtb_callback(request):
             o_user.qt_user_app_id,
             o_user,
             o_root,
-            '# 我的浑天匣'
+            ROOT_DESC
         )
         if ret.error is not Error.OK:
             return error_response(ret)
