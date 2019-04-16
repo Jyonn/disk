@@ -34,20 +34,35 @@ class QN:
         self.cdn_host = cdn_host
         self.public = public
 
+    @staticmethod
+    def encode_key(key):
+        key = key.replace('@', '@@')
+        key = key.replace('$', '@dollar')
+        return key
+
+    @staticmethod
+    def decode_key(key):
+        key = key.replace('@dollar', '$')
+        key = key.replace('@@', '@')
+        return key
+
     def get_upload_token(self, key, policy):
         """
         获取七牛上传token
         :param policy: 上传策略
         :param key: 规定的键
         """
+        key = QN.encode_key(key)
+
         key = _KEY_PREFIX + key
         token = self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy)
-        pre_token = token[:token.rfind(':') + 1]
-        suf_token = token[token.rfind(':') + 1:]
-        suf_token = suf_token.replace('-', '+')
-        suf_token = suf_token.replace('_', '/')
+        # pre_token = token[:token.rfind(':') + 1]
+        # suf_token = token[token.rfind(':') + 1:]
+        # suf_token = suf_token.replace('-', '+')
+        # suf_token = suf_token.replace('_', '/')
+        # token = pre_token + suf_token
 
-        return pre_token + suf_token, key
+        return token, key
 
     def qiniu_auth_callback(self, request):
         """七牛callback认证校验"""
