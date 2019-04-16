@@ -11,7 +11,7 @@ from Base.decorator import require_get, require_json, require_post, maybe_login,
     require_put, require_delete, require_owner
 from Base.error import Error
 from Base.policy import get_res_policy, get_cover_policy
-from Base.qn import QN_RES_MANAGER
+from Base.qn import QN_RES_MANAGER, QN
 from Base.response import response, error_response
 from Resource.models import Resource
 from User.models import User
@@ -411,6 +411,7 @@ def upload_res_token(request):
     """
     o_user = request.user
     filename = request.d.filename
+    filename = QN.encode_key(filename)
 
     if not isinstance(o_user, User):
         return error_response(Error.STRANGE)
@@ -435,6 +436,7 @@ def upload_cover_token(request):
     获取七牛上传资源封面token
     """
     filename = request.d.filename
+    filename = QN.encode_key(filename)
 
     o_res = request.resource
     if not isinstance(o_res, Resource):

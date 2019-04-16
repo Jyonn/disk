@@ -52,8 +52,6 @@ class QN:
         :param policy: 上传策略
         :param key: 规定的键
         """
-        key = QN.encode_key(key)
-
         key = _KEY_PREFIX + key
         token = self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy)
         # pre_token = token[:token.rfind(':') + 1]
