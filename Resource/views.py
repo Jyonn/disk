@@ -424,6 +424,8 @@ def upload_res_token(request):
     key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
     qn_token, key = QN_RES_MANAGER.get_upload_token(
         key, get_res_policy(filename, o_user.pk, o_parent.res_str_id))
+    qn_token = qn_token.replace('-', '_')
+    qn_token = qn_token.replace('_', '/')
     return response(body=dict(upload_token=qn_token, key=key))
 
 
