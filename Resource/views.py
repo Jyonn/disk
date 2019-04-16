@@ -196,6 +196,16 @@ def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
     if not o_parent.belong(o_user):
         return error_response(Error.PARENT_NOT_BELONG)
 
+    decode_fname = QN.decode_key(fname)
+    if fname != decode_fname:
+        new_key = '%s/%s' % (key[:key.rfind('/')], decode_fname)
+        from Base.qn import QN_RES_MANAGER
+        ret = QN_RES_MANAGER.move_res(key, new_key)
+        if ret.error is not Error.OK:
+            return ret
+        fname = decode_fname
+        key = new_key
+
     ret = Resource.create_file(fname, o_user, o_parent, key, fsize, sub_type)
     if ret.error is not Error.OK:
         return error_response(ret)
@@ -226,26 +236,26 @@ def upload_dlpath_callback(request):
     return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
 
 
-@require_get(['upload_ret'])
-def upload_dlpath_redirect(request):
-    """ GET /api/res/dlpath/callback
-
-    七牛上传资源成功后的回调函数
-    """
-    upload_ret = request.d.upload_ret
-    upload_ret = urlsafe_base64_decode(upload_ret)
-    # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-    upload_ret = json.loads(upload_ret)
-
-    key = upload_ret['key']
-    user_id = upload_ret['user_id']
-    fsize = upload_ret['fsize']
-    fname = upload_ret['fname']
-    parent_str_id = upload_ret['parent_str_id']
-    ftype = upload_ret['ftype']
-
-    return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
+# @require_get(['upload_ret'])
+# def upload_dlpath_redirect(request):
+#     """ GET /api/res/dlpath/callback
+#
+#     七牛上传资源成功后的回调函数
+#     """
+#     upload_ret = request.d.upload_ret
+#     upload_ret = urlsafe_base64_decode(upload_ret)
+#     # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+#     # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+#     upload_ret = json.loads(upload_ret)
+#
+#     key = upload_ret['key']
+#     user_id = upload_ret['user_id']
+#     fsize = upload_ret['fsize']
+#     fname = upload_ret['fname']
+#     parent_str_id = upload_ret['parent_str_id']
+#     ftype = upload_ret['ftype']
+#
+#     return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
 
 
 def deal_cover_dlpath(key, res_str_id):
@@ -330,22 +340,22 @@ def upload_cover_callback(request):
     return deal_cover_dlpath(key, res_str_id)
 
 
-@require_get(['upload_ret'])
-def upload_cover_redirect(request):
-    """ GET /api/res/cover/callback
-
-    七牛上传资源封面成功后的重定向
-    """
-    upload_ret = request.d.upload_ret
-    upload_ret = urlsafe_base64_decode(upload_ret)
-    # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-    # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-    upload_ret = json.loads(upload_ret)
-
-    key = upload_ret['key']
-    res_str_id = upload_ret['res_str_id']
-
-    return deal_cover_dlpath(key, res_str_id)
+# @require_get(['upload_ret'])
+# def upload_cover_redirect(request):
+#     """ GET /api/res/cover/callback
+#
+#     七牛上传资源封面成功后的重定向
+#     """
+#     upload_ret = request.d.upload_ret
+#     upload_ret = urlsafe_base64_decode(upload_ret)
+#     # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
+#     # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
+#     upload_ret = json.loads(upload_ret)
+#
+#     key = upload_ret['key']
+#     res_str_id = upload_ret['res_str_id']
+#
+#     return deal_cover_dlpath(key, res_str_id)
 
 
 @require_json
@@ -372,8 +382,6 @@ def modify_res(request):
     visit_key = request.d.visit_key
     right_bubble = request.d.right_bubble
     parent_str_id = request.d.parent_str_id
-
-    rname = QN.encode_key(rname)
 
     o_res = request.resource
     if not isinstance(o_res, Resource):

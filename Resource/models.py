@@ -387,8 +387,9 @@ class Resource(models.Model):
             return cover, cover
 
     def decode_name(self):
-        from Base.qn import QN
-        return QN.decode_key(self.rname)
+        # from Base.qn import QN
+        # return QN.decode_key(self.rname)
+        return self.rname
 
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
