@@ -41,7 +41,13 @@ class QN:
         :param key: 规定的键
         """
         key = _KEY_PREFIX + key
-        return self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy), key
+        token = self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy)
+        pre_token = token[:token.rfind(':') + 1]
+        suf_token = token[token.rfind(':') + 1:]
+        suf_token = suf_token.replace('-', '+')
+        suf_token = suf_token.replace('_', '/')
+
+        return pre_token + suf_token, key
 
     def qiniu_auth_callback(self, request):
         """七牛callback认证校验"""
