@@ -10,6 +10,7 @@ from django.utils.crypto import get_random_string
 from Base.common import deprint
 from Base.decorator import field_validator
 from Base.error import Error
+from Base.qn import QN
 from Base.response import Ret
 from User.models import User
 
@@ -385,12 +386,16 @@ class Resource(models.Model):
         else:
             return cover, cover
 
+    def decode_name(self):
+        from Base.qn import QN
+        return QN.decode_key(self.rname)
+
     def to_dict_for_child(self):
         """当资源作为子资源，获取简易字典"""
         cover_urls = self.get_cover_urls()
         return dict(
             res_str_id=self.res_str_id,
-            rname=self.rname,
+            rname=self.decode_name(),
             rtype=self.rtype,
             cover_small=cover_urls[1],
             status=self.status,
@@ -399,12 +404,12 @@ class Resource(models.Model):
             dlcount=self.dlcount,
         )
 
-    def to_dict(self, o_user=None):
+    def to_dict(self):
         """获取资源字典"""
         cover_urls = self.get_cover_urls()
         return dict(
             res_str_id=self.res_str_id,
-            rname=self.rname,
+            rname=self.decode_name(),
             rtype=self.rtype,
             rsize=self.rsize,
             sub_type=self.sub_type,
@@ -465,7 +470,7 @@ class Resource(models.Model):
             info=dict(
                 is_home=self.is_home(),
                 res_str_id=self.res_str_id,
-                rname=self.rname,
+                rname=self.decode_name(),
                 parent_str_id=self.parent.res_str_id,
             ),
             child_list=child_list,

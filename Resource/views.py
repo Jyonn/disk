@@ -373,6 +373,8 @@ def modify_res(request):
     right_bubble = request.d.right_bubble
     parent_str_id = request.d.parent_str_id
 
+    rname = QN.encode_key(rname)
+
     o_res = request.resource
     if not isinstance(o_res, Resource):
         return error_response(Error.STRANGE)
