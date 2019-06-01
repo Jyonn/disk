@@ -5,7 +5,7 @@ from Base.error import Error
 from Base.response import Ret
 from Config.models import Config
 
-QTB_HOST = 'https://sso.6-79.cn'
+QTB_HOST = 'https://ssoapi.6-79.cn'
 
 QTB_APP_ID = Config.get_value_by_key('qtb-app-id', 'DEFAULT-QTB-APP-ID').body
 QTB_APP_SECRET = Config.get_value_by_key('qtb-app-secret', 'DEFAULT-QTB-APP-SECRET').body
