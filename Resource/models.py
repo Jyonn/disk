@@ -24,12 +24,12 @@ class Resource(models.Model):
     ROOT_ID = 1
     L = {
         'rname': 256,
-        # 'description': 1024,
         'manager': 255,
         'dlpath': 1024,
         'visit_key': 16,
         'cover': 1024,
         'res_str_id': 6,
+        'mime': 100,
     }
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
@@ -90,6 +90,12 @@ class Resource(models.Model):
         verbose_name='sub type',
         choices=SUB_TYPE_TUPLE,
         default=STYPE_FOLDER,
+    )
+    mime = models.CharField(
+        verbose_name='资源类型',
+        null=True,
+        default=True,
+        max_length=L['mime'],
     )
     description = models.TextField(
         verbose_name='description in Markdown',
@@ -164,7 +170,7 @@ class Resource(models.Model):
     FIELD_LIST = [
         'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
         'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount',
-        'res_str_id', 'right_bubble', 'cover_type',
+        'res_str_id', 'right_bubble', 'cover_type', 'mime'
     ]
 
     @classmethod
@@ -212,11 +218,12 @@ class Resource(models.Model):
         return field_validator(dict_, Resource)
 
     @classmethod
-    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type):
+    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type, mime=None):
         crt_time = datetime.datetime.now()
         return cls(
             rname=rname,
             rtype=rtype,
+            mime=mime,
             description=desc,
             cover=None,
             cover_type=cls.COVER_SELF if sub_type == cls.STYPE_IMAGE else cls.COVER_RANDOM,
@@ -235,7 +242,7 @@ class Resource(models.Model):
         )
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type):
+    def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type, mime):
         """ 创建文件对象
 
         :param rname: 文件名
@@ -260,6 +267,7 @@ class Resource(models.Model):
                 dlpath=dlpath,
                 rsize=rsize,
                 sub_type=sub_type,
+                mime=mime,
             )
             o_res.save()
         except ValueError as err:

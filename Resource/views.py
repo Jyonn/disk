@@ -206,7 +206,7 @@ def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
         fname = decode_fname
         key = new_key
 
-    ret = Resource.create_file(fname, o_user, o_parent, key, fsize, sub_type)
+    ret = Resource.create_file(fname, o_user, o_parent, key, fsize, sub_type, ftype)
     if ret.error is not Error.OK:
         return error_response(ret)
     o_res = ret.body
