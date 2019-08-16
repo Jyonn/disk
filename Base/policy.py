@@ -4,28 +4,15 @@
 """
 from disk.settings import MAX_IMAGE_SIZE, HOST, MAX_FILE_SIZE
 
-AVATAR_CALLBACK = '%s/api/user/avatar/callback' % HOST
-FILE_CALLBACK = '%s/api/res/dlpath/callback' % HOST
-COVER_CALLBACK = '%s/api/res/cover/callback' % HOST
 
-AVATAR_POLICY = dict(
-    insertOnly=1,
-    callbackUrl=AVATAR_CALLBACK,
-    callbackBodyType='application/json',
-    fsizeMin=1,
-    fsizeLimit=MAX_IMAGE_SIZE,
-    mimeLimit='image/*',
-)
 FILE_POLICY = dict(
     insertOnly=1,
-    callbackUrl=FILE_CALLBACK,
     callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_FILE_SIZE,
 )
 COVER_POLICY = dict(
     insertOnly=1,
-    callbackUrl=COVER_CALLBACK,
     callbackBodyType='application/json',
     fsizeMin=1,
     fsizeLimit=MAX_IMAGE_SIZE,
@@ -33,21 +20,22 @@ COVER_POLICY = dict(
 )
 
 
-def get_avatar_policy(user_id):
-    policy = AVATAR_POLICY
-    policy['callbackBody'] = '{"key":"$(key)","user_id":%s}' % user_id
-    return policy
+class Policy:
+    @staticmethod
+    def file(filename, user_id, parent_id):
+        policy = dict(
+            callbackUrl='%s/api/res/%s/token' % (HOST, parent_id),
+            callbackBody='{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"%s",'
+                         '"ftype":"$(mimeType)"}' % (user_id, filename)
+        )
+        policy.update(FILE_POLICY)
+        return policy
 
-
-def get_res_policy(filename, user_id, parent_str_id):
-    policy = FILE_POLICY
-    policy['callbackBody'] = '{"key":"$(key)","user_id":%s,"fsize":$(fsize),"fname":"%s",' \
-                             '"parent_str_id":"%s","ftype":"$(mimeType)"}' \
-                             % (user_id, filename, parent_str_id)
-    return policy
-
-
-def get_cover_policy(res_str_id):
-    policy = COVER_POLICY
-    policy['callbackBody'] = '{"key":"$(key)","res_str_id":"%s"}' % res_str_id
-    return policy
+    @staticmethod
+    def cover(res_id):
+        policy = dict(
+            callbackUrl='%s/api/res/%s/cover' % (HOST, res_id),
+            callbackBody='{"key":"$(key)"}',
+        )
+        policy.update(COVER_POLICY)
+        return policy

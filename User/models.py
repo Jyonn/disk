@@ -2,21 +2,27 @@
 
 用户类
 """
+from SmartDjango import SmartModel, Packing, ErrorCenter, E
 from django.db import models
 
-from Base.common import deprint
-from Base.decorator import field_validator
-from Base.error import Error
-from Base.response import Ret
+from Base.common import qt_manager
 
 
-class User(models.Model):
+class UserError(ErrorCenter):
+    CREATE_USER = E("新建用户错误", hc=500)
+    USER_NOT_FOUND = E("不存在的用户", hc=404)
+
+
+UserError.register()
+
+
+class User(SmartModel):
     """
     用户类
     根超级用户id=1
     """
     ROOT_ID = 1
-    L = {
+    MAX_L = {
         'password': 32,
         'nickname': 10,
         'avatar': 1024,
@@ -24,91 +30,94 @@ class User(models.Model):
         'qtb_token': 256,
         'description': 20,
     }
+
     avatar = models.CharField(
         default=None,
         null=True,
         blank=True,
-        max_length=L['avatar'],
+        max_length=MAX_L['avatar'],
     )
+
     nickname = models.CharField(
-        max_length=L['nickname'],
+        max_length=MAX_L['nickname'],
         default=None,
         blank=True,
         null=True,
     )
+
     qt_user_app_id = models.CharField(
         default=None,
-        max_length=L['qt_user_app_id'],
+        max_length=MAX_L['qt_user_app_id'],
     )
+
     qtb_token = models.CharField(
         default=None,
-        max_length=L['qtb_token'],
+        max_length=MAX_L['qtb_token'],
     )
+
     description = models.CharField(
-        max_length=L['description'],
+        max_length=MAX_L['description'],
         default=None,
         blank=True,
         null=True,
     )
-    FIELD_LIST = ['avatar', 'nickname', 'qt_user_app_id', 'description']
 
-    @classmethod
-    def _validate(cls, dict_):
-        """验证传入参数是否合法"""
-        return field_validator(dict_, cls)
+    """
+    查询函数
+    """
 
     @staticmethod
-    def _hash(s):
-        from Base.common import md5
-        return md5(s)
-
-    @staticmethod
-    def get_user_by_id(user_id):
+    @Packing.pack
+    def get_by_id(user_id):
         """根据用户ID获取用户对象"""
         try:
             o_user = User.objects.get(pk=user_id)
         except User.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.NOT_FOUND_USER)
-        return Ret(o_user)
+            return UserError.USER_NOT_FOUND
+        return o_user
 
     @staticmethod
-    def get_user_by_qt_user_app_id(qt_user_app_id):
+    @Packing.pack
+    def get_by_qtid(qt_user_app_id):
         """根据齐天用户-应用ID获取用户对象"""
         try:
             o_user = User.objects.get(qt_user_app_id=qt_user_app_id)
         except User.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.NOT_FOUND_USER)
-        return Ret(o_user)
+            return UserError.USER_NOT_FOUND
+        return o_user
 
-    def to_dict(self):
-        """把用户对象转换为字典"""
+    """
+    字典函数
+    """
+
+    def _readable_user_id(self):
+        return self.pk
+
+    def _readable_root_res(self):
         from Resource.models import Resource
         ret = Resource.get_root_folder(self)
-        if ret.error is not Error.OK:
-            root_res = None
+        if not ret.ok:
+            return None
         else:
             o_res = ret.body
-            if not isinstance(o_res, Resource):
-                root_res = None
-            else:
-                root_res = o_res.res_str_id
-        return dict(
-            user_id=self.pk,
-            avatar=self.avatar,
-            nickname=self.nickname,
-            root_res=root_res
-        )
+            return o_res.res_str_id
+
+    def d(self):
+        return self.dictor(['user_id', 'avatar', 'nickname', 'root_res'])
+
+    """
+    增删函数
+    """
 
     @classmethod
+    @Packing.pack
     def create(cls, qt_user_app_id, token):
-        ret = cls.get_user_by_qt_user_app_id(qt_user_app_id)
-        if ret.error is Error.OK:
+        ret = cls.get_by_qtid(qt_user_app_id)
+        if not ret.ok:
             o_user = ret.body
             o_user.qtb_token = token
             o_user.save()
-            return Ret(o_user)
+            return o_user
         try:
             o_user = cls(
                 qt_user_app_id=qt_user_app_id,
@@ -116,18 +125,19 @@ class User(models.Model):
             )
             o_user.save()
         except Exception as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_CREATE_USER)
-        return Ret(o_user)
+            return UserError.CREATE_USER
+        return o_user
 
+    @Packing.pack
     def update(self):
-        from Base.qtb import update_user_info
-        ret = update_user_info(self.qtb_token)
-        if ret.error is not Error.OK:
+        ret = qt_manager.get_user_info(self.qtb_token)
+        if not ret.ok:
             return ret
         body = ret.body
         self.avatar = body['avatar']
         self.nickname = body['nickname']
         self.description = body['description']
         self.save()
-        return Ret()
+
+    def remove(self):
+        return self.delete()

@@ -4,15 +4,17 @@
 """
 from django.urls import path
 
-from Resource.dev import set_unique_res_key, set_default_cover_type
-from Resource.router import rt_dlpath_callback, rt_cover_callback, rt_res
+from Resource.views import FolderView, LinkView, CoverView, TokenView, SelectView, BaseView, \
+    BaseInfoView, PathView, DownloadView
 
 urlpatterns = [
-    path('@set_unique_res_key', set_unique_res_key),
-    path('@set_cover_type', set_default_cover_type),
-
-    path('dlpath/callback', rt_dlpath_callback),
-    path('cover/callback', rt_cover_callback),
-    path('<str:res_str_id>/<str:suffix>', rt_res),
-    path('<str:res_str_id>', rt_res),
+    path('<str:res_str_id>/folder', FolderView.as_view()),
+    path('<str:res_str_id>/link', LinkView.as_view()),
+    path('<str:res_str_id>/cover', CoverView.as_view()),
+    path('<str:res_str_id>/token', TokenView.as_view()),
+    path('<str:res_str_id>/selector', SelectView.as_view()),
+    path('<str:res_str_id>/path', PathView.as_view()),
+    path('<str:res_str_id>/base', BaseInfoView.as_view()),
+    path('<str:res_str_id>/dl', DownloadView.as_view()),
+    path('<str:res_str_id>', BaseView.as_view()),
 ]

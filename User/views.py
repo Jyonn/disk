@@ -2,67 +2,56 @@
 
 用户API处理函数
 """
+from SmartDjango import Packing, Analyse, Param
+from django.views import View
 
-from Base.decorator import require_login, require_get, require_delete, require_root
-from Base.error import Error
-from Base.jtoken import jwt_e
-from Base.response import response, error_response
+from Base.auth import Auth
 
 from User.models import User
 
-
-def get_token_info(o_user):
-    ret = jwt_e(dict(user_id=o_user.pk))
-    # if ret.error is not Error.OK:
-    #     return error_response(ret)
-    token, dict_ = ret.body
-    user_dict = o_user.to_dict()
-    user_dict['token'] = token
-    return user_dict
+P_QITIAN_USER_ID = Param('qt_user_app_id', yield_name='user').process(User.get_by_qtid)
 
 
-@require_get()
-@require_login
-def get_my_info(request):
-    """ GET /api/user/
+class BaseView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_login
+    def get(r):
+        """ GET /api/user/
 
-    获取我的信息
-    """
-    o_user = request.user
-    return get_user_info(request, o_user.qt_user_app_id)
-
-
-@require_get()
-def get_user_info(request, qt_user_app_id):
-    """ GET /api/user/@:qt_user_app_id
-
-    获取用户信息
-    """
-    ret = User.get_user_by_qt_user_app_id(qt_user_app_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_user = ret.body
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-    ret = o_user.update()
-    if ret.error is Error.REQUIRE_RE_LOGIN:
-        return error_response(ret)
-    return response(body=o_user.to_dict())
+        获取我的信息
+        """
+        user = r.user
+        ret = user.update()
+        if not ret.ok:
+            return ret
+        return user.d()
 
 
-@require_delete()
-@require_root
-def delete_user(request, qt_user_app_id):
-    """ DELETE /api/user/@:qt_user_app_id
+class QitianView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Analyse.r(a=[P_QITIAN_USER_ID])
+    def get(r, qt_user_app_id):
+        """ GET /api/user/@:qt_user_app_id
 
-    删除用户
-    """
+        获取用户信息
+        """
+        user = r.d.user
 
-    ret = User.get_user_by_qt_user_app_id(qt_user_app_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_user = ret.body
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-    o_user.delete()
-    return response()
+        ret = user.update()
+        if not ret.ok:
+            return ret
+        return user.d()
+
+    @staticmethod
+    @Packing.http_pack
+    @Analyse.r(a=[P_QITIAN_USER_ID])
+    @Auth.require_root
+    def delete_user(r, qt_user_app_id):
+        """ DELETE /api/user/@:qt_user_app_id
+
+        删除用户
+        """
+        user = r.d.user
+        user.remove()

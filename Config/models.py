@@ -2,15 +2,19 @@
 
 系统配置类
 """
+from SmartDjango import SmartModel, ErrorCenter, E, Packing
 from django.db import models
 
-from Base.common import deprint
-from Base.decorator import field_validator
-from Base.error import Error
-from Base.response import Ret
+
+class ConfigError(ErrorCenter):
+    CREATE_CONFIG = E("更新配置错误", hc=500)
+    CONFIG_NOT_FOUND = E("不存在的配置", hc=404)
 
 
-class Config(models.Model):
+ConfigError.register()
+
+
+class Config(SmartModel):
     """
     系统配置，如七牛密钥等
     """
@@ -25,27 +29,72 @@ class Config(models.Model):
     value = models.CharField(
         max_length=L['value'],
     )
-    FIELD_LIST = ['key', 'value']
-
-    class __ConfigNone:
-        pass
 
     @classmethod
-    def _validate(cls, dict_):
-        """验证传入参数是否合法"""
-        return field_validator(dict_, Config)
-
-    @classmethod
-    def get_value_by_key(cls, key, default=__ConfigNone()):
-        ret = cls._validate(locals())
-        if ret.error is not Error.OK:
+    @Packing.pack
+    def get_config_by_key(cls, key):
+        ret = cls.validator(locals())
+        if not ret.ok:
             return ret
+
         try:
             o_config = cls.objects.get(key=key)
+        except cls.DoesNotExist as err:
+            return ConfigError.CONFIG_NOT_FOUND
+
+        return o_config
+
+    @classmethod
+    def get_value_by_key(cls, key, default=None):
+        try:
+            ret = cls.get_config_by_key(key)
+            if not ret.ok:
+                return default
+            return ret.body.value
         except Exception as err:
-            deprint(str(err))
-            if isinstance(default, cls.__ConfigNone):
-                return Ret(Error.NOT_FOUND_CONFIG)
-            else:
-                return Ret(default)
-        return Ret(o_config.value)
+            return default
+
+    @classmethod
+    @Packing.pack
+    def update_value(cls, key, value):
+        ret = cls.validator(locals())
+        if not ret.ok:
+            return ret
+
+        ret = cls.get_config_by_key(key)
+        if ret.ok:
+            o_config = ret.body
+            o_config.value = value
+            o_config.save()
+        else:
+            try:
+                o_config = cls(
+                    key=key,
+                    value=value,
+                )
+                o_config.save()
+            except Exception as err:
+                return ConfigError.CREATE_CONFIG
+
+
+class ConfigInstance:
+    JWT_ENCODE_ALGO = 'jwt-encode-algo'
+    PROJECT_SECRET_KEY = 'project-secret-key'
+
+    HOST = 'host'
+
+    QITIAN_APP_ID = 'qt-app-id'
+    QITIAN_APP_SECRET = 'qt-app-secret'
+    ADMIN_QITIAN = 'admin-qitian'
+
+    QINIU_ACCESS_KEY = 'qiniu-access-key'
+    QINIU_SECRET_KEY = 'qiniu-secret-key'
+
+    RES_BUCKET = 'qiniu-res-bucket'
+    PUBLIC_BUCKET = 'qiniu-public-bucket'
+
+    RES_CDN_HOST = 'res-cdn-host'
+    PUBLIC_CDN_HOST = 'public-cdn-host'
+
+
+CI = ConfigInstance

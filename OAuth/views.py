@@ -1,10 +1,10 @@
-from Base.decorator import require_get
-from Base.error import Error
-from Base.qtb import get_qtb_user_token
-from Base.response import error_response, response
-from Resource.models import Resource
+from SmartDjango import Packing, Analyse, Param
+from django.views import View
+
+from Base.auth import Auth
+from Base.common import qt_manager
+from Resource.models import Resource, ResourceError
 from User.models import User
-from User.views import get_token_info
 
 
 ROOT_DESC = '''
@@ -27,41 +27,43 @@ ROOT_DESC = '''
 '''
 
 
-@require_get(['code'])
-def oauth_qtb_callback(request):
-    code = request.d.code
+class OAuthView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Analyse.r(Param('code', '齐天簿授权码'))
+    def get(r):
+        code = r.d.code
 
-    ret = get_qtb_user_token(code)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    body = ret.body
-    token = body['token']
-    qt_user_app_id = body['user_app_id']
+        ret = qt_manager.get_token(code)
+        if not ret.ok:
+            return ret
 
-    ret = User.create(qt_user_app_id, token)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_user = ret.body
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
+        body = ret.body
+        token = body['token']
+        qt_user_app_id = body['user_app_id']
 
-    ret = Resource.get_root_folder(o_user)
-    if ret.error is Error.ERROR_GET_ROOT_FOLDER:
-        ret = Resource.get_res_by_id(Resource.ROOT_ID)
-        if ret.error is not Error.OK:
-            return error_response(ret)
-        o_root = ret.body
+        ret = User.create(qt_user_app_id, token)
+        if not ret.ok:
+            return ret
+        user = ret.body
 
-        ret = Resource.create_folder(
-            o_user.qt_user_app_id,
-            o_user,
-            o_root,
-            ROOT_DESC
-        )
-        if ret.error is not Error.OK:
-            return error_response(ret)
+        ret = Resource.get_root_folder(user)
+        if ret.erroris(ResourceError.GET_ROOT_FOLDER):
+            ret = Resource.get_by_pk(Resource.ROOT_ID)
+            if not ret.ok:
+                return ret
+            root = ret.body
 
-    ret = o_user.update()
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    return response(body=get_token_info(o_user))
+            ret = Resource.create_folder(
+                user.qt_user_app_id,
+                user,
+                root,
+                ROOT_DESC
+            )
+            if not ret.ok:
+                return ret
+
+        ret = user.update()
+        if not ret.ok:
+            return ret
+        return Auth.get_login_token(user)

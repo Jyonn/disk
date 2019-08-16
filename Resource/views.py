@@ -2,486 +2,394 @@
 
 资源API处理函数
 """
-import json
-
+from SmartDjango import Packing, Analyse, Param
 from django.http import HttpResponseRedirect
-from qiniu import urlsafe_base64_decode
+from django.views import View
 
-from Base.decorator import require_get, require_json, require_post, maybe_login, \
-    require_put, require_delete, require_owner
-from Base.error import Error
-from Base.policy import get_res_policy, get_cover_policy
-from Base.qn import QN_RES_MANAGER, QN
-from Base.response import response, error_response
-from Resource.models import Resource
+from Base.auth import Auth
+from Base.policy import Policy
+from Base.qn_manager import qn_res_manager, QnManager
+from Resource.models import Resource, P_RNAME, P_VISIT_KEY, ResourceError, P_STATUS, P_DESC, \
+    P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE
 from User.models import User
 
 
-@require_json
-@require_post(['folder_name'])
-@require_owner
-def create_folder(request):
-    """ POST /api/res/:res_str_id/folder
+P_RES_ID = Param('res_str_id', yield_name='res').process(Resource.get_by_id)
+P_PARENT_RES_ID = Param('parent_str_id', yield_name='parent_res').process(Resource.get_by_id)
 
-    上传文件夹资源
-    """
-    o_user = request.user
-
-    folder_name = request.d.folder_name
-
-    # get parent folder
-    o_parent = request.resource
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
-
-    ret = Resource.create_folder(folder_name, o_user, o_parent)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    return response(body=o_res.to_dict())
+P_USER_ID = Param('user_id', yield_name='user').process(User.get_by_id)
 
 
-@require_json
-@require_post(['link_name', 'link'])
-@require_owner
-def create_link(request):
-    """ POST /api/res/:res_str_id/link
+class BaseView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.maybe_login
+    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_RES_ID])
+    def get(r, res_str_id):
+        """ GET /api/res/:res_str_id
 
-    上传链接资源
-    """
-    o_user = request.user
+        获取资源信息
+        """
+        user = r.user
+        res = r.d.res
+        visit_key = r.d.visit_key
 
-    link_name = request.d.link_name
-    link = request.d.link
+        if not res.readable(user, visit_key):
+            return ResourceError.NOT_READABLE
+        return res.d_layer()
 
-    o_parent = request.resource
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(b=[
+        P_RNAME.clone().null(),
+        P_STATUS.clone().null(),
+        P_DESC.clone().null(),
+        P_VISIT_KEY.clone().null(),
+        P_RIGHT_BUBBLE.clone().null(),
+        P_PARENT_RES_ID.clone().null()
+    ], a=[P_RES_ID])
+    def put(r, res_str_id):
+        """ PUT /api/res/:slug/
 
-    ret = Resource.create_link(link_name, o_user, o_parent, link)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    return response(body=o_res.to_dict())
+        修改资源信息
+        """
+        user = r.user
+        rname = r.d.rname
+        description = r.d.description
+        status = r.d.status
+        visit_key = r.d.visit_key
+        right_bubble = r.d.right_bubble
+        parent_res = r.d.parent_res
 
+        res = r.d.res
 
-@require_get([('visit_key', None, None)])
-@maybe_login
-def get_res_info(request):
-    """ GET /api/res/:slug
+        if parent_res:
+            if not parent_res.belong(user):
+                return ResourceError.RESOURCE_NOT_BELONG
+            if parent_res.rtype != Resource.RTYPE_FOLDER:
+                return ResourceError.REQUIRE_FOLDER
 
-    获取资源信息
-    """
-    o_user = request.user
-    o_res = request.resource
-    visit_key = request.d.visit_key
+            temp_res = parent_res
+            while temp_res.pk != Resource.ROOT_ID:
+                if temp_res.pk == res.pk:
+                    return ResourceError.RESOURCE_CIRCLE
+                temp_res = temp_res.parent
 
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    if not o_res.readable(o_user, visit_key):
-        return error_response(Error.NOT_READABLE)
-
-    return response(o_res.to_dict_with_children())
-
-
-@require_get()
-@require_owner
-def get_res_info_for_selector(request):
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    return response(o_res.to_dict_for_selector())
-
-
-@require_get()
-@require_owner
-def get_res_path(request):
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    res_path = []
-    while o_res.pk != Resource.ROOT_ID:
-        if o_res.res_str_id in res_path:
-            return error_response(Error.RESOURCE_CIRCLE)
-        res_path.append(o_res.res_str_id)
-        o_res = o_res.parent
-    return response(res_path)
-
-
-@require_get([('visit_key', None, None)])
-@maybe_login
-def get_dl_link(request):
-    """ GET /api/res/:slug/dl
-
-    获取资源下载链接
-    """
-    o_user = request.user
-    visit_key = request.d.visit_key
-
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    if not o_res.readable(o_user, visit_key):
-        return error_response(Error.NOT_READABLE)
-
-    if o_res.rtype == Resource.RTYPE_FOLDER:
-        return error_response(Error.REQUIRE_FILE)
-
-    return HttpResponseRedirect(o_res.get_dl_url())
-    # return response(body=dict(link=o_res.get_dl_url()))
-
-
-@require_get([
-    ('token', None, None),
-    ('visit_key', None, None),
-])
-def deal_dl_link(request):
-    """ GET /api/res/:res_str_id/dl
-
-    获取下载资源链接
-    """
-    request.META['HTTP_TOKEN'] = request.d.token
-    return get_dl_link(request)
-
-
-@require_get()
-@maybe_login
-def get_res_base_info(request):
-    """ GET /api/res/:res_str_id/base
-
-    获取资源公开信息
-    """
-    o_user = request.user
-
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    return response(body=dict(
-        info=o_res.to_base_dict(),
-        readable=o_res.readable(o_user, None)
-    ))
-
-
-def deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype):
-    if ftype.find('video') == 0:
-        sub_type = Resource.STYPE_VIDEO
-    elif ftype.find('image') == 0:
-        sub_type = Resource.STYPE_IMAGE
-    elif ftype.find('audio') == 0:
-        sub_type = Resource.STYPE_MUSIC
-    else:
-        sub_type = Resource.STYPE_FILE
-
-    ret = User.get_user_by_id(user_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_user = ret.body
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
-
-    ret = Resource.get_res_by_str_id(parent_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_parent = ret.body
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
-
-    if not o_parent.belong(o_user):
-        return error_response(Error.PARENT_NOT_BELONG)
-
-    decode_fname = QN.decode_key(fname)
-    if fname != decode_fname:
-        new_key = '%s/%s' % (key[:key.rfind('/')], decode_fname)
-        from Base.qn import QN_RES_MANAGER
-        ret = QN_RES_MANAGER.move_res(key, new_key)
-        if ret.error is not Error.OK:
+        ret = res.modify_info(rname, description, status, visit_key, right_bubble, parent_res)
+        if not ret.ok:
             return ret
-        fname = decode_fname
-        key = new_key
+        return res.d()
 
-    ret = Resource.create_file(fname, o_user, o_parent, key, fsize, sub_type, ftype)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-    return response(body=o_res.to_dict_for_child())
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(a=[P_RES_ID])
+    def delete(r, res_str_id):
+        """ DELETE /api/res/:slug
 
+        删除资源
+        """
+        res = r.d.res
 
-@require_json
-@require_post(['key', 'user_id', 'fsize', 'fname', 'parent_str_id', 'ftype'])
-def upload_dlpath_callback(request):
-    """ POST /api/res/dlpath/callback
+        if res.parent == Resource.ROOT_ID:
+            return ResourceError.DELETE_ROOT_FOLDER
 
-    七牛上传资源回调函数
-    """
-    ret = QN_RES_MANAGER.qiniu_auth_callback(request)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-
-    key = request.d.key
-    user_id = request.d.user_id
-    fsize = request.d.fsize
-    fname = request.d.fname
-    parent_str_id = request.d.parent_str_id
-    ftype = request.d.ftype
-
-    return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
+        ret = res.remove()
+        if not ret.ok:
+            return ret
 
 
-# @require_get(['upload_ret'])
-# def upload_dlpath_redirect(request):
-#     """ GET /api/res/dlpath/callback
-#
-#     七牛上传资源成功后的回调函数
-#     """
-#     upload_ret = request.d.upload_ret
-#     upload_ret = urlsafe_base64_decode(upload_ret)
-#     # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-#     # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-#     upload_ret = json.loads(upload_ret)
-#
-#     key = upload_ret['key']
-#     user_id = upload_ret['user_id']
-#     fsize = upload_ret['fsize']
-#     fname = upload_ret['fname']
-#     parent_str_id = upload_ret['parent_str_id']
-#     ftype = upload_ret['ftype']
-#
-#     return deal_upload_dlpath(key, user_id, fsize, fname, parent_str_id, ftype)
+class FolderView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(b=[P_RNAME.clone().rename('folder_name')],
+               a=[P_RES_ID])
+    def post(r, res_str_id):
+        """ POST /api/res/:res_str_id/folder
+
+        上传文件夹资源
+        """
+        user = r.user
+        folder_name = r.d.folder_name
+        res_parent = r.res
+
+        ret = Resource.create_folder(folder_name, user, res_parent)
+        if not ret.ok:
+            return ret
+        res = ret.body
+        return res.d()
 
 
-def deal_cover_dlpath(key, res_str_id):
-    ret = Resource.get_res_by_str_id(res_str_id)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    o_res = ret.body
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
+class LinkView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(b=[P_RNAME.clone().rename('link_name'), Param('link')],
+               a=[P_RES_ID])
+    def post(r, res_str_id):
+        """ POST /api/res/:res_str_id/link
 
-    ret = o_res.modify_cover(key, Resource.COVER_UPLOAD)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    return response(o_res.to_dict())
+        上传链接资源
+        """
+        user = r.user
+        link_name = r.d.link_name
+        link = r.d.link
+        res_parent = r.res
 
-
-@require_json
-@require_put(['cover', 'cover_type'])
-@require_owner
-def modify_cover(request):
-    """ PUT /api/res/:res_str_id/cover
-
-    修改封面信息
-    """
-    cover = request.d.cover
-    cover_type = request.d.cover_type
-
-    o_res = request.resource
-    o_user = request.user
-
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    if cover_type == Resource.COVER_UPLOAD:
-        return error_response(Error.NOT_ALLOWED_COVER_UPLOAD)
-    if cover_type == Resource.COVER_SELF and o_res.sub_type != Resource.STYPE_IMAGE:
-        return error_response(Error.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE)
-    if cover_type == Resource.COVER_RESOURCE:
-        resource_chain = [cover]
-        next_str_id = cover
-        while True:
-            ret = Resource.get_res_by_str_id(next_str_id)
-            if ret.error is not Error.OK:
-                return error_response(ret)
-            o_chain = ret.body
-            if not isinstance(o_chain, Resource):
-                return error_response(Error.STRANGE)
-            if o_chain.res_str_id == o_res.res_str_id:
-                return error_response(Error.RESOURCE_CIRCLE)
-            if not o_chain.belong(o_user):
-                return error_response(Error.NOT_YOUR_RESOURCE)
-            if o_chain.cover_type == Resource.COVER_RESOURCE:
-                next_str_id = o_chain.cover
-            elif o_chain.cover_type == Resource.COVER_PARENT:
-                next_str_id = o_chain.parent.res_str_id
-            else:
-                break
-            if next_str_id in resource_chain:
-                return error_response(Error.RESOURCE_CIRCLE)
-            resource_chain.append(next_str_id)
-
-    ret = o_res.modify_cover(cover, cover_type)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    return response(o_res.to_dict())
+        ret = Resource.create_link(link_name, user, res_parent, link)
+        if not ret.ok:
+            return ret
+        res = ret.body
+        return res.d()
 
 
-@require_json
-@require_post(['key', 'res_str_id'])
-def upload_cover_callback(request):
-    """ POST /api/res/cover/callback
-
-    七牛上传资源封面成功后的回调函数
-    """
-    ret = QN_RES_MANAGER.qiniu_auth_callback(request)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-
-    key = request.d.key
-    res_str_id = request.d.res_str_id
-
-    return deal_cover_dlpath(key, res_str_id)
-
-
-# @require_get(['upload_ret'])
-# def upload_cover_redirect(request):
-#     """ GET /api/res/cover/callback
-#
-#     七牛上传资源封面成功后的重定向
-#     """
-#     upload_ret = request.d.upload_ret
-#     upload_ret = urlsafe_base64_decode(upload_ret)
-#     # upload_ret = upload_ret.replace('-', '+').replace('_', '/')
-#     # upload_ret = base64.decodebytes(bytes(upload_ret, encoding='utf8')).decode()
-#     upload_ret = json.loads(upload_ret)
-#
-#     key = upload_ret['key']
-#     res_str_id = upload_ret['res_str_id']
-#
-#     return deal_cover_dlpath(key, res_str_id)
+class PathView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(a=[P_RES_ID])
+    def get(r, res_str_id):
+        res = r.d.res
+        res_path = []
+        while res.pk != Resource.ROOT_ID:
+            if res.res_str_id in res_path:
+                return ResourceError.RESOURCE_CIRCLE
+            res_path.append(res.res_str_id)
+            res = res.parent
+        return res_path
 
 
-@require_json
-@require_put(
-    [
-        ('rname', None, None),
-        ('status', None, None),
-        ('description', None, None),
-        ('visit_key', None, None),
-        ('right_bubble', None, None),
-        ('parent_str_id', None, None),
-    ]
-)
-@require_owner
-def modify_res(request):
-    """ PUT /api/res/:slug/
-
-    修改资源信息
-    """
-    o_user = request.user
-    rname = request.d.rname
-    description = request.d.description
-    status = request.d.status
-    visit_key = request.d.visit_key
-    right_bubble = request.d.right_bubble
-    parent_str_id = request.d.parent_str_id
-
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    if parent_str_id:
-        ret = Resource.get_res_by_str_id(parent_str_id)
-        if ret.error is not Error.OK:
-            return error_response(ret)
-        o_parent = ret.body
-        if not isinstance(o_parent, Resource):
-            return error_response(Error.STRANGE)
-        if not o_parent.belong(o_user):
-            return error_response(Error.NOT_YOUR_RESOURCE)
-        if o_parent.rtype != Resource.RTYPE_FOLDER:
-            return error_response(Error.REQUIRE_FOLDER)
-        o_temp = o_parent
-        while o_temp.pk != Resource.ROOT_ID:
-            if o_temp.pk == o_res.pk:
-                return error_response(Error.RESOURCE_CIRCLE)
-            o_temp = o_temp.parent
-    else:
-        o_parent = None
-
-    ret = o_res.modify_info(rname, description, status, visit_key, right_bubble, o_parent)
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    return response(body=o_res.to_dict())
+class SelectView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(a=[P_RES_ID])
+    def get(r, res_str_id):
+        res = r.d.res
+        return res.d_selector_layer()
 
 
-@require_get([('filename', Resource.pub_valid_rname)])
-@require_owner
-def upload_res_token(request):
-    """ GET /api/res/:res_str_id/token
+class TokenView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    def get(r, res_str_id):
+        """ GET /api/res/:res_str_id/token
 
-    获取七牛上传资源token
-    """
-    o_user = request.user
-    filename = request.d.filename
-    filename = QN.encode_key(filename)
+        获取七牛上传资源token
+        """
+        user = r.user
+        filename = r.d.filename
+        filename = QnManager.encode_key(filename)
+        res_parent = r.d.res
 
-    if not isinstance(o_user, User):
-        return error_response(Error.STRANGE)
+        import datetime
+        crt_time = datetime.datetime.now().timestamp()
+        key = 'res/%s/%s/%s' % (user.pk, crt_time, filename)
+        qn_token, key = qn_res_manager.get_upload_token(
+            key, Policy.file(filename, user.pk, res_parent.res_str_id))
+        return dict(upload_token=qn_token, key=key)
 
-    o_parent = request.resource
-    if not isinstance(o_parent, Resource):
-        return error_response(Error.STRANGE)
+    @staticmethod
+    @Packing.http_pack
+    @Analyse.r(b=[Param('key'), P_USER_ID, Param('fsize'), Param('fname'), Param('ftype')],
+               a=[P_RES_ID])
+    def post(r, res_str_id):
+        """ POST /api/res/:res_str_id/token
 
-    import datetime
-    crt_time = datetime.datetime.now().timestamp()
-    key = 'res/%s/%s/%s' % (o_user.pk, crt_time, filename)
-    qn_token, key = QN_RES_MANAGER.get_upload_token(
-        key, get_res_policy(filename, o_user.pk, o_parent.res_str_id))
-    return response(body=dict(upload_token=qn_token, key=key))
+        七牛上传资源回调函数
+        """
+        ret = qn_res_manager.auth_callback(r)
+        if not ret.ok:
+            return ret
 
+        key = r.d.key
+        user = r.d.user
+        fsize = r.d.fsize
+        fname = r.d.fname
+        ftype = r.d.ftype
+        res_parent = r.d.res
 
-@require_get([('filename', Resource.pub_valid_rname)])
-@require_owner
-def upload_cover_token(request):
-    """ GET /api/res/:res_str_id/cover
+        if ftype.find('video') == 0:
+            sub_type = Resource.STYPE_VIDEO
+        elif ftype.find('image') == 0:
+            sub_type = Resource.STYPE_IMAGE
+        elif ftype.find('audio') == 0:
+            sub_type = Resource.STYPE_MUSIC
+        else:
+            sub_type = Resource.STYPE_FILE
 
-    获取七牛上传资源封面token
-    """
-    filename = request.d.filename
-    filename = QN.encode_key(filename)
+        if not res_parent.belong(user):
+            return ResourceError.PARENT_NOT_BELONG
 
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
+        decode_fname = QnManager.decode_key(fname)
+        if fname != decode_fname:
+            new_key = '%s/%s' % (key[:key.rfind('/')], decode_fname)
+            ret = qn_res_manager.move_res(key, new_key)
+            if not ret.ok:
+                return ret
+            fname = decode_fname
+            key = new_key
 
-    import datetime
-    crt_time = datetime.datetime.now().timestamp()
-    key = 'cover/%s/%s/%s' % (o_res.pk, crt_time, filename)
-    qn_token, key = QN_RES_MANAGER.get_upload_token(key, get_cover_policy(o_res.res_str_id))
-    return response(body=dict(upload_token=qn_token, key=key))
-
-
-@require_delete()
-@require_owner
-def delete_res(request):
-    """ DELETE /api/res/:slug
-
-    删除资源
-    """
-    o_res = request.resource
-    if not isinstance(o_res, Resource):
-        return error_response(Error.STRANGE)
-
-    if o_res.parent == Resource.ROOT_ID:
-        return error_response(Error.ERROR_DELETE_ROOT_FOLDER)
-
-    ret = o_res.delete_()
-    if ret.error is not Error.OK:
-        return error_response(ret)
-    return response()
+        ret = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
+        if not ret.ok:
+            return ret
+        res = ret.body  # type: Resource
+        return res.d_child()
 
 
-def direct_link(request):
-    """ GET /l/:res_str_id
+class CoverView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    def get(r, res_str_id):
+        """ GET /api/res/:res_str_id/cover
 
-    直链解析，允许在资源ID后加扩展名
-    """
-    return get_dl_link(request)
+        获取七牛上传资源封面token
+        """
+        filename = r.d.filename
+        filename = QnManager.encode_key(filename)
+        res = r.d.res
+
+        import datetime
+        crt_time = datetime.datetime.now().timestamp()
+        key = 'cover/%s/%s/%s' % (res.pk, crt_time, filename)
+        qn_token, key = qn_res_manager.get_upload_token(key, Policy.cover(res.res_str_id))
+        return dict(upload_token=qn_token, key=key)
+
+    @staticmethod
+    @Packing.http_pack
+    @Analyse.r(b=[Param('key')], a=[P_RES_ID])
+    def post(r, res_str_id):
+        """ POST /api/res/:res_str_id/cover
+
+        七牛上传资源封面成功后的回调函数
+        """
+        ret = qn_res_manager.qiniu_auth_callback(r)
+        if not ret.ok:
+            return ret
+
+        key = r.d.key
+        res = r.d.res  # type: Resource
+
+        ret = res.modify_cover(key, Resource.COVER_UPLOAD)
+        if not ret.ok:
+            return ret
+        return res.d()
+
+    @staticmethod
+    @Packing.http_pack
+    @Auth.require_owner
+    @Analyse.r(b=[P_COVER, P_COVER_TYPE])
+    def put(r):
+        """ PUT /api/res/:res_str_id/cover
+
+        修改封面信息
+        """
+        cover = r.d.cover
+        cover_type = r.d.cover_type
+
+        res = r.d.res
+        user = r.user
+
+        if cover_type == Resource.COVER_UPLOAD:
+            return ResourceError.NOT_ALLOWED_COVER_UPLOAD
+        if cover_type == Resource.COVER_SELF and res.sub_type != Resource.STYPE_IMAGE:
+            return ResourceError.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
+        if cover_type == Resource.COVER_RESOURCE:
+            resource_chain = [cover]
+            next_str_id = cover
+            while True:
+                ret = Resource.get_by_id(next_str_id)
+                if not ret.ok:
+                    return ret
+                next_res = ret.body  # type: Resource
+                if next_res.res_str_id == res.res_str_id:
+                    return ResourceError.RESOURCE_CIRCLE
+                if not next_res.belong(user):
+                    return ResourceError.RESOURCE_NOT_BELONG
+                if next_res.cover_type == Resource.COVER_RESOURCE:
+                    next_str_id = next_res.cover
+                elif next_res.cover_type == Resource.COVER_PARENT:
+                    next_str_id = next_res.parent.res_str_id
+                else:
+                    break
+                if next_str_id in resource_chain:
+                    return ResourceError.RESOURCE_CIRCLE
+                resource_chain.append(next_str_id)
+
+        ret = res.modify_cover(cover, cover_type)
+        if not ret.ok:
+            return ret
+        return res.d()
+
+
+class BaseInfoView(View):
+    @staticmethod
+    @Packing.http_pack
+    @Auth.maybe_login
+    def get(r):
+        """ GET /api/res/:res_str_id/base
+
+        获取资源公开信息
+        """
+        user = r.user  # type: User
+
+        res = r.d.res  # type: Resource
+
+        return dict(
+            info=res.d_base(),
+            readable=res.readable(user, None)
+        )
+
+
+class DownloadView(View):
+    @staticmethod
+    @Auth.maybe_login
+    @Analyse.r(q=[P_VISIT_KEY.clone().null()])
+    def get_dl_link(r):
+        user = r.user
+        visit_key = r.d.visit_key
+
+        res = r.d.res  # type: Resource
+        if not res.readable(user, visit_key):
+            return Packing.http_response(ResourceError.NOT_READABLE)
+
+        if res.rtype == Resource.RTYPE_FOLDER:
+            return Packing.http_response(ResourceError.REQUIRE_FILE)
+
+        return HttpResponseRedirect(res.get_dl_url())
+
+    @staticmethod
+    @Analyse.r(q=[Param('token', '登录口令').null(), P_VISIT_KEY.clone().null()], a=[P_RES_ID])
+    def get(r, res_str_id):
+        """ GET /api/res/:res_str_id/dl
+
+        获取下载资源链接
+        """
+        r.META['HTTP_TOKEN'] = r.d.token
+        return DownloadView.get_dl_link(r)
+
+
+class ShortLinkView(View):
+    @staticmethod
+    def remove_dot(res_str_id):
+        find_dot = res_str_id.find('.')
+        if find_dot != -1:
+            res_str_id = res_str_id[:find_dot]
+        return res_str_id
+
+    P_SL_RES_ID = P_RES_ID.clone().process(remove_dot, begin=True)
+
+    @staticmethod
+    @Analyse.r(a=[P_SL_RES_ID])
+    def get(r, res_str_id, *args, **kwargs):
+        """ /s/:res_str_id
+
+        GET: direct_link, 直链分享解析
+        """
+        return DownloadView.get_dl_link(r)

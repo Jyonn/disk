@@ -1,7 +1,7 @@
 from django.urls import path
 
-from OAuth.router import rt_qtb_callback
+from OAuth.views import OAuthView
 
 urlpatterns = [
-    path('qtb/callback', rt_qtb_callback),
+    path('qtb/callback', OAuthView.as_view()),
 ]

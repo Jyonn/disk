@@ -1,11 +1,11 @@
-""" Adel Liu 180226
+""" Adel Liu 190815
 
 base子路由
 """
 from django.urls import path
 
-from Base.views import get_error_dict
+from Base.views import ErrorView
 
 urlpatterns = [
-    path('errors', get_error_dict),
+    path('errors', ErrorView.as_view()),
 ]

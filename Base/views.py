@@ -1,6 +1,10 @@
-from Base.error import ERROR_DICT
-from Base.response import response
+from SmartDjango import Packing, ErrorCenter
+from django.views import View
 
 
-def get_error_dict(request):
-    return response(body=ERROR_DICT)
+class ErrorView(View):
+    @staticmethod
+    @Packing.http_pack
+    def get(r):
+        """GET /base/errors"""
+        return ErrorCenter.all()

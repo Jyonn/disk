@@ -4,9 +4,9 @@
 """
 from django.urls import path
 
-from User.router import rt_user, rt_qt_user_app_id
+from User.views import BaseView, QitianView
 
 urlpatterns = [
-    path('', rt_user),
-    path('@<str:qt_user_app_id>', rt_qt_user_app_id),
+    path('', BaseView.as_view()),
+    path('@<str:qt_user_app_id>', QitianView.as_view()),
 ]

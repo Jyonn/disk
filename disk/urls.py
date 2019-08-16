@@ -15,14 +15,13 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from Resource.router import rt_direct_link
-
+from Resource.views import ShortLinkView
 
 urlpatterns = [
     path('api/', include('disk.api_urls')),
-    path('s/<str:res_str_id>/', rt_direct_link),
-    path('s/<str:res_str_id>/<str:_>', rt_direct_link),
-    path('s/<str:res_str_id>', rt_direct_link),
+    path('s/<str:res_str_id>/', ShortLinkView.as_view()),
+    path('s/<str:res_str_id>/<str:_>', ShortLinkView.as_view()),
+    path('s/<str:res_str_id>', ShortLinkView.as_view()),
 ]
 
 # handler404 = page_not_found

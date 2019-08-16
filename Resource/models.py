@@ -4,25 +4,50 @@
 """
 import datetime
 
+from SmartDjango import SmartModel, Packing, ErrorCenter, E, Param, BaseError
 from django.db import models
 from django.utils.crypto import get_random_string
 
-from Base.common import deprint
-from Base.decorator import field_validator
-from Base.error import Error
-from Base.qn import QN
-from Base.response import Ret
 from User.models import User
 
 
-class Resource(models.Model):
+class ResourceError(ErrorCenter):
+    PARENT_NOT_BELONG = E("无法在他人目录下存储", hc=403)
+    NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE = E("不允许非图片资源设置封面为自身", hc=403)
+    NOT_ALLOWED_COVER_UPLOAD = E("不允许封面类型直接修改为本地上传类型", hc=403)
+
+    DELETE_ROOT_FOLDER = E("无法删除用户根目录", hc=403)
+    RESOURCE_CIRCLE = E("不允许资源关系成环", hc=403)
+
+    REQUIRE_FOLDER = E("目标需要为目录资源", hc=403)
+    REQUIRE_FILE = E("目标需要为文件资源", hc=403)
+
+    NOT_READABLE = E("没有读取权限", hc=403)
+    RIGHT_NOT_FOUND = E("不存在的读取权限", hc=404)
+    CREATE_RIGHT = E("存储读取权限错误", hc=500)
+    REQUIRE_EMPTY_FOLDER = E("非空目录无法删除", hc=403)
+    GET_ROOT_FOLDER = E("无法获得根目录", hc=500)
+    CREATE_LINK = E("存储链接错误", hc=500)
+    CREATE_FOLDER = E("存储目录错误", hc=500)
+    CREATE_FILE = E("存储文件错误", hc=500)
+    VISIT_KEY_LEN = E("资源密码至少需要3个字符", hc=403)
+    FILE_PARENT = E("文件资源不能成为父目录", hc=403)
+    RESOURCE_NOT_BELONG = E("没有权限", hc=403)
+    RESOURCE_NOT_FOUND = E("不存在的资源", hc=404)
+    INVALID_RNAME = E("不合法的资源名称", hc=400)
+
+
+ResourceError.register()
+
+
+class Resource(SmartModel):
     """
     资源类
     根资源文件夹id=1
     一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
     ROOT_ID = 1
-    L = {
+    MAX_L = {
         'rname': 256,
         'manager': 255,
         'dlpath': 1024,
@@ -31,6 +56,7 @@ class Resource(models.Model):
         'res_str_id': 6,
         'mime': 100,
     }
+
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
     RTYPE_LINK = 2
@@ -39,6 +65,7 @@ class Resource(models.Model):
         (RTYPE_FOLDER, 'folder'),
         (RTYPE_LINK, 'link'),
     )
+
     STATUS_PUBLIC = 0
     STATUS_PRIVATE = 1
     STATUS_PROTECT = 2
@@ -47,6 +74,7 @@ class Resource(models.Model):
         (STATUS_PRIVATE, 'private'),
         (STATUS_PROTECT, 'protect')
     )
+
     STYPE_FOLDER = 0
     STYPE_IMAGE = 1
     STYPE_VIDEO = 2
@@ -61,6 +89,7 @@ class Resource(models.Model):
         (STYPE_FILE, 'normal file'),
         (STYPE_LINK, 'link'),
     )
+
     COVER_RANDOM = 0
     COVER_UPLOAD = 1
     COVER_PARENT = 2
@@ -75,9 +104,10 @@ class Resource(models.Model):
         (COVER_SELF, 'use self file'),
         (COVER_RESOURCE, 'use another resource'),
     )
+
     rname = models.CharField(
         verbose_name='resource name',
-        max_length=L['rname'],
+        max_length=MAX_L['rname'],
     )
     rtype = models.IntegerField(
         verbose_name='file or folder',
@@ -95,11 +125,10 @@ class Resource(models.Model):
         verbose_name='资源类型',
         null=True,
         default=True,
-        max_length=L['mime'],
+        max_length=MAX_L['mime'],
     )
     description = models.TextField(
         verbose_name='description in Markdown',
-        # max_length=L['description'],
         null=True,
         blank=True,
         default=None,
@@ -108,7 +137,7 @@ class Resource(models.Model):
         null=True,
         blank=True,
         default=None,
-        max_length=L['cover']
+        max_length=MAX_L['cover']
     )
     owner = models.ForeignKey(
         User,
@@ -123,7 +152,7 @@ class Resource(models.Model):
     )
     dlpath = models.CharField(
         verbose_name='download relative path to res.6-79.cn',
-        max_length=L['dlpath'],
+        max_length=MAX_L['dlpath'],
         default=None,
         null=True,
         blank=True,
@@ -134,7 +163,7 @@ class Resource(models.Model):
         default=STATUS_PUBLIC,
     )
     visit_key = models.CharField(
-        max_length=L['visit_key'],
+        max_length=MAX_L['visit_key'],
         verbose_name='当status为2时有效',
     )
     vk_change_time = models.FloatField(
@@ -152,7 +181,7 @@ class Resource(models.Model):
         default=None,
         null=True,
         blank=True,
-        max_length=L['res_str_id'],
+        max_length=MAX_L['res_str_id'],
         unique=True,
     )
     right_bubble = models.NullBooleanField(
@@ -167,30 +196,23 @@ class Resource(models.Model):
         blank=0,
     )
 
-    FIELD_LIST = [
-        'rname', 'rtype', 'rsize', 'sub_type', 'description', 'cover', 'owner',
-        'parent', 'dlpath', 'status', 'visit_key', 'create_time', 'dlcount',
-        'res_str_id', 'right_bubble', 'cover_type', 'mime'
-    ]
-
     @classmethod
-    def get_unique_res_str_id(cls):
+    def get_unique_id(cls):
         while True:
-            res_str_id = get_random_string(length=cls.L['res_str_id'])
-            ret = cls.get_res_by_str_id(res_str_id)
-            if ret.error == Error.NOT_FOUND_RESOURCE:
+            res_str_id = get_random_string(length=cls.MAX_L['res_str_id'])
+            ret = cls.get_by_id(res_str_id)
+            if ret.erroris(ResourceError.RESOURCE_NOT_FOUND):
                 return res_str_id
-            deprint('generate res_str_id: %s, conflict.' % res_str_id)
+            # deprint('generate res_str_id: %s, conflict.' % res_str_id)
 
     @staticmethod
+    @Packing.pack
     def _valid_rname(rname):
         """验证rname属性"""
         invalid_chars = '\\/*:\'"|<>?'
         for char in invalid_chars:
             if char in rname:
-                # print(char)
-                return Ret(Error.INVALID_RNAME)
-        return Ret()
+                return ResourceError.INVALID_RNAME
 
     @staticmethod
     def pub_valid_rname(rname):
@@ -198,27 +220,22 @@ class Resource(models.Model):
         return Resource._valid_rname(rname)
 
     @staticmethod
-    def _valid_o_parent(o_parent):
+    @Packing.pack
+    def _valid_res_parent(o_parent):
         """验证o_parent属性"""
         if not isinstance(o_parent, Resource):
-            return Ret(Error.STRANGE)
+            return BaseError.STRANGE
         if o_parent.rtype != Resource.RTYPE_FOLDER:
-            return Ret(Error.ERROR_FILE_PARENT)
-        return Ret()
+            return ResourceError.FILE_PARENT
 
     @staticmethod
+    @Packing.pack
     def _valid_visit_key(visit_key):
         if len(visit_key) < 3:
-            return Ret(Error.VISIT_KEY_LEN)
-        return Ret()
+            return ResourceError.VISIT_KEY_LEN
 
     @classmethod
-    def _validate(cls, dict_):
-        """验证传入参数是否合法"""
-        return field_validator(dict_, Resource)
-
-    @classmethod
-    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type, mime=None):
+    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type, mime):
         crt_time = datetime.datetime.now()
         return cls(
             rname=rname,
@@ -236,266 +253,188 @@ class Resource(models.Model):
             vk_change_time=crt_time.timestamp(),
             rsize=rsize,
             sub_type=sub_type,
-            res_str_id=cls.get_unique_res_str_id(),
+            res_str_id=cls.get_unique_id(),
             dlcount=0,
             right_bubble=True,
         )
 
     @classmethod
-    def create_file(cls, rname, o_user, o_parent, dlpath, rsize, sub_type, mime):
+    @Packing.pack
+    def create_file(cls, rname, user, res_parent, dlpath, rsize, sub_type, mime):
         """ 创建文件对象
 
+        :param mime: 七牛返回的资源类型
         :param rname: 文件名
-        :param o_user: 所属用户
-        :param o_parent: 所属目录
+        :param user: 所属用户
+        :param res_parent: 所属目录
         :param dlpath: 七牛存储的key
         :param rsize: 文件大小
         :param sub_type: 文件分类
         :return: Ret对象，错误返回错误代码，成功返回文件对象
         """
-        ret = cls._validate(locals())
-        if ret.error is not Error.OK:
+        ret = cls.validator(locals())
+        if not ret.ok:
             return ret
 
         try:
-            o_res = cls.create_abstract(
+            res = cls.create_abstract(
                 rname=rname,
                 rtype=cls.RTYPE_FILE,
                 desc=None,
-                o_user=o_user,
-                o_parent=o_parent,
+                o_user=user,
+                o_parent=res_parent,
                 dlpath=dlpath,
                 rsize=rsize,
                 sub_type=sub_type,
                 mime=mime,
             )
-            o_res.save()
+            res.save()
         except ValueError as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_CREATE_FILE)
-        return Ret(o_res)
+            return ResourceError.CREATE_FILE
+        return res
 
     @classmethod
-    def create_folder(cls, rname, o_user, o_parent, desc=None):
+    @Packing.pack
+    def create_folder(cls, rname, user, res_parent, desc=None):
         """ 创建文件夹对象
 
         :param rname: 文件夹名
-        :param o_user: 所属用户
-        :param o_parent: 所属目录
+        :param user: 所属用户
+        :param res_parent: 所属目录
         :param desc: 描述说明
         :return: Ret对象，错误返回错误代码，成功返回文件夹对象
         """
-        ret = cls._validate(locals())
-        if ret.error is not Error.OK:
+        ret = cls.validator(locals())
+        if not ret.ok:
             return ret
 
         try:
-            o_res = cls.create_abstract(
+            res = cls.create_abstract(
                 rname=rname,
                 rtype=cls.RTYPE_FOLDER,
                 desc=desc,
-                o_user=o_user,
-                o_parent=o_parent,
+                o_user=user,
+                o_parent=res_parent,
                 dlpath=None,
                 rsize=0,
                 sub_type=cls.STYPE_FOLDER,
+                mime=None,
             )
-            o_res.save()
+            res.save()
         except ValueError as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_CREATE_FOLDER)
-        return Ret(o_res)
+            return ResourceError.CREATE_FOLDER
+        return res
 
     @classmethod
-    def create_link(cls, rname, o_user, o_parent, dlpath):
+    @Packing.pack
+    def create_link(cls, rname, user, res_parent, dlpath):
         """ 创建链接对象
 
         :param rname: 链接名称
-        :param o_user: 所属用户
-        :param o_parent: 所在目录
+        :param user: 所属用户
+        :param res_parent: 所在目录
         :param dlpath: 链接地址
         :return: Ret对象，错误返回错误代码，成功返回链接对象
         """
-        ret = cls._validate(locals())
-        if ret.error is not Error.OK:
+        ret = cls.validator(locals())
+        if not ret.ok:
             return ret
 
         try:
-            o_res = cls.create_abstract(
+            res = cls.create_abstract(
                 rname=rname,
                 rtype=cls.RTYPE_LINK,
                 desc=None,
-                o_user=o_user,
-                o_parent=o_parent,
+                o_user=user,
+                o_parent=res_parent,
                 dlpath=dlpath,
                 rsize=0,
                 sub_type=cls.STYPE_LINK,
+                mime=None,
             )
-            o_res.save()
+            res.save()
         except ValueError as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_CREATE_LINK)
-        return Ret(o_res)
+            return ResourceError.CREATE_LINK
+        return res
+
+    """
+    查询方法
+    """
 
     @classmethod
-    def get_res_by_str_id(cls, res_str_id):
+    @Packing.pack
+    def get_by_id(cls, res_str_id):
         try:
-            o_res = cls.objects.get(res_str_id=res_str_id)
+            res = cls.objects.get(res_str_id=res_str_id)
         except cls.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.NOT_FOUND_RESOURCE)
-        return Ret(o_res)
+            return ResourceError.RESOURCE_NOT_FOUND
+        return res
 
     @classmethod
-    def get_res_by_id(cls, res_id):
+    @Packing.pack
+    def get_by_pk(cls, res_id):
         """根据资源id获取资源对象"""
         try:
-            o_res = cls.objects.get(pk=res_id)
+            res = cls.objects.get(pk=res_id)
         except cls.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.NOT_FOUND_RESOURCE)
-        return Ret(o_res)
+            return ResourceError.RESOURCE_NOT_FOUND
+        return res
 
-    def belong(self, o_user):
+    def belong(self, user):
         """判断资源是否属于用户"""
-        return self.owner.pk == o_user.pk
+        return self.owner.pk == user.pk
 
     def is_home(self):
         return self.parent.pk == Resource.ROOT_ID
 
     def get_cover_urls(self):
         """获取封面链接"""
-        o_res = self
+        res = self
         cover = None
-        while o_res.pk != Resource.ROOT_ID:
-            if o_res.cover_type == Resource.COVER_PARENT:
-                o_res = o_res.parent
-            elif o_res.cover_type == Resource.COVER_RESOURCE:
-                ret = Resource.get_res_by_str_id(o_res.cover)
-                if ret.error is not Error.OK:
+        while res.pk != Resource.ROOT_ID:
+            if res.cover_type == Resource.COVER_PARENT:
+                res = res.parent
+            elif res.cover_type == Resource.COVER_RESOURCE:
+                ret = Resource.get_by_id(res.cover)
+                if not ret.ok:
                     return None, None
-                o_res = ret.body
-                if not o_res.belong(self.owner):
+                res = ret.body
+                if not res.belong(self.owner):
                     return None, None
             else:
-                cover = o_res.cover
+                cover = res.cover
                 break
-        if o_res.cover_type == Resource.COVER_SELF:
-            if o_res.sub_type == Resource.STYPE_IMAGE:
-                from Base.qn import QN_RES_MANAGER
-                return (QN_RES_MANAGER.get_resource_url(o_res.dlpath),
-                        QN_RES_MANAGER.get_resource_url("%s-small" % o_res.dlpath))
+        if res.cover_type == Resource.COVER_SELF:
+            if res.sub_type == Resource.STYPE_IMAGE:
+                from Base.qn_manager import qn_res_manager
+                return (qn_res_manager.get_resource_url(res.dlpath),
+                        qn_res_manager.get_resource_url("%s-small" % res.dlpath))
         if cover is None:
             return None, None
-        if o_res.cover_type == Resource.COVER_UPLOAD:
-            from Base.qn import QN_RES_MANAGER
-            return (QN_RES_MANAGER.get_resource_url(cover),
-                    QN_RES_MANAGER.get_resource_url("%s-small" % cover))
+        if res.cover_type == Resource.COVER_UPLOAD:
+            from Base.qn_manager import qn_res_manager
+            return (qn_res_manager.get_resource_url(cover),
+                    qn_res_manager.get_resource_url("%s-small" % cover))
         else:
             return cover, cover
 
-    def decode_name(self):
-        # from Base.qn import QN
-        # return QN.decode_key(self.rname)
-        return self.rname
+    """
+    字典方法
+    """
 
-    def to_dict_for_child(self):
-        """当资源作为子资源，获取简易字典"""
-        cover_urls = self.get_cover_urls()
-        return dict(
-            res_str_id=self.res_str_id,
-            rname=self.decode_name(),
-            rtype=self.rtype,
-            cover_small=cover_urls[1],
-            status=self.status,
-            create_time=self.create_time.timestamp(),
-            sub_type=self.sub_type,
-            dlcount=self.dlcount,
-        )
+    def _readable_owner(self):
+        return self.owner.d()
 
-    def to_dict(self):
-        """获取资源字典"""
-        cover_urls = self.get_cover_urls()
-        return dict(
-            res_str_id=self.res_str_id,
-            rname=self.decode_name(),
-            rtype=self.rtype,
-            rsize=self.rsize,
-            sub_type=self.sub_type,
-            description=self.description,
-            cover=cover_urls[0],
-            cover_small=cover_urls[1],
-            cover_type=self.cover_type,
-            owner=self.owner.to_dict(),
-            parent_str_id=self.parent.res_str_id,
-            status=self.status,
-            create_time=self.create_time.timestamp(),
-            dlcount=self.dlcount,
-            visit_key=self.visit_key if self.status == Resource.STATUS_PROTECT else None,
-            is_home=self.is_home(),
-            right_bubble=self.right_bubble,
-            secure_env=self.secure_env(),
-            raw_cover=self.cover,
-        )
+    def _readable_create_time(self):
+        return self.create_time.timestamp()
 
-    def to_base_dict(self):
-        """获取资源最基本信息"""
-        cover_urls = self.get_cover_urls()
-        return dict(
-            cover=cover_urls[0],
-            cover_small=cover_urls[1],
-            status=self.status,
-            is_home=self.is_home(),
-            owner=self.owner.to_dict(),
-            create_time=self.create_time.timestamp(),
-            right_bubble=self.right_bubble,
-        )
+    def _readable_visit_key(self):
+        return self.visit_key if self.status == Resource.STATUS_PROTECT else None
 
-    def to_dict_with_children(self):
-        _child_list = Resource.objects.filter(parent=self)
+    def _readable_is_home(self):
+        return self.is_home()
 
-        child_list = []
-        for o_child in _child_list:
-            child_list.append(o_child.to_dict_for_child())
-
-        return dict(
-            info=self.to_dict(),
-            child_list=child_list,
-        )
-
-    def to_dict_for_selector(self):
-        _child_list = Resource.objects.filter(parent=self)
-
-        child_list = []
-        for o_child in _child_list:
-            child_list.append(dict(
-                res_str_id=o_child.res_str_id,
-                rname=o_child.rname,
-                rtype=o_child.rtype,
-                sub_type=o_child.sub_type,
-            ))
-
-        return dict(
-            info=dict(
-                is_home=self.is_home(),
-                res_str_id=self.res_str_id,
-                rname=self.decode_name(),
-                parent_str_id=self.parent.res_str_id,
-            ),
-            child_list=child_list,
-        )
-
-    @staticmethod
-    def get_root_folder(o_user):
-        """获取当前用户的根目录"""
-        try:
-            o_res = Resource.objects.get(owner=o_user, parent=1, rtype=Resource.RTYPE_FOLDER)
-        except Resource.DoesNotExist as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_GET_ROOT_FOLDER)
-        return Ret(o_res)
-
-    def secure_env(self):
+    def _readable_secure_env(self):
         if self.pk == Resource.ROOT_ID or \
                 not self.right_bubble or \
                 self.status == Resource.STATUS_PUBLIC:
@@ -509,20 +448,88 @@ class Resource(models.Model):
             o_res = o_res.parent
         return True
 
-    def readable(self, o_user, visit_key):
+    def _readable_raw_cover(self):
+        return self.cover
+
+    def _readable_parent_str_id(self):
+        return self.parent.res_str_id
+
+    def d(self):
+        dict_ = self.dictor(['res_str_id', 'rname', 'rtype', 'rsize', 'sub_type', 'description',
+                             'cover_type', 'owner', 'parent_str_id', 'status', 'create_time',
+                             'dlcount', 'visit_key', 'is_home', 'right_bubble', 'secure_env',
+                             'raw_cover'])
+        cover_urls = self.get_cover_urls()
+        dict_.update(dict(
+            cover=cover_urls[0],
+            cover_small=cover_urls[1],
+        ))
+        return dict_
+
+    def d_base(self):
+        dict_ = self.dictor(['status', 'is_home', 'owner', 'create_time', 'right_bubble'])
+        cover_urls = self.get_cover_urls()
+        dict_.update(dict(
+            cover=cover_urls[0],
+            cover_small=cover_urls[1],
+        ))
+        return dict_
+
+    def d_child(self):
+        dict_ = self.dictor(['res_str_id', 'rname', 'rtype', 'status', 'create_time', 'sub_type',
+                             'dlcount'])
+        cover_urls = self.get_cover_urls()
+        dict_.update(dict(
+            cover_small=cover_urls[1],
+        ))
+        return dict_
+
+    def d_layer(self):
+        child_list = Resource.objects.filter(parent=self).dict(Resource.d_child)
+        return dict(
+            info=self.d(),
+            child_list=child_list,
+        )
+
+    def d_child_selector(self):
+        return self.dictor(['res_str_id', 'rname', 'rtype', 'sub_type'])
+
+    def d_selector_layer(self):
+        child_list = Resource.objects.filter(parent=self).dict(Resource.d_child_selector)
+        info = self.dictor(['is_home', 'res_str_id', 'rname', 'parent_str_id'])
+        return dict(
+            info=info,
+            child_list=child_list,
+        )
+
+    """
+    查询方法
+    """
+
+    @staticmethod
+    @Packing.pack
+    def get_root_folder(user):
+        """获取当前用户的根目录"""
+        try:
+            res = Resource.objects.get(owner=user, parent=1, rtype=Resource.RTYPE_FOLDER)
+        except Resource.DoesNotExist as err:
+            return ResourceError.GET_ROOT_FOLDER
+        return res
+
+    def readable(self, user, visit_key):
         """判断当前资源是否被当前用户可读"""
-        o_res = self
-        while o_res.pk != Resource.ROOT_ID:
-            if o_res.owner == o_user or o_res.status == Resource.STATUS_PUBLIC:
+        res = self
+        while res.pk != Resource.ROOT_ID:
+            if res.owner == user or res.status == Resource.STATUS_PUBLIC:
                 return True
-            if o_res.status == Resource.STATUS_PROTECT and o_res.visit_key == visit_key:
-                UserRight.update(o_user, o_res)
+            if res.status == Resource.STATUS_PROTECT and res.visit_key == visit_key:
+                UserRight.update(user, res)
                 return True
-            if o_res.status == Resource.STATUS_PROTECT and UserRight.verify(o_user, o_res):
+            if res.status == Resource.STATUS_PROTECT and UserRight.verify(user, res):
                 return True
-            if not o_res.right_bubble:
+            if not res.right_bubble:
                 break
-            o_res = o_res.parent
+            res = res.parent
             visit_key = None
         return False
 
@@ -532,8 +539,8 @@ class Resource(models.Model):
         self.save()
         if self.rtype == Resource.RTYPE_LINK:
             return self.dlpath
-        from Base.qn import QN_RES_MANAGER
-        return QN_RES_MANAGER.get_resource_url(self.dlpath)
+        from Base.qn_manager import qn_res_manager
+        return qn_res_manager.get_resource_url(self.dlpath)
 
     def get_visit_key(self):
         """获取当前资源的访问密码"""
@@ -541,18 +548,23 @@ class Resource(models.Model):
             return self.visit_key
         return None
 
+    """
+    修改方法
+    """
+
+    @Packing.pack
     def modify_rname(self, rname):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
-        from Base.qn import QN_RES_MANAGER
-        ret = QN_RES_MANAGER.move_res(key, new_key)
-        if ret.error is not Error.OK:
+        from Base.qn_manager import qn_res_manager
+        ret = qn_res_manager.move_res(key, new_key)
+        if not ret.ok:
             return ret
         self.rname = rname
         self.dlpath = new_key
         self.save()
-        return Ret()
 
+    @Packing.pack
     def modify_info(self, rname, description, status, visit_key, right_bubble, o_parent):
         """ 修改资源属性
 
@@ -577,17 +589,17 @@ class Resource(models.Model):
         if o_parent is None:
             o_parent = self.parent
 
-        ret = self._validate(locals())
-        if ret.error is not Error.OK:
+        ret = self.validator(locals())
+        if not ret.ok:
             return ret
+
         if self.rname != rname:
             if self.rtype == Resource.RTYPE_FILE:
                 ret = self.modify_rname(rname)
-                if ret.error is not Error.OK:
+                if not ret.ok:
                     return ret
             else:
                 self.rname = rname
-        # self.rname = rname
         self.description = description
         self.status = status
         self.right_bubble = right_bubble
@@ -597,22 +609,22 @@ class Resource(models.Model):
                 self.visit_key = visit_key
                 self.vk_change_time = datetime.datetime.now().timestamp()
         self.save()
-        return Ret()
 
+    @Packing.pack
     def modify_cover(self, cover, cover_type):
         """修改资源封面"""
-        ret = self._validate(locals())
-        if ret.error is not Error.OK:
+        ret = self.validator(locals())
+        if not ret.ok:
             return ret
-        from Base.qn import QN_RES_MANAGER
+        from Base.qn_manager import qn_res_manager
         if self.cover_type == self.COVER_UPLOAD:
-            ret = QN_RES_MANAGER.delete_res(self.cover)
-            if ret.error is not Error.OK:
+            ret = qn_res_manager.delete_res(self.cover)
+            if not ret.ok:
                 return ret
         self.cover = cover
         self.cover_type = cover_type
         self.save()
-        return Ret(self)
+        return self
 
     def is_empty(self):
         """ 资源是否为空（针对文件夹资源） """
@@ -621,27 +633,27 @@ class Resource(models.Model):
             return False
         return True
 
-    def delete_(self):
+    @Packing.pack
+    def remove(self):
         """ 删除资源 """
         if self.rtype == Resource.RTYPE_FOLDER:
             if not self.is_empty():
-                return Ret(Error.REQUIRE_EMPTY_FOLDER)
-        from Base.qn import QN_RES_MANAGER
+                return ResourceError.REQUIRE_EMPTY_FOLDER
+        from Base.qn_manager import qn_res_manager
         if self.cover and self.cover_type == Resource.COVER_UPLOAD:
-            ret = QN_RES_MANAGER.delete_res(self.cover)
-            if ret.error is not Error.OK:
+            ret = qn_res_manager.delete_res(self.cover)
+            if not ret.ok:
                 return ret
             self.cover = None
             self.save()
         if self.rtype == Resource.RTYPE_FILE:
-            ret = QN_RES_MANAGER.delete_res(self.dlpath)
-            if ret.error is not Error.OK:
+            ret = qn_res_manager.delete_res(self.dlpath)
+            if not ret.ok:
                 return ret
         self.delete()
-        return Ret()
 
 
-class UserRight(models.Model):
+class UserRight(SmartModel):
     """
     用户可读资源权限表（记录加密资源可读性）
     """
@@ -658,53 +670,50 @@ class UserRight(models.Model):
     )
 
     @classmethod
-    def update(cls, o_user, o_res):
-        if not isinstance(o_user, User):
-            return Ret(Error.STRANGE)
-        if not isinstance(o_res, Resource):
-            return Ret(Error.STRANGE)
-        ret = cls.get_right(o_user, o_res)
-        if ret.error is Error.OK:
-            o_right = ret.body
-            if not isinstance(o_right, UserRight):
-                return Ret(Error.STRANGE)
-            o_right.verify_time = datetime.datetime.now().timestamp()
-            o_right.save()
-            return Ret(o_right)
+    @Packing.pack
+    def update(cls, user: User, res: Resource):
+        ret = cls.get_right(user, res)
+        if ret.ok:
+            right = ret.body
+            right.verify_time = datetime.datetime.now().timestamp()
+            right.save()
+            return right
         try:
-            o_right = cls(
-                user=o_user,
-                res=o_res,
+            right = cls(
+                user=user,
+                res=res,
                 verify_time=datetime.datetime.now().timestamp()
             )
-            o_right.save()
+            right.save()
         except ValueError as err:
-            deprint(str(err))
-            return Ret(Error.ERROR_CREATE_RIGHT)
-        return Ret(o_right)
+            return ResourceError.CREATE_RIGHT
+        return right
 
     @classmethod
-    def get_right(cls, o_user, o_res):
+    @Packing.pack
+    def get_right(cls, user, res):
         try:
-            o_right = cls.objects.get(user=o_user, res=o_res)
+            right = cls.objects.get(user=user, r=res)
         except cls.DoesNotExist:
-            return Ret(Error.NOT_FOUND_RIGHT)
-        return Ret(o_right)
+            return ResourceError.RIGHT_NOT_FOUND
+        return right
 
     @classmethod
-    def verify(cls, o_user, o_res):
-        if not isinstance(o_res, Resource):
-            return False
-        if not isinstance(o_user, User):
-            return False
-        ret = cls.get_right(o_user, o_res)
-        if ret.error is not Error.OK:
+    def verify(cls, user: User, res: Resource):
+        ret = cls.get_right(user, res)
+        if not ret.ok:
             return False
         o_right = ret.body
-        if not isinstance(o_right, UserRight):
-            return False
-        if o_right.verify_time > o_res.vk_change_time:
+        if o_right.verify_time > res.vk_change_time:
             return True
         else:
             o_right.delete()
             return False
+
+
+P_RNAME, P_VISIT_KEY, P_STATUS, P_DESC, P_RIGHT_BUBBLE, P_COVER,\
+    P_COVER_TYPE = \
+    Resource.get_params([
+        'rname', 'visit_key', 'status', 'description', 'right_bubble', 'cover',
+        'cover_type',
+    ])
