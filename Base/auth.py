@@ -38,7 +38,7 @@ class Auth:
     @staticmethod
     def get_login_token(user: User):
         token, _dict = JWT.encrypt(dict(
-            user_id=user.qt_user_app_id,
+            user_id=user.pk,
         ))
         _dict['token'] = token
         _dict['user'] = user.d()
