@@ -351,10 +351,8 @@ class BaseInfoView(View):
 class DownloadView(View):
     @staticmethod
     @Auth.maybe_login
-    @Analyse.r(q=[P_VISIT_KEY.clone().null()])
-    def get_dl_link(r):
+    def get_dl_link(r, visit_key):
         user = r.user
-        visit_key = r.d.visit_key
 
         res = r.d.res  # type: Resource
         if not res.readable(user, visit_key):
@@ -373,8 +371,9 @@ class DownloadView(View):
         获取下载资源链接
         """
         r.META['HTTP_TOKEN'] = r.d.token
-        print(r.d.dict())
-        return DownloadView.get_dl_link(r)
+
+        visit_key = r.d.visit_key
+        return DownloadView.get_dl_link(r, visit_key)
 
 
 class ShortLinkView(View):
@@ -388,10 +387,11 @@ class ShortLinkView(View):
     P_SL_RES_ID = P_RES_ID.clone().process(remove_dot, begin=True)
 
     @staticmethod
-    @Analyse.r(a=[P_SL_RES_ID])
+    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_SL_RES_ID])
     def get(r, res_str_id, *args, **kwargs):
         """ /s/:res_str_id
 
         GET: direct_link, 直链分享解析
         """
-        return DownloadView.get_dl_link(r)
+        visit_key = r.d.visit_key
+        return DownloadView.get_dl_link(r, visit_key)
