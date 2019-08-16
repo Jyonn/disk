@@ -40,7 +40,6 @@ class BaseView(View):
 
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(b=[
         P_RNAME.clone().null(),
         P_STATUS.clone().null(),
@@ -49,6 +48,7 @@ class BaseView(View):
         P_RIGHT_BUBBLE.clone().null(),
         P_PARENT_RES_ID.clone().null()
     ], a=[P_RES_ID])
+    @Auth.require_owner
     def put(r, res_str_id):
         """ PUT /api/res/:slug/
 
@@ -83,8 +83,8 @@ class BaseView(View):
 
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(a=[P_RES_ID])
+    @Auth.require_owner
     def delete(r, res_str_id):
         """ DELETE /api/res/:slug
 
@@ -103,9 +103,9 @@ class BaseView(View):
 class FolderView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(b=[P_RNAME.clone().rename('folder_name')],
                a=[P_RES_ID])
+    @Auth.require_owner
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/folder
 
@@ -125,9 +125,9 @@ class FolderView(View):
 class LinkView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(b=[P_RNAME.clone().rename('link_name'), Param('link')],
                a=[P_RES_ID])
+    @Auth.require_owner
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/link
 
@@ -148,8 +148,8 @@ class LinkView(View):
 class PathView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(a=[P_RES_ID])
+    @Auth.require_owner
     def get(r, res_str_id):
         res = r.d.res
         res_path = []
@@ -174,8 +174,8 @@ class SelectView(View):
 class TokenView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    @Auth.require_owner
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/token
 
@@ -244,8 +244,8 @@ class TokenView(View):
 class CoverView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    @Auth.require_owner
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/cover
 
@@ -283,8 +283,8 @@ class CoverView(View):
 
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES_ID])
+    @Auth.require_owner
     def put(r, res_str_id):
         """ PUT /api/res/:res_str_id/cover
 
