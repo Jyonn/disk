@@ -164,8 +164,8 @@ class PathView(View):
 class SelectView(View):
     @staticmethod
     @Packing.http_pack
-    @Auth.require_owner
     @Analyse.r(a=[P_RES_ID])
+    @Auth.require_owner
     def get(r, res_str_id):
         res = r.d.res
         return res.d_selector_layer()
