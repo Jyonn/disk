@@ -30,7 +30,7 @@ ROOT_DESC = '''
 class OAuthView(View):
     @staticmethod
     @Packing.http_pack
-    @Analyse.r(Param('code', '齐天簿授权码'))
+    @Analyse.r(q=[Param('code', '齐天簿授权码')])
     def get(r):
         code = r.d.code
 
