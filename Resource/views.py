@@ -373,6 +373,7 @@ class DownloadView(View):
         获取下载资源链接
         """
         r.META['HTTP_TOKEN'] = r.d.token
+        print(r.d.dict())
         return DownloadView.get_dl_link(r)
 
 
