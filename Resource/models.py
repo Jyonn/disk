@@ -523,7 +523,8 @@ class Resource(SmartModel):
             if res.owner == user or res.status == Resource.STATUS_PUBLIC:
                 return True
             if res.status == Resource.STATUS_PROTECT and res.visit_key == visit_key:
-                UserRight.update(user, res)
+                if user:
+                    UserRight.update(user, res)
                 return True
             if res.status == Resource.STATUS_PROTECT and UserRight.verify(user, res):
                 return True
@@ -700,6 +701,8 @@ class UserRight(SmartModel):
 
     @classmethod
     def verify(cls, user: User, res: Resource):
+        if not user:
+            return False
         ret = cls.get_right(user, res)
         if not ret.ok:
             return False
