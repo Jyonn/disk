@@ -113,7 +113,7 @@ class FolderView(View):
         """
         user = r.user
         folder_name = r.d.folder_name
-        res_parent = r.res
+        res_parent = r.d.res
 
         ret = Resource.create_folder(folder_name, user, res_parent)
         if not ret.ok:
