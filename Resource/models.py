@@ -693,7 +693,7 @@ class UserRight(SmartModel):
     @Packing.pack
     def get_right(cls, user, res):
         try:
-            right = cls.objects.get(user=user, r=res)
+            right = cls.objects.get(user=user, res=res)
         except cls.DoesNotExist:
             return ResourceError.RIGHT_NOT_FOUND
         return right
