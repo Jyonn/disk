@@ -284,8 +284,8 @@ class CoverView(View):
     @staticmethod
     @Packing.http_pack
     @Auth.require_owner
-    @Analyse.r(b=[P_COVER, P_COVER_TYPE])
-    def put(r):
+    @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES_ID])
+    def put(r, res_str_id):
         """ PUT /api/res/:res_str_id/cover
 
         修改封面信息
@@ -331,8 +331,9 @@ class CoverView(View):
 class BaseInfoView(View):
     @staticmethod
     @Packing.http_pack
+    @Analyse.r(a=[P_RES_ID])
     @Auth.maybe_login
-    def get(r):
+    def get(r, res_str_id):
         """ GET /api/res/:res_str_id/base
 
         获取资源公开信息
