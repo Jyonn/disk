@@ -33,10 +33,6 @@ class Auth:
         if not ret.ok:
             return ret
         dict_ = ret.body
-
-        if not dict_.get('type'):
-            return AuthError.TOKEN_MISS_PARAM('type')
-
         return dict_
 
     @staticmethod
