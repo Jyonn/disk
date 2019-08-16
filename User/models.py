@@ -48,6 +48,7 @@ class User(SmartModel):
     qt_user_app_id = models.CharField(
         default=None,
         max_length=MAX_L['qt_user_app_id'],
+        unique=True,
     )
 
     qtb_token = models.CharField(
@@ -113,20 +114,20 @@ class User(SmartModel):
     @Packing.pack
     def create(cls, qt_user_app_id, token):
         ret = cls.get_by_qtid(qt_user_app_id)
-        if not ret.ok:
-            o_user = ret.body
-            o_user.qtb_token = token
-            o_user.save()
-            return o_user
+        if ret.ok:
+            user = ret.body
+            user.qtb_token = token
+            user.save()
+            return user
         try:
-            o_user = cls(
+            user = cls(
                 qt_user_app_id=qt_user_app_id,
                 qtb_token=token,
             )
-            o_user.save()
+            user.save()
         except Exception as err:
             return UserError.CREATE_USER
-        return o_user
+        return user
 
     @Packing.pack
     def update(self):
