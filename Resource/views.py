@@ -136,7 +136,7 @@ class LinkView(View):
         user = r.user
         link_name = r.d.link_name
         link = r.d.link
-        res_parent = r.res
+        res_parent = r.d.res
 
         ret = Resource.create_link(link_name, user, res_parent, link)
         if not ret.ok:

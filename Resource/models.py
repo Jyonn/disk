@@ -642,15 +642,17 @@ class Resource(SmartModel):
                 return ResourceError.REQUIRE_EMPTY_FOLDER
         from Base.qn_manager import qn_res_manager
         if self.cover and self.cover_type == Resource.COVER_UPLOAD:
-            ret = qn_res_manager.delete_res(self.cover)
-            if not ret.ok:
-                return ret
+            qn_res_manager.delete_res(self.cover)
+            # ret = qn_res_manager.delete_res(self.cover)
+            # if not ret.ok:
+            #     return ret
             self.cover = None
             self.save()
         if self.rtype == Resource.RTYPE_FILE:
-            ret = qn_res_manager.delete_res(self.dlpath)
-            if not ret.ok:
-                return ret
+            qn_res_manager.delete_res(self.dlpath)
+            # ret = qn_res_manager.delete_res(self.dlpath)
+            # if not ret.ok:
+            #     return ret
         self.delete()
 
 
