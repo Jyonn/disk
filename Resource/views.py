@@ -354,7 +354,9 @@ class ShortLinkView(View):
         find_dot = res_str_id.find('.')
         if find_dot != -1:
             res_str_id = res_str_id[:find_dot]
+        print(res_str_id)
         return res_str_id
+
 
     P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
 
