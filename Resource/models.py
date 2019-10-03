@@ -634,21 +634,23 @@ class UserRight(models.Model):
     @classmethod
     @Excp.pack
     def update(cls, user: User, res: Resource):
-        ret = cls.get_right(user, res)
-        if ret.ok:
-            right = ret.body
+        try:
+            right = cls.get_right(user, res)
             right.verify_time = datetime.datetime.now().timestamp()
             right.save()
-            return right
-        try:
-            right = cls(
-                user=user,
-                res=res,
-                verify_time=datetime.datetime.now().timestamp()
-            )
-            right.save()
-        except Exception:
-            return ResourceError.CREATE_RIGHT
+        except Excp as ret:
+            if ret.eis(ResourceError.RESOURCE_NOT_FOUND):
+                try:
+                    right = cls(
+                        user=user,
+                        res=res,
+                        verify_time=datetime.datetime.now().timestamp()
+                    )
+                    right.save()
+                except Exception:
+                    return ResourceError.CREATE_RIGHT
+            else:
+                return ret
         return right
 
     @classmethod
