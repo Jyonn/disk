@@ -4,7 +4,7 @@
 """
 import qiniu
 import requests
-from SmartDjango import Packing, ErrorCenter, E
+from SmartDjango import Excp, ErrorCenter, E
 from django.http import HttpRequest
 from qiniu import urlsafe_base64_encode
 
@@ -76,7 +76,7 @@ class QnManager:
         key = _KEY_PREFIX + key
         return self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy), key
 
-    @Packing.pack
+    @Excp.pack
     def auth_callback(self, request: HttpRequest):
         """七牛callback认证校验"""
         auth_header = request.META.get('HTTP_AUTHORIZATION')
@@ -100,7 +100,7 @@ class QnManager:
             return self.auth.private_download_url(url, expires=expires)
 
     @staticmethod
-    @Packing.pack
+    @Excp.pack
     def deal_manage_res(target, access_token):
         url = '%s%s' % (QINIU_MANAGE_HOST, target)
         headers = {

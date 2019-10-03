@@ -2,7 +2,8 @@
 
 七牛上传政策，现全部转变为303重定向，未来会改为callback
 """
-from disk.settings import MAX_IMAGE_SIZE, HOST, MAX_FILE_SIZE
+from Base.common import HOST
+from disk.settings import MAX_IMAGE_SIZE, MAX_FILE_SIZE
 
 
 FILE_POLICY = dict(

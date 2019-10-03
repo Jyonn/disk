@@ -8,14 +8,6 @@ from Config.models import Config, CI
 DEBUG = True
 
 
-def deprint(*args):
-    """
-    系统处于调试状态时输出数据
-    """
-    if DEBUG:
-        print(*args)
-
-
 QITIAN_APP_ID = Config.get_value_by_key(CI.QITIAN_APP_ID)
 QITIAN_APP_SECRET = Config.get_value_by_key(CI.QITIAN_APP_SECRET)
 

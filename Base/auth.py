@@ -2,7 +2,7 @@ from functools import wraps
 
 from Base.common import ADMIN_QITIAN
 from Base.jtoken import JWT
-from SmartDjango import ErrorCenter, Packing, E
+from SmartDjango import ErrorCenter, Excp, E
 
 from Resource.models import ResourceError
 from User.models import User
@@ -23,17 +23,12 @@ AuthError.register()
 
 class Auth:
     @staticmethod
-    @Packing.pack
+    @Excp.handle
     def validate_token(request):
         jwt_str = request.META.get('HTTP_TOKEN')
         if jwt_str is None:
             return AuthError.REQUIRE_LOGIN
-
-        ret = JWT.decrypt(jwt_str)
-        if not ret.ok:
-            return ret
-        dict_ = ret.body
-        return dict_
+        return JWT.decrypt(jwt_str)
 
     @staticmethod
     def get_login_token(user: User):
@@ -45,24 +40,17 @@ class Auth:
         return _dict
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def _extract_user(cls, r):
         r.user = None
 
-        ret = cls.validate_token(r)
-        if not ret.ok:
-            return ret
-
-        dict_ = ret.body
+        dict_ = cls.validate_token(r)
         user_id = dict_.get('user_id')
         if not user_id:
             return AuthError.TOKEN_MISS_PARAM('user_id')
 
         from User.models import User
-        ret = User.get_by_id(user_id)
-        if not ret.ok:
-            return ret
-        r.user = ret.body
+        r.user = User.get_by_id(user_id)
 
     @staticmethod
     def maybe_login(func):
@@ -77,9 +65,7 @@ class Auth:
     def require_login(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            ret = cls._extract_user(r)
-            if not ret.ok:
-                return ret
+            cls._extract_user(r)
             return func(r, *args, **kwargs)
 
         return wrapper
@@ -88,9 +74,7 @@ class Auth:
     def require_owner(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            ret = cls._extract_user(r)
-            if not ret.ok:
-                return ret
+            cls._extract_user(r)
             if not r.d.res.belong(r.user):
                 return ResourceError.RESOURCE_NOT_BELONG
             return func(r, *args, **kwargs)
@@ -100,9 +84,7 @@ class Auth:
     def require_root(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            ret = cls._extract_user(r)
-            if not ret.ok:
-                return ret
+            cls._extract_user(r)
             user = r.user  # type: User
             if user.qt_user_app_id != ADMIN_QITIAN:
                 return AuthError.REQUIRE_ROOT

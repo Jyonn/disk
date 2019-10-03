@@ -2,8 +2,7 @@
 
 用户类
 """
-from SmartDjango import SmartModel, Packing, ErrorCenter, E
-from django.db import models
+from SmartDjango import models, Excp, ErrorCenter, E
 
 from Base.common import qt_manager
 
@@ -16,30 +15,22 @@ class UserError(ErrorCenter):
 UserError.register()
 
 
-class User(SmartModel):
+class User(models.Model):
     """
     用户类
     根超级用户id=1
     """
     ROOT_ID = 1
-    MAX_L = {
-        'password': 32,
-        'nickname': 10,
-        'avatar': 1024,
-        'qt_user_app_id': 16,
-        'qtb_token': 256,
-        'description': 20,
-    }
 
     avatar = models.CharField(
         default=None,
         null=True,
         blank=True,
-        max_length=MAX_L['avatar'],
+        max_length=1024,
     )
 
     nickname = models.CharField(
-        max_length=MAX_L['nickname'],
+        max_length=10,
         default=None,
         blank=True,
         null=True,
@@ -47,17 +38,17 @@ class User(SmartModel):
 
     qt_user_app_id = models.CharField(
         default=None,
-        max_length=MAX_L['qt_user_app_id'],
+        max_length=16,
         unique=True,
     )
 
     qtb_token = models.CharField(
         default=None,
-        max_length=MAX_L['qtb_token'],
+        max_length=256,
     )
 
     description = models.CharField(
-        max_length=MAX_L['description'],
+        max_length=20,
         default=None,
         blank=True,
         null=True,
@@ -68,7 +59,7 @@ class User(SmartModel):
     """
 
     @staticmethod
-    @Packing.pack
+    @Excp.pack
     def get_by_id(user_id):
         """根据用户ID获取用户对象"""
         try:
@@ -78,7 +69,7 @@ class User(SmartModel):
         return o_user
 
     @staticmethod
-    @Packing.pack
+    @Excp.pack
     def get_by_qtid(qt_user_app_id):
         """根据齐天用户-应用ID获取用户对象"""
         try:
@@ -111,30 +102,29 @@ class User(SmartModel):
     """
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def create(cls, qt_user_app_id, token):
-        ret = cls.get_by_qtid(qt_user_app_id)
-        if ret.ok:
-            user = ret.body
+        try:
+            user = cls.get_by_qtid(qt_user_app_id)
             user.qtb_token = token
             user.save()
-            return user
-        try:
-            user = cls(
-                qt_user_app_id=qt_user_app_id,
-                qtb_token=token,
-            )
-            user.save()
-        except Exception as err:
-            return UserError.CREATE_USER
+        except Excp as ret:
+            if ret.eis(UserError.USER_NOT_FOUND):
+                try:
+                    user = cls(
+                        qt_user_app_id=qt_user_app_id,
+                        qtb_token=token,
+                    )
+                    user.save()
+                except Exception as err:
+                    return UserError.CREATE_USER
+            else:
+                return ret
         return user
 
-    @Packing.pack
+    @Excp.pack
     def update(self):
-        ret = qt_manager.get_user_info(self.qtb_token)
-        if not ret.ok:
-            return ret
-        body = ret.body
+        body = qt_manager.get_user_info(self.qtb_token)
         self.avatar = body['avatar']
         self.nickname = body['nickname']
         self.description = body['description']

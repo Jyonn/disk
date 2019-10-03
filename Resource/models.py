@@ -4,8 +4,7 @@
 """
 import datetime
 
-from SmartDjango import SmartModel, Packing, ErrorCenter, E, Param, BaseError
-from django.db import models
+from SmartDjango import models, ErrorCenter, E, BaseError, Excp, P
 from django.utils.crypto import get_random_string
 
 from User.models import User
@@ -30,7 +29,6 @@ class ResourceError(ErrorCenter):
     CREATE_LINK = E("存储链接错误", hc=500)
     CREATE_FOLDER = E("存储目录错误", hc=500)
     CREATE_FILE = E("存储文件错误", hc=500)
-    VISIT_KEY_LEN = E("资源密码至少需要3个字符", hc=403)
     FILE_PARENT = E("文件资源不能成为父目录", hc=403)
     RESOURCE_NOT_BELONG = E("没有权限", hc=403)
     RESOURCE_NOT_FOUND = E("不存在的资源", hc=404)
@@ -40,7 +38,7 @@ class ResourceError(ErrorCenter):
 ResourceError.register()
 
 
-class Resource(SmartModel):
+class Resource(models.Model):
     """
     资源类
     根资源文件夹id=1
@@ -48,13 +46,7 @@ class Resource(SmartModel):
     """
     ROOT_ID = 1
     MAX_L = {
-        'rname': 256,
         'manager': 255,
-        'dlpath': 1024,
-        'visit_key': 16,
-        'cover': 1024,
-        'res_str_id': 6,
-        'mime': 100,
     }
 
     RTYPE_FILE = 0
@@ -107,7 +99,7 @@ class Resource(SmartModel):
 
     rname = models.CharField(
         verbose_name='resource name',
-        max_length=MAX_L['rname'],
+        max_length=256,
     )
     rtype = models.IntegerField(
         verbose_name='file or folder',
@@ -125,7 +117,7 @@ class Resource(SmartModel):
         verbose_name='资源类型',
         null=True,
         default=True,
-        max_length=MAX_L['mime'],
+        max_length=100,
     )
     description = models.TextField(
         verbose_name='description in Markdown',
@@ -137,7 +129,7 @@ class Resource(SmartModel):
         null=True,
         blank=True,
         default=None,
-        max_length=MAX_L['cover']
+        max_length=1024,
     )
     owner = models.ForeignKey(
         User,
@@ -152,7 +144,7 @@ class Resource(SmartModel):
     )
     dlpath = models.CharField(
         verbose_name='download relative path to res.6-79.cn',
-        max_length=MAX_L['dlpath'],
+        max_length=1024,
         default=None,
         null=True,
         blank=True,
@@ -163,7 +155,8 @@ class Resource(SmartModel):
         default=STATUS_PUBLIC,
     )
     visit_key = models.CharField(
-        max_length=MAX_L['visit_key'],
+        max_length=16,
+        min_length=3,
         verbose_name='当status为2时有效',
     )
     vk_change_time = models.FloatField(
@@ -181,7 +174,7 @@ class Resource(SmartModel):
         default=None,
         null=True,
         blank=True,
-        max_length=MAX_L['res_str_id'],
+        max_length=6,
         unique=True,
     )
     right_bubble = models.NullBooleanField(
@@ -203,10 +196,9 @@ class Resource(SmartModel):
             ret = cls.get_by_id(res_str_id)
             if ret.erroris(ResourceError.RESOURCE_NOT_FOUND):
                 return res_str_id
-            # deprint('generate res_str_id: %s, conflict.' % res_str_id)
 
     @staticmethod
-    @Packing.pack
+    @Excp.pack
     def _valid_rname(rname):
         """验证rname属性"""
         invalid_chars = '\\/*:\'"|<>?'
@@ -215,24 +207,13 @@ class Resource(SmartModel):
                 return ResourceError.INVALID_RNAME
 
     @staticmethod
-    def pub_valid_rname(rname):
-        """验证rname属性"""
-        return Resource._valid_rname(rname)
-
-    @staticmethod
-    @Packing.pack
+    @Excp.pack
     def _valid_res_parent(o_parent):
         """验证o_parent属性"""
         if not isinstance(o_parent, Resource):
             return BaseError.STRANGE
         if o_parent.rtype != Resource.RTYPE_FOLDER:
             return ResourceError.FILE_PARENT
-
-    @staticmethod
-    @Packing.pack
-    def _valid_visit_key(visit_key):
-        if len(visit_key) < 3:
-            return ResourceError.VISIT_KEY_LEN
 
     @classmethod
     def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type, mime):
@@ -259,7 +240,7 @@ class Resource(SmartModel):
         )
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def create_file(cls, rname, user, res_parent, dlpath, rsize, sub_type, mime):
         """ 创建文件对象
 
@@ -272,9 +253,7 @@ class Resource(SmartModel):
         :param sub_type: 文件分类
         :return: Ret对象，错误返回错误代码，成功返回文件对象
         """
-        ret = cls.validator(locals())
-        if not ret.ok:
-            return ret
+        cls.validator(locals())
 
         try:
             res = cls.create_abstract(
@@ -289,12 +268,12 @@ class Resource(SmartModel):
                 mime=mime,
             )
             res.save()
-        except ValueError as err:
+        except Exception:
             return ResourceError.CREATE_FILE
         return res
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def create_folder(cls, rname, user, res_parent, desc=None):
         """ 创建文件夹对象
 
@@ -304,9 +283,7 @@ class Resource(SmartModel):
         :param desc: 描述说明
         :return: Ret对象，错误返回错误代码，成功返回文件夹对象
         """
-        ret = cls.validator(locals())
-        if not ret.ok:
-            return ret
+        cls.validator(locals())
 
         try:
             res = cls.create_abstract(
@@ -321,12 +298,12 @@ class Resource(SmartModel):
                 mime=None,
             )
             res.save()
-        except ValueError as err:
+        except Exception:
             return ResourceError.CREATE_FOLDER
         return res
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def create_link(cls, rname, user, res_parent, dlpath):
         """ 创建链接对象
 
@@ -336,9 +313,7 @@ class Resource(SmartModel):
         :param dlpath: 链接地址
         :return: Ret对象，错误返回错误代码，成功返回链接对象
         """
-        ret = cls.validator(locals())
-        if not ret.ok:
-            return ret
+        cls.validator(locals())
 
         try:
             res = cls.create_abstract(
@@ -353,7 +328,7 @@ class Resource(SmartModel):
                 mime=None,
             )
             res.save()
-        except ValueError as err:
+        except Exception:
             return ResourceError.CREATE_LINK
         return res
 
@@ -362,21 +337,21 @@ class Resource(SmartModel):
     """
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def get_by_id(cls, res_str_id):
         try:
             res = cls.objects.get(res_str_id=res_str_id)
-        except cls.DoesNotExist as err:
+        except cls.DoesNotExist:
             return ResourceError.RESOURCE_NOT_FOUND
         return res
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def get_by_pk(cls, res_id):
         """根据资源id获取资源对象"""
         try:
             res = cls.objects.get(pk=res_id)
-        except cls.DoesNotExist as err:
+        except cls.DoesNotExist:
             return ResourceError.RESOURCE_NOT_FOUND
         return res
 
@@ -507,12 +482,12 @@ class Resource(SmartModel):
     """
 
     @staticmethod
-    @Packing.pack
+    @Excp.pack
     def get_root_folder(user):
         """获取当前用户的根目录"""
         try:
             res = Resource.objects.get(owner=user, parent=1, rtype=Resource.RTYPE_FOLDER)
-        except Resource.DoesNotExist as err:
+        except Resource.DoesNotExist:
             return ResourceError.GET_ROOT_FOLDER
         return res
 
@@ -553,19 +528,17 @@ class Resource(SmartModel):
     修改方法
     """
 
-    @Packing.pack
+    @Excp.pack
     def modify_rname(self, rname):
         key = self.dlpath
         new_key = '%s/%s' % (key[:key.rfind('/')], rname)
         from Base.qn_manager import qn_res_manager
-        ret = qn_res_manager.move_res(key, new_key)
-        if not ret.ok:
-            return ret
+        qn_res_manager.move_res(key, new_key)
         self.rname = rname
         self.dlpath = new_key
         self.save()
 
-    @Packing.pack
+    @Excp.pack
     def modify_info(self, rname, description, status, visit_key, right_bubble, o_parent):
         """ 修改资源属性
 
@@ -590,15 +563,11 @@ class Resource(SmartModel):
         if o_parent is None:
             o_parent = self.parent
 
-        ret = self.validator(locals())
-        if not ret.ok:
-            return ret
+        self.validator(locals())
 
         if self.rname != rname:
             if self.rtype == Resource.RTYPE_FILE:
-                ret = self.modify_rname(rname)
-                if not ret.ok:
-                    return ret
+                self.modify_rname(rname)
             else:
                 self.rname = rname
         self.description = description
@@ -611,17 +580,13 @@ class Resource(SmartModel):
                 self.vk_change_time = datetime.datetime.now().timestamp()
         self.save()
 
-    @Packing.pack
+    @Excp.pack
     def modify_cover(self, cover, cover_type):
         """修改资源封面"""
-        ret = self.validator(locals())
-        if not ret.ok:
-            return ret
+        self.validator(locals())
         from Base.qn_manager import qn_res_manager
         if self.cover_type == self.COVER_UPLOAD:
-            ret = qn_res_manager.delete_res(self.cover)
-            if not ret.ok:
-                return ret
+            qn_res_manager.delete_res(self.cover)
         self.cover = cover
         self.cover_type = cover_type
         self.save()
@@ -634,7 +599,7 @@ class Resource(SmartModel):
             return False
         return True
 
-    @Packing.pack
+    @Excp.pack
     def remove(self):
         """ 删除资源 """
         if self.rtype == Resource.RTYPE_FOLDER:
@@ -643,20 +608,14 @@ class Resource(SmartModel):
         from Base.qn_manager import qn_res_manager
         if self.cover and self.cover_type == Resource.COVER_UPLOAD:
             qn_res_manager.delete_res(self.cover)
-            # ret = qn_res_manager.delete_res(self.cover)
-            # if not ret.ok:
-            #     return ret
             self.cover = None
             self.save()
         if self.rtype == Resource.RTYPE_FILE:
             qn_res_manager.delete_res(self.dlpath)
-            # ret = qn_res_manager.delete_res(self.dlpath)
-            # if not ret.ok:
-            #     return ret
         self.delete()
 
 
-class UserRight(SmartModel):
+class UserRight(models.Model):
     """
     用户可读资源权限表（记录加密资源可读性）
     """
@@ -673,7 +632,7 @@ class UserRight(SmartModel):
     )
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def update(cls, user: User, res: Resource):
         ret = cls.get_right(user, res)
         if ret.ok:
@@ -688,12 +647,12 @@ class UserRight(SmartModel):
                 verify_time=datetime.datetime.now().timestamp()
             )
             right.save()
-        except ValueError as err:
+        except Exception:
             return ResourceError.CREATE_RIGHT
         return right
 
     @classmethod
-    @Packing.pack
+    @Excp.pack
     def get_right(cls, user, res):
         try:
             right = cls.objects.get(user=user, res=res)
@@ -716,9 +675,5 @@ class UserRight(SmartModel):
             return False
 
 
-P_RNAME, P_VISIT_KEY, P_STATUS, P_DESC, P_RIGHT_BUBBLE, P_COVER,\
-    P_COVER_TYPE = \
-    Resource.get_params([
-        'rname', 'visit_key', 'status', 'description', 'right_bubble', 'cover',
-        'cover_type',
-    ])
+P_RNAME, P_VISIT_KEY, P_STATUS, P_DESC, P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE = Resource.get_params(
+        'rname', 'visit_key', 'status', 'description', 'right_bubble', 'cover', 'cover_type')

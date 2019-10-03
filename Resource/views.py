@@ -2,7 +2,7 @@
 
 资源API处理函数
 """
-from SmartDjango import Packing, Analyse, Param
+from SmartDjango import Analyse, Excp, P
 from django.http import HttpResponseRedirect
 from django.views import View
 
@@ -14,17 +14,16 @@ from Resource.models import Resource, P_RNAME, P_VISIT_KEY, ResourceError, P_STA
 from User.models import User
 
 
-P_RES_ID = Param('res_str_id', yield_name='res').process(Resource.get_by_id)
-P_PARENT_RES_ID = Param('parent_str_id', yield_name='parent_res').process(Resource.get_by_id)
-
-P_USER_ID = Param('user_id', yield_name='user').process(User.get_by_id)
+P_RES = P('res_str_id').process(P.Processor(Resource.get_by_id, yield_name='res'))
+P_PARENT_RES = P('parent_str_id').process(P.Processor(Resource.get_by_id, yield_name='parent_res'))
+P_USER = P('user_id').process(P.Processor(User.get_by_id, yield_name='user'))
 
 
 class BaseView(View):
     @staticmethod
-    @Packing.http_pack
+    @Excp.handle
     @Auth.maybe_login
-    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_RES_ID])
+    @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_RES])
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id
 
@@ -39,15 +38,15 @@ class BaseView(View):
         return res.d_layer()
 
     @staticmethod
-    @Packing.http_pack
+    @Excp.handle
     @Analyse.r(b=[
-        P_RNAME.clone().null(),
-        P_STATUS.clone().null(),
-        P_DESC.clone().null(),
-        P_VISIT_KEY.clone().null(),
-        P_RIGHT_BUBBLE.clone().null(),
-        P_PARENT_RES_ID.clone().null()
-    ], a=[P_RES_ID])
+        P_RNAME.clone().set_null(),
+        P_STATUS.clone().set_null(),
+        P_DESC.clone().set_null(),
+        P_VISIT_KEY.clone().set_null(),
+        P_RIGHT_BUBBLE.clone().set_null(),
+        P_PARENT_RES.clone().set_null()
+    ], a=[P_RES])
     @Auth.require_owner
     def put(r, res_str_id):
         """ PUT /api/res/:slug/
@@ -76,14 +75,12 @@ class BaseView(View):
                     return ResourceError.RESOURCE_CIRCLE
                 temp_res = temp_res.parent
 
-        ret = res.modify_info(rname, description, status, visit_key, right_bubble, parent_res)
-        if not ret.ok:
-            return ret
+        res.modify_info(rname, description, status, visit_key, right_bubble, parent_res)
         return res.d()
 
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(a=[P_RES])
     @Auth.require_owner
     def delete(r, res_str_id):
         """ DELETE /api/res/:slug
@@ -95,16 +92,14 @@ class BaseView(View):
         if res.parent == Resource.ROOT_ID:
             return ResourceError.DELETE_ROOT_FOLDER
 
-        ret = res.remove()
-        if not ret.ok:
-            return ret
+        res.remove()
 
 
 class FolderView(View):
     @staticmethod
-    @Packing.http_pack
+    @Excp.handle
     @Analyse.r(b=[P_RNAME.clone().rename('folder_name')],
-               a=[P_RES_ID])
+               a=[P_RES])
     @Auth.require_owner
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/folder
@@ -115,18 +110,15 @@ class FolderView(View):
         folder_name = r.d.folder_name
         res_parent = r.d.res
 
-        ret = Resource.create_folder(folder_name, user, res_parent)
-        if not ret.ok:
-            return ret
-        res = ret.body
+        res = Resource.create_folder(folder_name, user, res_parent)
         return res.d()
 
 
 class LinkView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(b=[P_RNAME.clone().rename('link_name'), Param('link')],
-               a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(b=[P_RNAME.clone().rename('link_name'), P('link')],
+               a=[P_RES])
     @Auth.require_owner
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/link
@@ -138,17 +130,14 @@ class LinkView(View):
         link = r.d.link
         res_parent = r.d.res
 
-        ret = Resource.create_link(link_name, user, res_parent, link)
-        if not ret.ok:
-            return ret
-        res = ret.body
+        res = Resource.create_link(link_name, user, res_parent, link)
         return res.d()
 
 
 class PathView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(a=[P_RES])
     @Auth.require_owner
     def get(r, res_str_id):
         res = r.d.res
@@ -163,8 +152,8 @@ class PathView(View):
 
 class SelectView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(a=[P_RES])
     @Auth.require_owner
     def get(r, res_str_id):
         res = r.d.res
@@ -173,8 +162,8 @@ class SelectView(View):
 
 class TokenView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
     @Auth.require_owner
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/token
@@ -194,17 +183,15 @@ class TokenView(View):
         return dict(upload_token=qn_token, key=key)
 
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(b=[Param('key'), P_USER_ID, Param('fsize'), Param('fname'), Param('ftype')],
-               a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(b=[P('key'), P_USER, P('fsize'), P('fname'), P('ftype')],
+               a=[P_RES])
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/token
 
         七牛上传资源回调函数
         """
-        ret = qn_res_manager.auth_callback(r)
-        if not ret.ok:
-            return ret
+        qn_res_manager.auth_callback(r)
 
         key = r.d.key
         user = r.d.user
@@ -228,23 +215,18 @@ class TokenView(View):
         decode_fname = QnManager.decode_key(fname)
         if fname != decode_fname:
             new_key = '%s/%s' % (key[:key.rfind('/')], decode_fname)
-            ret = qn_res_manager.move_res(key, new_key)
-            if not ret.ok:
-                return ret
+            qn_res_manager.move_res(key, new_key)
             fname = decode_fname
             key = new_key
 
-        ret = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
-        if not ret.ok:
-            return ret
-        res = ret.body  # type: Resource
+        res = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
         return res.d_child()
 
 
 class CoverView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
     @Auth.require_owner
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/cover
@@ -262,28 +244,24 @@ class CoverView(View):
         return dict(upload_token=qn_token, key=key)
 
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(b=[Param('key')], a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(b=[P('key')], a=[P_RES])
     def post(r, res_str_id):
         """ POST /api/res/:res_str_id/cover
 
         七牛上传资源封面成功后的回调函数
         """
-        ret = qn_res_manager.qiniu_auth_callback(r)
-        if not ret.ok:
-            return ret
+        qn_res_manager.qiniu_auth_callback(r)
 
         key = r.d.key
         res = r.d.res  # type: Resource
 
-        ret = res.modify_cover(key, Resource.COVER_UPLOAD)
-        if not ret.ok:
-            return ret
+        res.modify_cover(key, Resource.COVER_UPLOAD)
         return res.d()
 
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES])
     @Auth.require_owner
     def put(r, res_str_id):
         """ PUT /api/res/:res_str_id/cover
@@ -322,16 +300,14 @@ class CoverView(View):
                     return ResourceError.RESOURCE_CIRCLE
                 resource_chain.append(next_str_id)
 
-        ret = res.modify_cover(cover, cover_type)
-        if not ret.ok:
-            return ret
+        res.modify_cover(cover, cover_type)
         return res.d()
 
 
 class BaseInfoView(View):
     @staticmethod
-    @Packing.http_pack
-    @Analyse.r(a=[P_RES_ID])
+    @Excp.handle
+    @Analyse.r(a=[P_RES])
     @Auth.maybe_login
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/base
@@ -339,7 +315,6 @@ class BaseInfoView(View):
         获取资源公开信息
         """
         user = r.user  # type: User
-
         res = r.d.res  # type: Resource
 
         return dict(
@@ -356,15 +331,15 @@ class DownloadView(View):
 
         res = r.d.res  # type: Resource
         if not res.readable(user, visit_key):
-            return Packing.http_response(ResourceError.NOT_READABLE)
+            return Excp.http_response(ResourceError.NOT_READABLE)
 
         if res.rtype == Resource.RTYPE_FOLDER:
-            return Packing.http_response(ResourceError.REQUIRE_FILE)
+            return Excp.http_response(ResourceError.REQUIRE_FILE)
 
         return HttpResponseRedirect(res.get_dl_url())
 
     @staticmethod
-    @Analyse.r(q=[Param('token', '登录口令').null(), P_VISIT_KEY.clone().null()], a=[P_RES_ID])
+    @Analyse.r(q=[P('token', '登录口令').set_null(), P_VISIT_KEY.clone().set_null()], a=[P_RES])
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/dl
 
@@ -384,10 +359,10 @@ class ShortLinkView(View):
             res_str_id = res_str_id[:find_dot]
         return res_str_id
 
-    P_SL_RES_ID = P_RES_ID.clone().process(remove_dot, begin=True)
+    P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
 
     @staticmethod
-    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_SL_RES_ID])
+    @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_SL_RES_ID])
     def get(r, res_str_id, *args, **kwargs):
         """ /s/:res_str_id
 

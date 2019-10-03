@@ -12,10 +12,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
-HOST = 'https://disk.6-79.cn'
-# HOST = 'localhost:8000'
-CDN_HOST = 'https://res.6-79.cn'
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -25,12 +21,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'YOUR-SECRET-KEY'
-JWT_ENCODE_ALGO = 'HS256'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['disk.6-79.cn', 'localhost']
 
 
 # Application definition
@@ -62,9 +57,9 @@ MIDDLEWARE = [
 # 增加跨域
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = (
-    '*'
-)
+# CORS_ORIGIN_WHITELIST = (
+#     '*'
+# )
 CORS_ALLOW_METHODS = (
     'DELETE',
     'GET',
