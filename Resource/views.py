@@ -282,10 +282,7 @@ class CoverView(View):
             resource_chain = [cover]
             next_str_id = cover
             while True:
-                ret = Resource.get_by_id(next_str_id)
-                if not ret.ok:
-                    return ret
-                next_res = ret.body  # type: Resource
+                next_res = Resource.get_by_id(next_str_id)
                 if next_res.res_str_id == res.res_str_id:
                     return ResourceError.RESOURCE_CIRCLE
                 if not next_res.belong(user):
