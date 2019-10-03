@@ -87,12 +87,11 @@ class User(models.Model):
 
     def _readable_root_res(self):
         from Resource.models import Resource
-        ret = Resource.get_root_folder(self)
-        if not ret.ok:
+        try:
+            res = Resource.get_root_folder(self)
+            return res.res_str_id
+        except Exception:
             return None
-        else:
-            o_res = ret.body
-            return o_res.res_str_id
 
     def d(self):
         return self.dictor(['user_id', 'avatar', 'nickname', 'root_res'])
