@@ -45,6 +45,7 @@ class Auth:
         r.user = None
 
         dict_ = cls.validate_token(r)
+        print(dict_)
         user_id = dict_.get('user_id')
         if not user_id:
             return AuthError.TOKEN_MISS_PARAM('user_id')
