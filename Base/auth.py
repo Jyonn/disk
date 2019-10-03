@@ -56,7 +56,10 @@ class Auth:
     def maybe_login(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            Auth._extract_user(request)
+            try:
+                Auth._extract_user(request)
+            except Excp:
+                pass
             return func(request, *args, **kwargs)
 
         return wrapper
