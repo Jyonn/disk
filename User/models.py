@@ -63,20 +63,20 @@ class User(models.Model):
     def get_by_id(user_id):
         """根据用户ID获取用户对象"""
         try:
-            o_user = User.objects.get(pk=user_id)
+            user = User.objects.get(pk=user_id)
         except User.DoesNotExist as err:
             return UserError.USER_NOT_FOUND
-        return o_user
+        return user
 
     @staticmethod
     @Excp.pack
     def get_by_qtid(qt_user_app_id):
         """根据齐天用户-应用ID获取用户对象"""
         try:
-            o_user = User.objects.get(qt_user_app_id=qt_user_app_id)
+            user = User.objects.get(qt_user_app_id=qt_user_app_id)
         except User.DoesNotExist as err:
             return UserError.USER_NOT_FOUND
-        return o_user
+        return user
 
     """
     字典函数

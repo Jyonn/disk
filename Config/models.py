@@ -31,11 +31,11 @@ class Config(models.Model):
         cls.validator(locals())
 
         try:
-            o_config = cls.objects.get(key=key)
+            config = cls.objects.get(key=key)
         except cls.DoesNotExist as err:
             return ConfigError.CONFIG_NOT_FOUND
 
-        return o_config
+        return config
 
     @classmethod
     def get_value_by_key(cls, key, default=None):

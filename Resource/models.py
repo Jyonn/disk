@@ -208,15 +208,15 @@ class Resource(models.Model):
 
     @staticmethod
     @Excp.pack
-    def _valid_res_parent(o_parent):
-        """验证o_parent属性"""
-        if not isinstance(o_parent, Resource):
+    def _valid_res_parent(parent):
+        """验证parent属性"""
+        if not isinstance(parent, Resource):
             return BaseError.STRANGE
-        if o_parent.rtype != Resource.RTYPE_FOLDER:
+        if parent.rtype != Resource.RTYPE_FOLDER:
             return ResourceError.FILE_PARENT
 
     @classmethod
-    def create_abstract(cls, rname, rtype, desc, o_user, o_parent, dlpath, rsize, sub_type, mime):
+    def create_abstract(cls, rname, rtype, desc, user, parent, dlpath, rsize, sub_type, mime):
         crt_time = datetime.datetime.now()
         return cls(
             rname=rname,
@@ -225,8 +225,8 @@ class Resource(models.Model):
             description=desc,
             cover=None,
             cover_type=cls.COVER_SELF if sub_type == cls.STYPE_IMAGE else cls.COVER_RANDOM,
-            owner=o_user,
-            parent=o_parent,
+            owner=user,
+            parent=parent,
             dlpath=dlpath,
             status=cls.STATUS_PRIVATE,
             visit_key=get_random_string(length=4),
@@ -260,8 +260,8 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=cls.RTYPE_FILE,
                 desc=None,
-                o_user=user,
-                o_parent=res_parent,
+                user=user,
+                parent=res_parent,
                 dlpath=dlpath,
                 rsize=rsize,
                 sub_type=sub_type,
@@ -290,8 +290,8 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=cls.RTYPE_FOLDER,
                 desc=desc,
-                o_user=user,
-                o_parent=res_parent,
+                user=user,
+                parent=res_parent,
                 dlpath=None,
                 rsize=0,
                 sub_type=cls.STYPE_FOLDER,
@@ -320,8 +320,8 @@ class Resource(models.Model):
                 rname=rname,
                 rtype=cls.RTYPE_LINK,
                 desc=None,
-                o_user=user,
-                o_parent=res_parent,
+                user=user,
+                parent=res_parent,
                 dlpath=dlpath,
                 rsize=0,
                 sub_type=cls.STYPE_LINK,
@@ -414,13 +414,13 @@ class Resource(models.Model):
                 not self.right_bubble or \
                 self.status == Resource.STATUS_PUBLIC:
             return True
-        o_res = self.parent
-        while o_res.pk != Resource.ROOT_ID:
-            if o_res.status == Resource.STATUS_PUBLIC:
-                return o_res.rname
-            if not o_res.right_bubble:
+        res = self.parent
+        while res.pk != Resource.ROOT_ID:
+            if res.status == Resource.STATUS_PUBLIC:
+                return res.rname
+            if not res.right_bubble:
                 break
-            o_res = o_res.parent
+            res = res.parent
         return True
 
     def _readable_raw_cover(self):
@@ -539,7 +539,7 @@ class Resource(models.Model):
         self.save()
 
     @Excp.pack
-    def modify_info(self, rname, description, status, visit_key, right_bubble, o_parent):
+    def modify_info(self, rname, description, status, visit_key, right_bubble, parent):
         """ 修改资源属性
 
         :param rname: 资源名称
@@ -547,7 +547,7 @@ class Resource(models.Model):
         :param status: 资源分享类型（公开、私有、加密）
         :param visit_key: 资源加密密钥
         :param right_bubble: 资源读取权限是否向上查询
-        :param o_parent: 移动后的新父目录
+        :param parent: 移动后的新父目录
         :return: Ret对象，错误返回错误代码，成功返回资源对象
         """
         if rname is None:
@@ -560,8 +560,8 @@ class Resource(models.Model):
             visit_key = self.visit_key
         if right_bubble is None:
             right_bubble = self.right_bubble
-        if o_parent is None:
-            o_parent = self.parent
+        if parent is None:
+            parent = self.parent
 
         self.validator(locals())
 
@@ -573,7 +573,7 @@ class Resource(models.Model):
         self.description = description
         self.status = status
         self.right_bubble = right_bubble
-        self.parent = o_parent
+        self.parent = parent
         if status == Resource.STATUS_PROTECT:
             if self.visit_key != visit_key:
                 self.visit_key = visit_key
@@ -666,14 +666,14 @@ class UserRight(models.Model):
     def verify(cls, user: User, res: Resource):
         if not user:
             return False
-        ret = cls.get_right(user, res)
-        if not ret.ok:
+        try:
+            right = cls.get_right(user, res)
+        except Excp:
             return False
-        o_right = ret.body
-        if o_right.verify_time > res.vk_change_time:
+        if right.verify_time > res.vk_change_time:
             return True
         else:
-            o_right.delete()
+            right.delete()
             return False
 
 
