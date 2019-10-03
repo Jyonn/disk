@@ -370,10 +370,10 @@ class Resource(models.Model):
             if res.cover_type == Resource.COVER_PARENT:
                 res = res.parent
             elif res.cover_type == Resource.COVER_RESOURCE:
-                ret = Resource.get_by_id(res.cover)
-                if not ret.ok:
+                try:
+                    res = Resource.get_by_id(res.cover)
+                except Excp:
                     return None, None
-                res = ret.body
                 if not res.belong(self.owner):
                     return None, None
             else:
