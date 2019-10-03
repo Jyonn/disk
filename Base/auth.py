@@ -23,10 +23,9 @@ AuthError.register()
 
 class Auth:
     @staticmethod
-    @Excp.handle
+    @Excp.pack
     def validate_token(request):
         jwt_str = request.META.get('HTTP_TOKEN')
-        print(jwt_str)
         if jwt_str is None:
             return AuthError.REQUIRE_LOGIN
         return JWT.decrypt(jwt_str)
@@ -40,10 +39,9 @@ class Auth:
         _dict['user'] = user.d()
         return _dict
 
-    @staticmethod
+    @classmethod
     @Excp.pack
-    def _extract_user(r):
-        print(r)
+    def _extract_user(cls, r):
         r.user = None
 
         dict_ = Auth.validate_token(r)
@@ -63,30 +61,30 @@ class Auth:
 
         return wrapper
 
-    @staticmethod
-    def require_login(func):
+    @classmethod
+    def require_login(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            Auth._extract_user(r)
+            cls._extract_user(r)
             return func(r, *args, **kwargs)
 
         return wrapper
 
-    @staticmethod
-    def require_owner(func):
+    @classmethod
+    def require_owner(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            Auth._extract_user(r)
+            cls._extract_user(r)
             if not r.d.res.belong(r.user):
                 return ResourceError.RESOURCE_NOT_BELONG
             return func(r, *args, **kwargs)
         return wrapper
 
-    @staticmethod
-    def require_root(func):
+    @classmethod
+    def require_root(cls, func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            Auth._extract_user(r)
+            cls._extract_user(r)
             user = r.user  # type: User
             if user.qt_user_app_id != ADMIN_QITIAN:
                 return AuthError.REQUIRE_ROOT
