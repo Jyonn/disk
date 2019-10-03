@@ -39,13 +39,12 @@ class Auth:
         _dict['user'] = user.d()
         return _dict
 
-    @classmethod
+    @staticmethod
     @Excp.pack
-    def _extract_user(cls, r):
+    def _extract_user(r):
         r.user = None
 
-        dict_ = cls.validate_token(r)
-        print(dict_)
+        dict_ = Auth.validate_token(r)
         user_id = dict_.get('user_id')
         if not user_id:
             return AuthError.TOKEN_MISS_PARAM('user_id')
@@ -62,30 +61,30 @@ class Auth:
 
         return wrapper
 
-    @classmethod
-    def require_login(cls, func):
+    @staticmethod
+    def require_login(func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            cls._extract_user(r)
+            Auth._extract_user(r)
             return func(r, *args, **kwargs)
 
         return wrapper
 
-    @classmethod
-    def require_owner(cls, func):
+    @staticmethod
+    def require_owner(func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            cls._extract_user(r)
+            Auth._extract_user(r)
             if not r.d.res.belong(r.user):
                 return ResourceError.RESOURCE_NOT_BELONG
             return func(r, *args, **kwargs)
         return wrapper
 
-    @classmethod
-    def require_root(cls, func):
+    @staticmethod
+    def require_root(func):
         @wraps(func)
         def wrapper(r, *args, **kwargs):
-            cls._extract_user(r)
+            Auth._extract_user(r)
             user = r.user  # type: User
             if user.qt_user_app_id != ADMIN_QITIAN:
                 return AuthError.REQUIRE_ROOT
