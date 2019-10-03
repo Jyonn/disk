@@ -322,20 +322,22 @@ class BaseInfoView(View):
 
 class DownloadView(View):
     @staticmethod
+    @Excp.handle
     @Auth.maybe_login
     def get_dl_link(r, visit_key):
         user = r.user
 
         res = r.d.res  # type: Resource
         if not res.readable(user, visit_key):
-            return Excp.http_response(ResourceError.NOT_READABLE)
+            return ResourceError.NOT_READABLE
 
         if res.rtype == Resource.RTYPE_FOLDER:
-            return Excp.http_response(ResourceError.REQUIRE_FILE)
+            return ResourceError.REQUIRE_FILE
 
         return HttpResponseRedirect(res.get_dl_url())
 
     @staticmethod
+    @Excp.handle
     @Analyse.r(q=[P('token', '登录口令').set_null(), P_VISIT_KEY.clone().set_null()], a=[P_RES])
     def get(r, res_str_id):
         """ GET /api/res/:res_str_id/dl
@@ -348,19 +350,18 @@ class DownloadView(View):
         return DownloadView.get_dl_link(r, visit_key)
 
 
+def remove_dot(res_str_id):
+    find_dot = res_str_id.find('.')
+    if find_dot != -1:
+        res_str_id = res_str_id[:find_dot]
+    return res_str_id
+
+
 class ShortLinkView(View):
-    @staticmethod
-    def remove_dot(res_str_id):
-        find_dot = res_str_id.find('.')
-        if find_dot != -1:
-            res_str_id = res_str_id[:find_dot]
-        print(res_str_id)
-        return res_str_id
-
-
     P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
 
     @staticmethod
+    @Excp.handle
     @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_SL_RES_ID])
     def get(r, res_str_id, *args, **kwargs):
         """ /s/:res_str_id

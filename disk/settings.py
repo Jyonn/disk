@@ -25,7 +25,7 @@ SECRET_KEY = 'YOUR-SECRET-KEY'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['disk.6-79.cn', 'localhost']
+ALLOWED_HOSTS = ['disk.6-79.cn', 'localhost', 'local.6-79.cn']
 
 
 # Application definition
