@@ -42,6 +42,7 @@ class Auth:
     @staticmethod
     @Excp.pack
     def _extract_user(r):
+        print(r)
         r.user = None
 
         dict_ = Auth.validate_token(r)
