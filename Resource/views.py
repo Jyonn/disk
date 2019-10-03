@@ -251,7 +251,7 @@ class CoverView(View):
 
         七牛上传资源封面成功后的回调函数
         """
-        qn_res_manager.qiniu_auth_callback(r)
+        qn_res_manager.auth_callback(r)
 
         key = r.d.key
         res = r.d.res  # type: Resource
