@@ -26,6 +26,7 @@ class Auth:
     @Excp.handle
     def validate_token(request):
         jwt_str = request.META.get('HTTP_TOKEN')
+        print(jwt_str)
         if jwt_str is None:
             return AuthError.REQUIRE_LOGIN
         return JWT.decrypt(jwt_str)
