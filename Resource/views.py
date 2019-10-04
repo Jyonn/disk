@@ -21,10 +21,9 @@ P_USER = P('user_id').process(P.Processor(User.get_by_id, yield_name='user'))
 
 class BaseView(View):
     @staticmethod
-    @Excp.handle
     @Auth.maybe_login
     @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_RES])
-    def get(r, res_str_id):
+    def get(r):
         """ GET /api/res/:res_str_id
 
         获取资源信息
@@ -38,7 +37,6 @@ class BaseView(View):
         return res.d_layer()
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[
         P_RNAME.clone().set_null(),
         P_STATUS.clone().set_null(),
@@ -48,7 +46,7 @@ class BaseView(View):
         P_PARENT_RES.clone().set_null()
     ], a=[P_RES])
     @Auth.require_owner
-    def put(r, res_str_id):
+    def put(r):
         """ PUT /api/res/:slug/
 
         修改资源信息
@@ -79,10 +77,9 @@ class BaseView(View):
         return res.d()
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_RES])
     @Auth.require_owner
-    def delete(r, res_str_id):
+    def delete(r):
         """ DELETE /api/res/:slug
 
         删除资源
@@ -97,11 +94,10 @@ class BaseView(View):
 
 class FolderView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[P_RNAME.clone().rename('folder_name')],
                a=[P_RES])
     @Auth.require_owner
-    def post(r, res_str_id):
+    def post(r):
         """ POST /api/res/:res_str_id/folder
 
         上传文件夹资源
@@ -116,11 +112,10 @@ class FolderView(View):
 
 class LinkView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[P_RNAME.clone().rename('link_name'), P('link')],
                a=[P_RES])
     @Auth.require_owner
-    def post(r, res_str_id):
+    def post(r):
         """ POST /api/res/:res_str_id/link
 
         上传链接资源
@@ -136,10 +131,9 @@ class LinkView(View):
 
 class PathView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_RES])
     @Auth.require_owner
-    def get(r, res_str_id):
+    def get(r):
         res = r.d.res
         res_path = []
         while res.pk != Resource.ROOT_ID:
@@ -152,20 +146,18 @@ class PathView(View):
 
 class SelectView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_RES])
     @Auth.require_owner
-    def get(r, res_str_id):
+    def get(r):
         res = r.d.res
         return res.d_selector_layer()
 
 
 class TokenView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
     @Auth.require_owner
-    def get(r, res_str_id):
+    def get(r):
         """ GET /api/res/:res_str_id/token
 
         获取七牛上传资源token
@@ -183,10 +175,9 @@ class TokenView(View):
         return dict(upload_token=qn_token, key=key)
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[P('key'), P_USER, P('fsize'), P('fname'), P('ftype')],
                a=[P_RES])
-    def post(r, res_str_id):
+    def post(r):
         """ POST /api/res/:res_str_id/token
 
         七牛上传资源回调函数
@@ -225,10 +216,9 @@ class TokenView(View):
 
 class CoverView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
     @Auth.require_owner
-    def get(r, res_str_id):
+    def get(r):
         """ GET /api/res/:res_str_id/cover
 
         获取七牛上传资源封面token
@@ -244,9 +234,8 @@ class CoverView(View):
         return dict(upload_token=qn_token, key=key)
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[P('key')], a=[P_RES])
-    def post(r, res_str_id):
+    def post(r):
         """ POST /api/res/:res_str_id/cover
 
         七牛上传资源封面成功后的回调函数
@@ -260,10 +249,9 @@ class CoverView(View):
         return res.d()
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES])
     @Auth.require_owner
-    def put(r, res_str_id):
+    def put(r):
         """ PUT /api/res/:res_str_id/cover
 
         修改封面信息
@@ -303,10 +291,9 @@ class CoverView(View):
 
 class BaseInfoView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_RES])
     @Auth.maybe_login
-    def get(r, res_str_id):
+    def get(r):
         """ GET /api/res/:res_str_id/base
 
         获取资源公开信息
@@ -322,7 +309,6 @@ class BaseInfoView(View):
 
 class DownloadView(View):
     @staticmethod
-    @Excp.handle
     @Auth.maybe_login
     def get_dl_link(r, visit_key):
         user = r.user
@@ -337,9 +323,8 @@ class DownloadView(View):
         return HttpResponseRedirect(res.get_dl_url())
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(q=[P('token', '登录口令').set_null(), P_VISIT_KEY.clone().set_null()], a=[P_RES])
-    def get(r, res_str_id):
+    def get(r):
         """ GET /api/res/:res_str_id/dl
 
         获取下载资源链接
@@ -361,9 +346,8 @@ class ShortLinkView(View):
     P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_SL_RES_ID])
-    def get(r, res_str_id, *args, **kwargs):
+    def get(r):
         """ /s/:res_str_id
 
         GET: direct_link, 直链分享解析

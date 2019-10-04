@@ -2,7 +2,7 @@
 
 用户API处理函数
 """
-from SmartDjango import Excp, Analyse, P
+from SmartDjango import Analyse, P
 from django.views import View
 
 from Base.auth import Auth
@@ -14,7 +14,6 @@ P_QITIAN_USER = P('qt_user_app_id').process(P.Processor(User.get_by_qtid, yield_
 
 class BaseView(View):
     @staticmethod
-    @Excp.handle
     @Auth.require_login
     def get(r):
         """ GET /api/user/
@@ -28,9 +27,8 @@ class BaseView(View):
 
 class QitianView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_QITIAN_USER])
-    def get(r, qt_user_app_id):
+    def get(r):
         """ GET /api/user/@:qt_user_app_id
 
         获取用户信息
@@ -40,10 +38,9 @@ class QitianView(View):
         return user.d()
 
     @staticmethod
-    @Excp.handle
     @Analyse.r(a=[P_QITIAN_USER])
     @Auth.require_root
-    def delete_user(r, qt_user_app_id):
+    def delete_user(r):
         """ DELETE /api/user/@:qt_user_app_id
 
         删除用户

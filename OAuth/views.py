@@ -29,7 +29,6 @@ ROOT_DESC = '''
 
 class OAuthView(View):
     @staticmethod
-    @Excp.handle
     @Analyse.r(q=[Param('code', '齐天簿授权码')])
     def get(r):
         code = r.d.code

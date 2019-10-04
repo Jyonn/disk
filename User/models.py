@@ -64,7 +64,7 @@ class User(models.Model):
         """根据用户ID获取用户对象"""
         try:
             user = User.objects.get(pk=user_id)
-        except User.DoesNotExist as err:
+        except User.DoesNotExist:
             return UserError.USER_NOT_FOUND
         return user
 
@@ -74,7 +74,7 @@ class User(models.Model):
         """根据齐天用户-应用ID获取用户对象"""
         try:
             user = User.objects.get(qt_user_app_id=qt_user_app_id)
-        except User.DoesNotExist as err:
+        except User.DoesNotExist:
             return UserError.USER_NOT_FOUND
         return user
 
@@ -115,7 +115,7 @@ class User(models.Model):
                         qtb_token=token,
                     )
                     user.save()
-                except Exception as err:
+                except Exception:
                     return UserError.CREATE_USER
             else:
                 return ret
