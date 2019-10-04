@@ -44,7 +44,7 @@ class JWT:
         """
         try:
             dict_ = jwt.decode(str_, SECRET_KEY, JWT_ENCODE_ALGO)
-        except jwt.DecodeError as err:
+        except jwt.DecodeError:
             return JWTError.ERROR_JWT_FORMAT
         if 'expire' not in dict_.keys() \
                 or 'ctime' not in dict_.keys() \

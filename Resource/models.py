@@ -4,7 +4,7 @@
 """
 import datetime
 
-from SmartDjango import models, ErrorCenter, E, BaseError, Excp, P
+from SmartDjango import models, ErrorCenter, E, BaseError, Excp
 from django.utils.crypto import get_random_string
 
 from User.models import User

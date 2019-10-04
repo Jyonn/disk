@@ -1,9 +1,9 @@
-from SmartDjango import Excp, ErrorCenter
+from SmartDjango import ErrorCenter
 from django.views import View
 
 
 class ErrorView(View):
     @staticmethod
-    def get(r):
+    def get(_):
         """GET /base/errors"""
         return ErrorCenter.all()

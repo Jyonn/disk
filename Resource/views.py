@@ -2,7 +2,7 @@
 
 资源API处理函数
 """
-from SmartDjango import Analyse, Excp, P
+from SmartDjango import Analyse, P
 from django.http import HttpResponseRedirect
 from django.views import View
 
