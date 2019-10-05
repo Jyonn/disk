@@ -184,6 +184,8 @@ class TokenView(View):
         """
         qn_res_manager.auth_callback(r)
 
+        print(r.d.dict())
+
         key = r.d.key
         user = r.d.user
         fsize = r.d.fsize
@@ -209,6 +211,8 @@ class TokenView(View):
             qn_res_manager.move_res(key, new_key)
             fname = decode_fname
             key = new_key
+
+        print('create file')
 
         res = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
         return res.d_child()
