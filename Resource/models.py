@@ -45,9 +45,9 @@ class Resource(models.Model):
     一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
     ROOT_ID = 1
-    MAX_L = {
-        'manager': 255,
-    }
+    # MAX_L = {
+    #     'manager': 255,
+    # }
 
     RTYPE_FILE = 0
     RTYPE_FOLDER = 1
@@ -192,7 +192,7 @@ class Resource(models.Model):
     @classmethod
     def get_unique_id(cls):
         while True:
-            res_str_id = get_random_string(length=cls.MAX_L['res_str_id'])
+            res_str_id = get_random_string(length=cls.res_str_id.max_length)
             ret = cls.get_by_id(res_str_id)
             if ret.erroris(ResourceError.RESOURCE_NOT_FOUND):
                 return res_str_id
