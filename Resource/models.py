@@ -255,21 +255,21 @@ class Resource(models.Model):
         """
         cls.validator(locals())
 
-        try:
-            res = cls.create_abstract(
-                rname=rname,
-                rtype=cls.RTYPE_FILE,
-                desc=None,
-                user=user,
-                parent=res_parent,
-                dlpath=dlpath,
-                rsize=rsize,
-                sub_type=sub_type,
-                mime=mime,
-            )
-            res.save()
-        except Exception:
-            return ResourceError.CREATE_FILE
+        # try:
+        res = cls.create_abstract(
+            rname=rname,
+            rtype=cls.RTYPE_FILE,
+            desc=None,
+            user=user,
+            parent=res_parent,
+            dlpath=dlpath,
+            rsize=rsize,
+            sub_type=sub_type,
+            mime=mime,
+        )
+        res.save()
+        # except Exception:
+        #     return ResourceError.CREATE_FILE
         return res
 
     @classmethod
@@ -285,21 +285,21 @@ class Resource(models.Model):
         """
         cls.validator(locals())
 
-        # try:
-        res = cls.create_abstract(
-            rname=rname,
-            rtype=cls.RTYPE_FOLDER,
-            desc=desc,
-            user=user,
-            parent=res_parent,
-            dlpath=None,
-            rsize=0,
-            sub_type=cls.STYPE_FOLDER,
-            mime=None,
-        )
-        res.save()
-        # except Exception:
-        #     return ResourceError.CREATE_FOLDER
+        try:
+            res = cls.create_abstract(
+                rname=rname,
+                rtype=cls.RTYPE_FOLDER,
+                desc=desc,
+                user=user,
+                parent=res_parent,
+                dlpath=None,
+                rsize=0,
+                sub_type=cls.STYPE_FOLDER,
+                mime=None,
+            )
+            res.save()
+        except Exception:
+            return ResourceError.CREATE_FOLDER
         return res
 
     @classmethod

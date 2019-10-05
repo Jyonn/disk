@@ -211,6 +211,7 @@ class TokenView(View):
             key = new_key
 
         res = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
+        print('create end')
         return res.d_child()
 
 
