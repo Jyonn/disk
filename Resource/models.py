@@ -193,9 +193,11 @@ class Resource(models.Model):
     def get_unique_id(cls):
         while True:
             res_str_id = get_random_string(length=6)
-            ret = cls.get_by_id(res_str_id)
-            if ret.erroris(ResourceError.RESOURCE_NOT_FOUND):
-                return res_str_id
+            try:
+                cls.get_by_id(res_str_id)
+            except Excp as ret:
+                if ret.eis(ResourceError.RESOURCE_NOT_FOUND):
+                    return res_str_id
 
     @staticmethod
     @Excp.pack
