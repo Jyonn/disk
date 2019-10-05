@@ -192,7 +192,7 @@ class Resource(models.Model):
     @classmethod
     def get_unique_id(cls):
         while True:
-            res_str_id = get_random_string(length=cls.res_str_id.max_length)
+            res_str_id = get_random_string(length=6)
             ret = cls.get_by_id(res_str_id)
             if ret.erroris(ResourceError.RESOURCE_NOT_FOUND):
                 return res_str_id
@@ -255,21 +255,21 @@ class Resource(models.Model):
         """
         cls.validator(locals())
 
-        # try:
-        res = cls.create_abstract(
-            rname=rname,
-            rtype=cls.RTYPE_FILE,
-            desc=None,
-            user=user,
-            parent=res_parent,
-            dlpath=dlpath,
-            rsize=rsize,
-            sub_type=sub_type,
-            mime=mime,
-        )
-        res.save()
-        # except Exception:
-        #     return ResourceError.CREATE_FILE
+        try:
+            res = cls.create_abstract(
+                rname=rname,
+                rtype=cls.RTYPE_FILE,
+                desc=None,
+                user=user,
+                parent=res_parent,
+                dlpath=dlpath,
+                rsize=rsize,
+                sub_type=sub_type,
+                mime=mime,
+            )
+            res.save()
+        except Exception:
+            return ResourceError.CREATE_FILE
         return res
 
     @classmethod
