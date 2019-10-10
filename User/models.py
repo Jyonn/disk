@@ -2,17 +2,15 @@
 
 用户类
 """
-from SmartDjango import models, Excp, ErrorCenter, E
+from SmartDjango import models, Excp, E
 
 from Base.common import qt_manager
 
 
-class UserError(ErrorCenter):
+@E.register
+class UserError:
     CREATE_USER = E("新建用户错误", hc=500)
     USER_NOT_FOUND = E("不存在的用户", hc=404)
-
-
-UserError.register()
 
 
 class User(models.Model):
@@ -94,7 +92,7 @@ class User(models.Model):
             return None
 
     def d(self):
-        return self.dictor(['user_id', 'avatar', 'nickname', 'root_res'])
+        return self.dictor('user_id', 'avatar', 'nickname', 'root_res')
 
     """
     增删函数

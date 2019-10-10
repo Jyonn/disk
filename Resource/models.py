@@ -4,13 +4,14 @@
 """
 import datetime
 
-from SmartDjango import models, ErrorCenter, E, BaseError, Excp
+from SmartDjango import models, E, BaseError, Excp
 from django.utils.crypto import get_random_string
 
 from User.models import User
 
 
-class ResourceError(ErrorCenter):
+@E.register
+class ResourceError:
     PARENT_NOT_BELONG = E("无法在他人目录下存储", hc=403)
     NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE = E("不允许非图片资源设置封面为自身", hc=403)
     NOT_ALLOWED_COVER_UPLOAD = E("不允许封面类型直接修改为本地上传类型", hc=403)
@@ -33,9 +34,6 @@ class ResourceError(ErrorCenter):
     RESOURCE_NOT_BELONG = E("没有权限", hc=403)
     RESOURCE_NOT_FOUND = E("不存在的资源", hc=404)
     INVALID_RNAME = E("不合法的资源名称", hc=400)
-
-
-ResourceError.register()
 
 
 class Resource(models.Model):
@@ -432,10 +430,10 @@ class Resource(models.Model):
         return self.parent.res_str_id
 
     def d(self):
-        dict_ = self.dictor(['res_str_id', 'rname', 'rtype', 'rsize', 'sub_type', 'description',
-                             'cover_type', 'owner', 'parent_str_id', 'status', 'create_time',
-                             'dlcount', 'visit_key', 'is_home', 'right_bubble', 'secure_env',
-                             'raw_cover'])
+        dict_ = self.dictor('res_str_id', 'rname', 'rtype', 'rsize', 'sub_type', 'description',
+                            'cover_type', 'owner', 'parent_str_id', 'status', 'create_time',
+                            'dlcount', 'visit_key', 'is_home', 'right_bubble', 'secure_env',
+                            'raw_cover')
         cover_urls = self.get_cover_urls()
         dict_.update(dict(
             cover=cover_urls[0],
@@ -444,7 +442,7 @@ class Resource(models.Model):
         return dict_
 
     def d_base(self):
-        dict_ = self.dictor(['status', 'is_home', 'owner', 'create_time', 'right_bubble'])
+        dict_ = self.dictor('status', 'is_home', 'owner', 'create_time', 'right_bubble')
         cover_urls = self.get_cover_urls()
         dict_.update(dict(
             cover=cover_urls[0],
@@ -453,8 +451,8 @@ class Resource(models.Model):
         return dict_
 
     def d_child(self):
-        dict_ = self.dictor(['res_str_id', 'rname', 'rtype', 'status', 'create_time', 'sub_type',
-                             'dlcount'])
+        dict_ = self.dictor('res_str_id', 'rname', 'rtype', 'status', 'create_time', 'sub_type',
+                            'dlcount')
         cover_urls = self.get_cover_urls()
         dict_.update(dict(
             cover_small=cover_urls[1],
@@ -469,11 +467,11 @@ class Resource(models.Model):
         )
 
     def d_child_selector(self):
-        return self.dictor(['res_str_id', 'rname', 'rtype', 'sub_type'])
+        return self.dictor('res_str_id', 'rname', 'rtype', 'sub_type')
 
     def d_selector_layer(self):
         child_list = Resource.objects.filter(parent=self).dict(Resource.d_child_selector)
-        info = self.dictor(['is_home', 'res_str_id', 'rname', 'parent_str_id'])
+        info = self.dictor('is_home', 'res_str_id', 'rname', 'parent_str_id')
         return dict(
             info=info,
             child_list=child_list,

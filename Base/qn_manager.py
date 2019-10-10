@@ -4,7 +4,7 @@
 """
 import qiniu
 import requests
-from SmartDjango import Excp, ErrorCenter, E
+from SmartDjango import Excp, E
 from django.http import HttpRequest
 from qiniu import urlsafe_base64_encode
 
@@ -25,14 +25,12 @@ _KEY_PREFIX = 'disk/'
 QINIU_MANAGE_HOST = "https://rs.qiniu.com"
 
 
-class QNError(ErrorCenter):
+@E.register
+class QNError:
     REQUEST_QINIU = E("七牛请求错误", hc=500)
     QINIU_UNAUTHORIZED = E("七牛端身份验证错误", hc=403)
     FAIL_QINIU = E("未知原因导致的七牛端操作错误", hc=500)
     UNAUTH_CALLBACK = E("未经授权的回调函数", hc=403)
-
-
-QNError.register()
 
 
 class QnManager:

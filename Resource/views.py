@@ -14,9 +14,9 @@ from Resource.models import Resource, P_RNAME, P_VISIT_KEY, ResourceError, P_STA
 from User.models import User
 
 
-P_RES = P('res_str_id').process(P.Processor(Resource.get_by_id, yield_name='res'))
-P_PARENT_RES = P('parent_str_id').process(P.Processor(Resource.get_by_id, yield_name='parent_res'))
-P_USER = P('user_id').process(P.Processor(User.get_by_id, yield_name='user'))
+P_RES = P('res_str_id', yield_name='res').process(Resource.get_by_id)
+P_PARENT_RES = P('parent_str_id', yield_name='parent_res').process(Resource.get_by_id)
+P_USER = P('user_id', yield_name='user').process(User.get_by_id)
 
 
 class BaseView(View):

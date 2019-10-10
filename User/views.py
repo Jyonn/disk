@@ -9,7 +9,7 @@ from Base.auth import Auth
 
 from User.models import User
 
-P_QITIAN_USER = P('qt_user_app_id').process(P.Processor(User.get_by_qtid, yield_name='user'))
+P_QITIAN_USER = P('qt_user_app_id', yield_name='user').process(User.get_by_qtid)
 
 
 class BaseView(View):

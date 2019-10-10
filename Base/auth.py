@@ -2,13 +2,14 @@ from functools import wraps
 
 from Base.common import ADMIN_QITIAN
 from Base.jtoken import JWT
-from SmartDjango import ErrorCenter, Excp, E
+from SmartDjango import Excp, E
 
 from Resource.models import ResourceError
 from User.models import User
 
 
-class AuthError(ErrorCenter):
+@E.register
+class AuthError:
     REQUIRE_ROOT = E("需要管理员权限", hc=401)
     REQUIRE_RIGHT = E("需要{0}权限", E.PH_FORMAT, hc=401)
     EXPIRED = E("登录过期", 401)
@@ -18,14 +19,11 @@ class AuthError(ErrorCenter):
     REQUIRE_LOGIN = E("需要登录", hc=401)
 
 
-AuthError.register()
-
-
 class Auth:
     @staticmethod
     @Excp.pack
-    def validate_token(request):
-        jwt_str = request.META.get('HTTP_TOKEN')
+    def validate_token(r):
+        jwt_str = r.META.get('HTTP_TOKEN')
         if jwt_str is None:
             return AuthError.REQUIRE_LOGIN
         return JWT.decrypt(jwt_str)
