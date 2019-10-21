@@ -586,7 +586,10 @@ class Resource(models.Model):
         self.validator(locals())
         from Base.qn_manager import qn_res_manager
         if self.cover_type == self.COVER_UPLOAD:
-            qn_res_manager.delete_res(self.cover)
+            try:
+                qn_res_manager.delete_res(self.cover)
+            except:
+                pass
         self.cover = cover
         self.cover_type = cover_type
         self.save()
