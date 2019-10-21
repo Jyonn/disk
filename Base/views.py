@@ -28,10 +28,12 @@ class CleanerView(View):
                 dict_[item['k']] = dict(m=item['m'])
 
             for resource in resources:
+                resource.mime = None
                 if resource.rtype == Resource.RTYPE_FILE:
                     if resource.dlpath in dict_:
                         resource.mime = dict_[resource.dlpath]['m']
-                        resource.save()
                         del dict_[resource.dlpath]
+                resource.save()
 
-            return dict_
+            for k in dict_:
+                manager.delete(RES_BUCKET, k)
