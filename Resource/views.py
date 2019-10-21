@@ -4,6 +4,7 @@
 """
 from SmartDjango import Analyse, P
 from django.http import HttpResponseRedirect
+from django.utils.crypto import get_random_string
 from django.views import View
 
 from Base.auth import Auth
@@ -169,7 +170,8 @@ class TokenView(View):
 
         import datetime
         crt_time = datetime.datetime.now().timestamp()
-        key = 'res/%s/%s/%s' % (user.pk, crt_time, filename)
+        salt = get_random_string(4)
+        key = 'res/%s/%s/%s' % (salt, crt_time, filename)
         qn_token, key = qn_res_manager.get_upload_token(
             key, Policy.file(filename, user.pk, res_parent.res_str_id))
         return dict(upload_token=qn_token, key=key)
@@ -211,7 +213,6 @@ class TokenView(View):
             key = new_key
 
         res = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
-        print('create end')
         return res.d_child()
 
 
@@ -230,7 +231,8 @@ class CoverView(View):
 
         import datetime
         crt_time = datetime.datetime.now().timestamp()
-        key = 'cover/%s/%s/%s' % (res.pk, crt_time, filename)
+        salt = get_random_string(4)
+        key = 'cover/%s/%s/%s' % (salt, crt_time, filename)
         qn_token, key = qn_res_manager.get_upload_token(key, Policy.cover(res.res_str_id))
         return dict(upload_token=qn_token, key=key)
 

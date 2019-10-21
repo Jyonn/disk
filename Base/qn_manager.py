@@ -18,9 +18,9 @@ PUBLIC_BUCKET = Config.get_value_by_key(CI.PUBLIC_BUCKET)
 RES_CDN_HOST = Config.get_value_by_key(CI.RES_CDN_HOST)
 PUBLIC_CDN_HOST = Config.get_value_by_key(CI.PUBLIC_CDN_HOST)
 
-_AUTH = qiniu.Auth(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
-_HOST = HOST
-_KEY_PREFIX = 'disk/'
+qn_auth = qiniu.Auth(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
+host = HOST
+key_prefix = 'disk/'
 
 QINIU_MANAGE_HOST = "https://rs.qiniu.com"
 
@@ -71,7 +71,7 @@ class QnManager:
         :param policy: 上传策略
         :param key: 规定的键
         """
-        key = _KEY_PREFIX + key
+        key = key_prefix + key
         return self.auth.upload_token(bucket=self.bucket, key=key, expires=3600, policy=policy), key
 
     @Excp.pack
@@ -136,5 +136,5 @@ class QnManager:
         return self.deal_manage_res(target, access_token)
 
 
-qn_res_manager = QnManager(_AUTH, RES_BUCKET, RES_CDN_HOST, public=False)
-qn_public_manager = QnManager(_AUTH, PUBLIC_BUCKET, PUBLIC_CDN_HOST, public=True)
+qn_res_manager = QnManager(qn_auth, RES_BUCKET, RES_CDN_HOST, public=False)
+qn_public_manager = QnManager(qn_auth, PUBLIC_BUCKET, PUBLIC_CDN_HOST, public=True)
