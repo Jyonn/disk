@@ -4,9 +4,8 @@ base子路由
 """
 from django.urls import path
 
-from Base.views import ErrorView, CleanerView
+from Base.views import ErrorView
 
 urlpatterns = [
     path('errors', ErrorView.as_view()),
-    path('cleaner', CleanerView.as_view()),
 ]
