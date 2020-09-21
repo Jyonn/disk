@@ -32,7 +32,7 @@ class Auth:
     def get_login_token(user: User):
         token, _dict = JWT.encrypt(dict(
             user_id=user.pk,
-        ))
+        ), expire_second=30 * 60 * 60 * 24)
         _dict['token'] = token
         _dict['user'] = user.d()
         return _dict
