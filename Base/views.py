@@ -1,4 +1,4 @@
-from SmartDjango import ErrorJar
+from SmartDjango import E
 from django.views import View
 
 
@@ -6,4 +6,4 @@ class ErrorView(View):
     @staticmethod
     def get(_):
         """GET /base/errors"""
-        return ErrorJar.all()
+        return E.all()

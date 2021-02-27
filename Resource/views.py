@@ -11,7 +11,7 @@ from Base.auth import Auth
 from Base.policy import Policy
 from Base.qn_manager import qn_res_manager, QnManager
 from Resource.models import Resource, P_RNAME, P_VISIT_KEY, ResourceError, P_STATUS, P_DESC, \
-    P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE
+    P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE, RtypeChoice, StypeChoice, CoverChoice
 from User.models import User
 
 
@@ -23,7 +23,7 @@ P_USER = P('user_id', yield_name='user').process(User.get_by_id)
 class BaseView(View):
     @staticmethod
     @Auth.maybe_login
-    @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_RES])
+    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_RES])
     def get(r):
         """ GET /api/res/:res_str_id
 
@@ -39,12 +39,12 @@ class BaseView(View):
 
     @staticmethod
     @Analyse.r(b=[
-        P_RNAME.clone().set_null(),
-        P_STATUS.clone().set_null(),
-        P_DESC.clone().set_null(),
-        P_VISIT_KEY.clone().set_null(),
-        P_RIGHT_BUBBLE.clone().set_null(),
-        P_PARENT_RES.clone().set_null()
+        P_RNAME.clone().null(),
+        P_STATUS.clone().null(),
+        P_DESC.clone().null(),
+        P_VISIT_KEY.clone().null(),
+        P_RIGHT_BUBBLE.clone().null(),
+        P_PARENT_RES.clone().null()
     ], a=[P_RES])
     @Auth.require_owner
     def put(r):
@@ -65,7 +65,7 @@ class BaseView(View):
         if parent_res:
             if not parent_res.belong(user):
                 return ResourceError.RESOURCE_NOT_BELONG
-            if parent_res.rtype != Resource.RTYPE_FOLDER:
+            if parent_res.rtype != RtypeChoice.FOLDER:
                 return ResourceError.REQUIRE_FOLDER
 
             temp_res = parent_res
@@ -194,13 +194,13 @@ class TokenView(View):
         res_parent = r.d.res
 
         if ftype.find('video') == 0:
-            sub_type = Resource.STYPE_VIDEO
+            sub_type = StypeChoice.VIDEO
         elif ftype.find('image') == 0:
-            sub_type = Resource.STYPE_IMAGE
+            sub_type = StypeChoice.IMAGE
         elif ftype.find('audio') == 0:
-            sub_type = Resource.STYPE_MUSIC
+            sub_type = StypeChoice.MUSIC
         else:
-            sub_type = Resource.STYPE_FILE
+            sub_type = StypeChoice.FILE
 
         if not res_parent.belong(user):
             return ResourceError.PARENT_NOT_BELONG
@@ -248,7 +248,7 @@ class CoverView(View):
         key = r.d.key
         res = r.d.res  # type: Resource
 
-        res.modify_cover(key, Resource.COVER_UPLOAD)
+        res.modify_cover(key, CoverChoice.UPLOAD)
         return res.d()
 
     @staticmethod
@@ -265,11 +265,11 @@ class CoverView(View):
         res = r.d.res
         user = r.user
 
-        if cover_type == Resource.COVER_UPLOAD:
+        if cover_type == CoverChoice.UPLOAD:
             return ResourceError.NOT_ALLOWED_COVER_UPLOAD
-        if cover_type == Resource.COVER_SELF and res.sub_type != Resource.STYPE_IMAGE:
+        if cover_type == CoverChoice.SELF and res.sub_type != StypeChoice.IMAGE:
             return ResourceError.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
-        if cover_type == Resource.COVER_RESOURCE:
+        if cover_type == CoverChoice.RESOURCE:
             resource_chain = [cover]
             next_str_id = cover
             while True:
@@ -278,9 +278,9 @@ class CoverView(View):
                     return ResourceError.RESOURCE_CIRCLE
                 if not next_res.belong(user):
                     return ResourceError.RESOURCE_NOT_BELONG
-                if next_res.cover_type == Resource.COVER_RESOURCE:
+                if next_res.cover_type == CoverChoice.RESOURCE:
                     next_str_id = next_res.cover
-                elif next_res.cover_type == Resource.COVER_PARENT:
+                elif next_res.cover_type == CoverChoice.PARENT:
                     next_str_id = next_res.parent.res_str_id
                 else:
                     break
@@ -320,13 +320,13 @@ class DownloadView(View):
         if not res.readable(user, visit_key):
             return ResourceError.NOT_READABLE
 
-        if res.rtype == Resource.RTYPE_FOLDER:
+        if res.rtype == RtypeChoice.FOLDER:
             return ResourceError.REQUIRE_FILE
 
         return HttpResponseRedirect(res.get_dl_url())
 
     @staticmethod
-    @Analyse.r(q=[P('token', '登录口令').set_null(), P_VISIT_KEY.clone().set_null()], a=[P_RES])
+    @Analyse.r(q=[P('token', '登录口令').null(), P_VISIT_KEY.clone().null()], a=[P_RES])
     def get(r):
         """ GET /api/res/:res_str_id/dl
 
@@ -349,7 +349,7 @@ class ShortLinkView(View):
     P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
 
     @staticmethod
-    @Analyse.r(q=[P_VISIT_KEY.clone().set_null()], a=[P_SL_RES_ID])
+    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_SL_RES_ID])
     def get(r):
         """ /s/:res_str_id
 

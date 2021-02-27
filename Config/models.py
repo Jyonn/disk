@@ -2,13 +2,13 @@
 
 系统配置类
 """
-from SmartDjango import models, E, Excp
+from SmartDjango import models, E
 
 
-@E.register
+@E.register(id_processor=E.idp_cls_prefix())
 class ConfigError:
-    CREATE_CONFIG = E("更新配置错误", hc=500)
-    CONFIG_NOT_FOUND = E("不存在的配置", hc=404)
+    CREATE = E("更新配置错误", hc=500)
+    NOT_FOUND = E("不存在的配置", hc=404)
 
 
 class Config(models.Model):
@@ -24,14 +24,11 @@ class Config(models.Model):
     )
 
     @classmethod
-    @Excp.pack
     def get_config_by_key(cls, key):
-        cls.validator(locals())
-
         try:
             config = cls.objects.get(key=key)
         except cls.DoesNotExist as err:
-            return ConfigError.CONFIG_NOT_FOUND
+            raise ConfigError.CONFIG_NOT_FOUND(debug_message=err)
 
         return config
 
@@ -44,16 +41,13 @@ class Config(models.Model):
             return default
 
     @classmethod
-    @Excp.pack
     def update_value(cls, key, value):
-        cls.validator(locals())
-
         try:
             config = cls.get_config_by_key(key)
             config.value = value
             config.save()
-        except Excp as ret:
-            if ret.erroris(ConfigError.CONFIG_NOT_FOUND):
+        except E as e:
+            if e.eis(ConfigError.CONFIG_NOT_FOUND):
                 try:
                     config = cls(
                         key=key,
@@ -61,9 +55,9 @@ class Config(models.Model):
                     )
                     config.save()
                 except Exception:
-                    return ConfigError.CREATE_CONFIG
+                    raise ConfigError.CREATE_CONFIG
             else:
-                return ConfigError.CREATE_CONFIG
+                raise ConfigError.CREATE_CONFIG
 
 
 class ConfigInstance:

@@ -1,4 +1,4 @@
-from SmartDjango import Excp, Analyse, Param
+from SmartDjango import Analyse, P, E
 from django.views import View
 
 from Base.auth import Auth
@@ -29,7 +29,7 @@ ROOT_DESC = '''
 
 class OAuthView(View):
     @staticmethod
-    @Analyse.r(q=[Param('code', '齐天簿授权码')])
+    @Analyse.r(q=[P('code', '齐天簿授权码')])
     def get(r):
         code = r.d.code
 
@@ -42,8 +42,8 @@ class OAuthView(View):
 
         try:
             Resource.get_root_folder(user)
-        except Excp as ret:
-            if ret.erroris(ResourceError.GET_ROOT_FOLDER):
+        except E as e:
+            if e.eis(ResourceError.GET_ROOT_FOLDER):
                 root = Resource.get_by_pk(Resource.ROOT_ID)
 
                 Resource.create_folder(

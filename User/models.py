@@ -2,12 +2,12 @@
 
 用户类
 """
-from SmartDjango import models, Excp, E
+from SmartDjango import models, E
 
 from Base.common import qt_manager
 
 
-@E.register
+@E.register(id_processor=E.idp_cls_prefix())
 class UserError:
     CREATE_USER = E("新建用户错误", hc=500)
     USER_NOT_FOUND = E("不存在的用户", hc=404)
@@ -57,23 +57,21 @@ class User(models.Model):
     """
 
     @staticmethod
-    @Excp.pack
     def get_by_id(user_id):
         """根据用户ID获取用户对象"""
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return UserError.USER_NOT_FOUND
+            raise UserError.USER_NOT_FOUND
         return user
 
     @staticmethod
-    @Excp.pack
     def get_by_qtid(qt_user_app_id):
         """根据齐天用户-应用ID获取用户对象"""
         try:
             user = User.objects.get(qt_user_app_id=qt_user_app_id)
         except User.DoesNotExist:
-            return UserError.USER_NOT_FOUND
+            raise UserError.USER_NOT_FOUND
         return user
 
     """
@@ -92,21 +90,20 @@ class User(models.Model):
             return None
 
     def d(self):
-        return self.dictor('user_id', 'avatar', 'nickname', 'root_res')
+        return self.dictify('user_id', 'avatar', 'nickname', 'root_res')
 
     """
     增删函数
     """
 
     @classmethod
-    @Excp.pack
     def create(cls, qt_user_app_id, token):
         try:
             user = cls.get_by_qtid(qt_user_app_id)
             user.qtb_token = token
             user.save()
-        except Excp as ret:
-            if ret.eis(UserError.USER_NOT_FOUND):
+        except E as e:
+            if e.eis(UserError.USER_NOT_FOUND):
                 try:
                     user = cls(
                         qt_user_app_id=qt_user_app_id,
@@ -116,10 +113,9 @@ class User(models.Model):
                 except Exception:
                     return UserError.CREATE_USER
             else:
-                return ret
+                return e
         return user
 
-    @Excp.pack
     def update(self):
         body = qt_manager.get_user_info(self.qtb_token)
         self.avatar = body['avatar']
