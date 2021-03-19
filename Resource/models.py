@@ -50,6 +50,7 @@ class StatusChoice(models.cenum.CREnum):
 
 class StypeChoice(models.cenum.CREnum):
     FOLDER = 0
+    IMAGE = 1
     VIDEO = 2
     MUSIC = 3
     FILE = 4
@@ -87,7 +88,7 @@ class Resource(models.Model):
     sub_type = models.IntegerField(
         verbose_name='sub type',
         choices=StypeChoice.list(),
-        default=StypeChoice.FOLDER,
+        default=StypeChoice.FOLDER.value,
     )
     mime = models.CharField(
         verbose_name='资源类型',
@@ -128,7 +129,7 @@ class Resource(models.Model):
     status = models.IntegerField(
         choices=StatusChoice.list(),
         verbose_name='加密状态 0公开 1仅自己可见 2需要密码',
-        default=StatusChoice.PUBLIC,
+        default=StatusChoice.PUBLIC.value,
     )
     visit_key = models.CharField(
         max_length=16,
@@ -160,7 +161,7 @@ class Resource(models.Model):
     cover_type = models.IntegerField(
         choices=CoverChoice.list(),
         verbose_name='封面类型 0 上传图片 1 与父资源相同 2 与指定资源相同 3 外部URI链接',
-        default=CoverChoice.RANDOM,
+        default=CoverChoice.RANDOM.value,
         null=0,
         blank=0,
     )
@@ -188,23 +189,24 @@ class Resource(models.Model):
         """验证parent属性"""
         if not isinstance(parent, Resource):
             raise BaseError.STRANGE
-        if parent.rtype != RtypeChoice.FOLDER:
+        if parent.rtype != RtypeChoice.FOLDER.value:
             raise ResourceError.FILE_PARENT
 
     @classmethod
     def create_abstract(cls, rname, rtype, desc, user, parent, dlpath, rsize, sub_type, mime):
         crt_time = datetime.datetime.now()
+
         return cls(
             rname=rname,
             rtype=rtype,
             mime=mime,
             description=desc,
             cover=None,
-            cover_type=CoverChoice.SELF if sub_type == StypeChoice.IMAGE else CoverChoice.RANDOM,
+            cover_type=CoverChoice.SELF.value if sub_type == StypeChoice.IMAGE.value else CoverChoice.RANDOM.value,
             owner=user,
             parent=parent,
             dlpath=dlpath,
-            status=StatusChoice.PRIVATE,
+            status=StatusChoice.PRIVATE.value,
             visit_key=get_random_string(length=4),
             create_time=crt_time,
             vk_change_time=crt_time.timestamp(),
@@ -231,7 +233,7 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.FILE,
+                rtype=RtypeChoice.FILE.value,
                 desc=None,
                 user=user,
                 parent=res_parent,
@@ -258,13 +260,13 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.FOLDER,
+                rtype=RtypeChoice.FOLDER.value,
                 desc=desc,
                 user=user,
                 parent=res_parent,
                 dlpath=None,
                 rsize=0,
-                sub_type=StypeChoice.FOLDER,
+                sub_type=StypeChoice.FOLDER.value,
                 mime=None,
             )
             res.save()
@@ -291,7 +293,7 @@ class Resource(models.Model):
                 parent=res_parent,
                 dlpath=dlpath,
                 rsize=0,
-                sub_type=StypeChoice.LINK,
+                sub_type=StypeChoice.LINK.value,
                 mime=None,
             )
             res.save()
@@ -332,9 +334,9 @@ class Resource(models.Model):
         res = self
         cover = None
         while res.pk != Resource.ROOT_ID:
-            if res.cover_type == CoverChoice.PARENT:
+            if res.cover_type == CoverChoice.PARENT.value:
                 res = res.parent
-            elif res.cover_type == CoverChoice.RESOURCE:
+            elif res.cover_type == CoverChoice.RESOURCE.value:
                 try:
                     res = Resource.get_by_id(res.cover)
                 except E:
@@ -344,14 +346,14 @@ class Resource(models.Model):
             else:
                 cover = res.cover
                 break
-        if res.cover_type == CoverChoice.SELF:
-            if res.sub_type == StypeChoice.IMAGE:
+        if res.cover_type == CoverChoice.SELF.value:
+            if res.sub_type == StypeChoice.IMAGE.value:
                 from Base.qn_manager import qn_res_manager
                 return (qn_res_manager.get_resource_url(res.dlpath),
                         qn_res_manager.get_resource_url("%s-small" % res.dlpath))
         if cover is None:
             return None, None
-        if res.cover_type == CoverChoice.UPLOAD:
+        if res.cover_type == CoverChoice.UPLOAD.value:
             from Base.qn_manager import qn_res_manager
             return (qn_res_manager.get_resource_url(cover),
                     qn_res_manager.get_resource_url("%s-small" % cover))
@@ -369,7 +371,7 @@ class Resource(models.Model):
         return self.create_time.timestamp()
 
     def _readable_visit_key(self):
-        return self.visit_key if self.status == StatusChoice.PROTECT else None
+        return self.visit_key if self.status == StatusChoice.PROTECT.value else None
 
     def _readable_is_home(self):
         return self.is_home()
@@ -377,11 +379,11 @@ class Resource(models.Model):
     def _readable_secure_env(self):
         if self.pk == Resource.ROOT_ID or \
                 not self.right_bubble or \
-                self.status == StatusChoice.PUBLIC:
+                self.status == StatusChoice.PUBLIC.value:
             return True
         res = self.parent
         while res.pk != Resource.ROOT_ID:
-            if res.status == StatusChoice.PUBLIC:
+            if res.status == StatusChoice.PUBLIC.value:
                 return res.rname
             if not res.right_bubble:
                 break
@@ -449,7 +451,7 @@ class Resource(models.Model):
     def get_root_folder(cls, user):
         """获取当前用户的根目录"""
         try:
-            res = cls.objects.get(owner=user, parent=1, rtype=RtypeChoice.FOLDER)
+            res = cls.objects.get(owner=user, parent=1, rtype=RtypeChoice.FOLDER.value)
         except cls.DoesNotExist:
             raise ResourceError.GET_ROOT_FOLDER
         return res
@@ -458,13 +460,13 @@ class Resource(models.Model):
         """判断当前资源是否被当前用户可读"""
         res = self
         while res.pk != Resource.ROOT_ID:
-            if res.owner == user or res.status == StatusChoice.PUBLIC:
+            if res.owner == user or res.status == StatusChoice.PUBLIC.value:
                 return True
-            if res.status == StatusChoice.PROTECT and res.visit_key == visit_key:
+            if res.status == StatusChoice.PROTECT.value and res.visit_key == visit_key:
                 if user:
                     UserRight.update(user, res)
                 return True
-            if res.status == StatusChoice.PROTECT and UserRight.verify(user, res):
+            if res.status == StatusChoice.PROTECT.value and UserRight.verify(user, res):
                 return True
             if not res.right_bubble:
                 break
@@ -483,7 +485,7 @@ class Resource(models.Model):
 
     def get_visit_key(self):
         """获取当前资源的访问密码"""
-        if self.status == StatusChoice.PROTECT:
+        if self.status == StatusChoice.PROTECT.value:
             return self.visit_key
         return None
 
@@ -525,7 +527,7 @@ class Resource(models.Model):
             parent = self.parent
 
         if self.rname != rname:
-            if self.rtype == RtypeChoice.FILE:
+            if self.rtype == RtypeChoice.FILE.value:
                 self.modify_rname(rname)
             else:
                 self.rname = rname
@@ -533,7 +535,7 @@ class Resource(models.Model):
         self.status = status
         self.right_bubble = right_bubble
         self.parent = parent
-        if status == StatusChoice.PROTECT:
+        if status == StatusChoice.PROTECT.value:
             if self.visit_key != visit_key:
                 self.visit_key = visit_key
                 self.vk_change_time = datetime.datetime.now().timestamp()
@@ -542,7 +544,7 @@ class Resource(models.Model):
     def modify_cover(self, cover, cover_type):
         """修改资源封面"""
         from Base.qn_manager import qn_res_manager
-        if self.cover_type == CoverChoice.UPLOAD:
+        if self.cover_type == CoverChoice.UPLOAD.value:
             try:
                 qn_res_manager.delete_res(self.cover)
             except:
@@ -561,15 +563,15 @@ class Resource(models.Model):
 
     def remove(self):
         """ 删除资源 """
-        if self.rtype == RtypeChoice.FOLDER:
+        if self.rtype == RtypeChoice.FOLDER.value:
             if not self.is_empty():
                 raise ResourceError.REQUIRE_EMPTY_FOLDER
         from Base.qn_manager import qn_res_manager
-        if self.cover and self.cover_type == CoverChoice.UPLOAD:
+        if self.cover and self.cover_type == CoverChoice.UPLOAD.value:
             qn_res_manager.delete_res(self.cover)
             self.cover = None
             self.save()
-        if self.rtype == RtypeChoice.FILE:
+        if self.rtype == RtypeChoice.FILE.value:
             qn_res_manager.delete_res(self.dlpath)
         self.delete()
 

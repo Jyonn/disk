@@ -34,7 +34,7 @@ class BaseView(View):
         visit_key = r.d.visit_key
 
         if not res.readable(user, visit_key):
-            return ResourceError.NOT_READABLE
+            raise ResourceError.NOT_READABLE
         return res.d_layer()
 
     @staticmethod
@@ -64,14 +64,15 @@ class BaseView(View):
 
         if parent_res:
             if not parent_res.belong(user):
-                return ResourceError.RESOURCE_NOT_BELONG
-            if parent_res.rtype != RtypeChoice.FOLDER:
-                return ResourceError.REQUIRE_FOLDER
+                raise ResourceError.RESOURCE_NOT_BELONG
+
+            if parent_res.rtype != RtypeChoice.FOLDER.value:
+                raise ResourceError.REQUIRE_FOLDER
 
             temp_res = parent_res
             while temp_res.pk != Resource.ROOT_ID:
                 if temp_res.pk == res.pk:
-                    return ResourceError.RESOURCE_CIRCLE
+                    raise ResourceError.RESOURCE_CIRCLE
                 temp_res = temp_res.parent
 
         res.modify_info(rname, description, status, visit_key, right_bubble, parent_res)
@@ -88,7 +89,7 @@ class BaseView(View):
         res = r.d.res
 
         if res.parent == Resource.ROOT_ID:
-            return ResourceError.DELETE_ROOT_FOLDER
+            raise ResourceError.DELETE_ROOT_FOLDER
 
         res.remove()
 
@@ -139,7 +140,7 @@ class PathView(View):
         res_path = []
         while res.pk != Resource.ROOT_ID:
             if res.res_str_id in res_path:
-                return ResourceError.RESOURCE_CIRCLE
+                raise ResourceError.RESOURCE_CIRCLE
             res_path.append(res.res_str_id)
             res = res.parent
         return res_path
@@ -194,16 +195,16 @@ class TokenView(View):
         res_parent = r.d.res
 
         if ftype.find('video') == 0:
-            sub_type = StypeChoice.VIDEO
+            sub_type = StypeChoice.VIDEO.value
         elif ftype.find('image') == 0:
-            sub_type = StypeChoice.IMAGE
+            sub_type = StypeChoice.IMAGE.value
         elif ftype.find('audio') == 0:
-            sub_type = StypeChoice.MUSIC
+            sub_type = StypeChoice.MUSIC.value
         else:
-            sub_type = StypeChoice.FILE
+            sub_type = StypeChoice.FILE.value
 
         if not res_parent.belong(user):
-            return ResourceError.PARENT_NOT_BELONG
+            raise ResourceError.PARENT_NOT_BELONG
 
         decode_fname = QnManager.decode_key(fname)
         if fname != decode_fname:
@@ -248,7 +249,7 @@ class CoverView(View):
         key = r.d.key
         res = r.d.res  # type: Resource
 
-        res.modify_cover(key, CoverChoice.UPLOAD)
+        res.modify_cover(key, CoverChoice.UPLOAD.value)
         return res.d()
 
     @staticmethod
@@ -265,27 +266,27 @@ class CoverView(View):
         res = r.d.res
         user = r.user
 
-        if cover_type == CoverChoice.UPLOAD:
-            return ResourceError.NOT_ALLOWED_COVER_UPLOAD
-        if cover_type == CoverChoice.SELF and res.sub_type != StypeChoice.IMAGE:
-            return ResourceError.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
-        if cover_type == CoverChoice.RESOURCE:
+        if cover_type == CoverChoice.UPLOAD.value:
+            raise ResourceError.NOT_ALLOWED_COVER_UPLOAD
+        if cover_type == CoverChoice.SELF.value and res.sub_type != StypeChoice.IMAGE.value:
+            raise ResourceError.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
+        if cover_type == CoverChoice.RESOURCE.value:
             resource_chain = [cover]
             next_str_id = cover
             while True:
                 next_res = Resource.get_by_id(next_str_id)
                 if next_res.res_str_id == res.res_str_id:
-                    return ResourceError.RESOURCE_CIRCLE
+                    raise ResourceError.RESOURCE_CIRCLE
                 if not next_res.belong(user):
-                    return ResourceError.RESOURCE_NOT_BELONG
-                if next_res.cover_type == CoverChoice.RESOURCE:
+                    raise ResourceError.RESOURCE_NOT_BELONG
+                if next_res.cover_type == CoverChoice.RESOURCE.value:
                     next_str_id = next_res.cover
-                elif next_res.cover_type == CoverChoice.PARENT:
+                elif next_res.cover_type == CoverChoice.PARENT.value:
                     next_str_id = next_res.parent.res_str_id
                 else:
                     break
                 if next_str_id in resource_chain:
-                    return ResourceError.RESOURCE_CIRCLE
+                    raise ResourceError.RESOURCE_CIRCLE
                 resource_chain.append(next_str_id)
 
         res.modify_cover(cover, cover_type)
@@ -318,10 +319,10 @@ class DownloadView(View):
 
         res = r.d.res  # type: Resource
         if not res.readable(user, visit_key):
-            return ResourceError.NOT_READABLE
+            raise ResourceError.NOT_READABLE
 
-        if res.rtype == RtypeChoice.FOLDER:
-            return ResourceError.REQUIRE_FILE
+        if res.rtype == RtypeChoice.FOLDER.value:
+            raise ResourceError.REQUIRE_FILE
 
         return HttpResponseRedirect(res.get_dl_url())
 

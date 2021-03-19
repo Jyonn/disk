@@ -79,5 +79,8 @@ class ConfigInstance:
     RES_CDN_HOST = 'res-cdn-host'
     PUBLIC_CDN_HOST = 'public-cdn-host'
 
+    MAX_IMAGE_SIZE = 'max-image-size'
+    MAX_FILE_SIZE = 'max-file-size'
+
 
 CI = ConfigInstance
