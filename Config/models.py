@@ -35,13 +35,13 @@ class Config(models.Model):
 
     @classmethod
     def get_value_by_key(cls, key, default=None):
-        try:
-            config = cls.get_config_by_key(key)
-            print('found')
-            return config.value
-        except Exception:
-            print(key, 'not found')
-            return default
+        # try:
+        config = cls.get_config_by_key(key)
+        print('found')
+        return config.value
+        # except Exception:
+        #     print(key, 'not found')
+        #     return default
 
     @classmethod
     def update_value(cls, key, value):
