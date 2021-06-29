@@ -25,12 +25,13 @@ class Config(models.Model):
 
     @classmethod
     def get_config_by_key(cls, key):
+        for item in cls.objects.all():
+            print(item.key, item.value)
+        exit(0)
         try:
-            config = cls.objects.get(key=key)
+            return cls.objects.get(key=key)
         except cls.DoesNotExist as err:
             raise ConfigError.CONFIG_NOT_FOUND(debug_message=err)
-
-        return config
 
     @classmethod
     def get_value_by_key(cls, key, default=None):
