@@ -39,7 +39,7 @@ class Config(models.Model):
             print('found')
             return config.value
         except Exception:
-            print('not found')
+            print(key, 'not found')
             return default
 
     @classmethod
