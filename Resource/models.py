@@ -478,9 +478,7 @@ class Resource(models.Model):
         """获取当前资源的下载链接"""
         self.dlcount += 1
         self.save()
-        print(self.rtype, RtypeChoice.LINK)
-        if self.rtype == RtypeChoice.LINK:
-            print(self.dlpath)
+        if self.rtype == RtypeChoice.LINK.value:
             return self.dlpath
         from Base.qn_manager import qn_res_manager
         return qn_res_manager.get_resource_url(self.dlpath)
