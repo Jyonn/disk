@@ -478,6 +478,7 @@ class Resource(models.Model):
         """获取当前资源的下载链接"""
         self.dlcount += 1
         self.save()
+        print(self.rtype, RtypeChoice.LINK)
         if self.rtype == RtypeChoice.LINK:
             print(self.dlpath)
             return self.dlpath
