@@ -325,7 +325,6 @@ class DownloadView(View):
             raise ResourceError.REQUIRE_FILE
 
         dl_url = res.get_dl_url()
-        print(dl_url)
         return HttpResponseRedirect(dl_url)
 
     @staticmethod
