@@ -324,7 +324,9 @@ class DownloadView(View):
         if res.rtype == RtypeChoice.FOLDER.value:
             raise ResourceError.REQUIRE_FILE
 
-        return HttpResponseRedirect(res.get_dl_url())
+        dl_url = res.get_dl_url()
+        print(dl_url)
+        return HttpResponseRedirect(dl_url)
 
     @staticmethod
     @Analyse.r(q=[P('token', '登录口令').null(), P_VISIT_KEY.clone().null()], a=[P_RES])
