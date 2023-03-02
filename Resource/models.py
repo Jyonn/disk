@@ -479,6 +479,7 @@ class Resource(models.Model):
         self.dlcount += 1
         self.save()
         if self.rtype == RtypeChoice.LINK:
+            print(self.dlpath
             return self.dlpath
         from Base.qn_manager import qn_res_manager
         return qn_res_manager.get_resource_url(self.dlpath)
