@@ -288,7 +288,7 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.LINK,
+                rtype=RtypeChoice.LINK.value,
                 desc=None,
                 user=user,
                 parent=res_parent,
@@ -299,7 +299,6 @@ class Resource(models.Model):
             )
             res.save()
         except Exception as e:
-            pnt(e)
             raise ResourceError.CREATE_LINK
         return res
 
