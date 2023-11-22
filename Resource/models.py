@@ -6,6 +6,7 @@ import datetime
 
 from SmartDjango import models, E, BaseError
 from django.utils.crypto import get_random_string
+from pigmento import pnt
 
 from User.models import User
 
@@ -297,7 +298,8 @@ class Resource(models.Model):
                 mime=None,
             )
             res.save()
-        except Exception:
+        except Exception as e:
+            pnt(e)
             raise ResourceError.CREATE_LINK
         return res
 
