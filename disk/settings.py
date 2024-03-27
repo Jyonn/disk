@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
+import pymysql
+pymysql.install_as_MySQLdb()
 
 import os
 
@@ -23,6 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'YOUR-SECRET-KEY'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+PROJ_INIT = True
 DEBUG = True
 
 ALLOWED_HOSTS = ['disk.6-79.cn', 'localhost', 'local.6-79.cn']
@@ -116,9 +119,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
             'charset': 'utf8mb4',
-            'read_default_file': os.path.join(BASE_DIR, 'mysql.local.conf'),
-            'init_command':
-                'SET default_storage_engine=INNODB; SET sql_mode=\'STRICT_TRANS_TABLES\'; SET innodb_strict_mode=1',
+            'read_default_file': os.path.join(BASE_DIR, 'mysql.local.conf')
         },
     },
 }
@@ -160,6 +161,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
-
-MAX_IMAGE_SIZE = 10*1024*1024
-MAX_FILE_SIZE = 500*1024*1024

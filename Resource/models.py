@@ -4,9 +4,8 @@
 """
 import datetime
 
-from SmartDjango import models, E, BaseError
+from SmartDjango import models, E
 from django.utils.crypto import get_random_string
-from pigmento import pnt
 
 from User.models import User
 
@@ -155,9 +154,11 @@ class Resource(models.Model):
         max_length=6,
         unique=True,
     )
-    right_bubble = models.NullBooleanField(
+    right_bubble = models.BooleanField(
         verbose_name='读取权限向上冒泡',
         default=True,
+        null=True,
+        blank=True,
     )
     cover_type = models.IntegerField(
         choices=CoverChoice.list(),
@@ -188,8 +189,8 @@ class Resource(models.Model):
     @staticmethod
     def _valid_res_parent(parent):
         """验证parent属性"""
-        if not isinstance(parent, Resource):
-            raise BaseError.STRANGE
+        # if not isinstance(parent, Resource):
+        #     raise BaseError.STRANGE
         if parent.rtype != RtypeChoice.FOLDER.value:
             raise ResourceError.FILE_PARENT
 
