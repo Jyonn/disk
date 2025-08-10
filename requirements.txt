@@ -1,7 +1,9 @@
-QitianSDK
-SmartDjango
-requests
-PyJWT
-django
-qiniu
+QitianSDK~=0.1.1
+SmartDjango~=4.1.2
+requests~=2.32.4
+PyJWT~=2.8.0
+django~=5.2.4
+qiniu~=7.13.1
 django-cors-headers
+PyMySQL~=1.1.1
+diq~=0.1.1

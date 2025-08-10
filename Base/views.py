@@ -1,9 +1,9 @@
-from SmartDjango import E
 from django.views import View
+from smartdjango import Error
+from smartdjango.analyse import Request
 
 
 class ErrorView(View):
-    @staticmethod
-    def get(_):
+    def get(self, request: Request):
         """GET /base/errors"""
-        return E.all()
+        return Error.all()

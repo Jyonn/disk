@@ -2,33 +2,28 @@
 
 用户类
 """
-from SmartDjango import models, E
+from diq import Dictify
+from django.db import models
+from smartdjango import Error
 
 from Base.common import qt_manager
+from User.validators import UserValidator, UserErrors
 
 
-@E.register(id_processor=E.idp_cls_prefix())
-class UserError:
-    CREATE_USER = E("新建用户错误", hc=500)
-    USER_NOT_FOUND = E("不存在的用户", hc=404)
+class User(models.Model, Dictify):
+    vldt = UserValidator
 
-
-class User(models.Model):
-    """
-    用户类
-    根超级用户id=1
-    """
     ROOT_ID = 1
 
     avatar = models.CharField(
         default=None,
         null=True,
         blank=True,
-        max_length=1024,
+        max_length=vldt.MAX_AVATAR_LENGTH,
     )
 
     nickname = models.CharField(
-        max_length=10,
+        max_length=vldt.MAX_NICKNAME_LENGTH,
         default=None,
         blank=True,
         null=True,
@@ -36,17 +31,17 @@ class User(models.Model):
 
     qt_user_app_id = models.CharField(
         default=None,
-        max_length=16,
+        max_length=vldt.MAX_QT_USER_APP_ID_LENGTH,
         unique=True,
     )
 
     qtb_token = models.CharField(
         default=None,
-        max_length=256,
+        max_length=vldt.MAX_QTB_TOKEN_LENGTH,
     )
 
     description = models.CharField(
-        max_length=20,
+        max_length=vldt.MAX_DESCRIPTION_LENGTH,
         default=None,
         blank=True,
         null=True,
@@ -62,7 +57,7 @@ class User(models.Model):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            raise UserError.USER_NOT_FOUND
+            raise UserErrors.USER_NOT_FOUND
         return user
 
     @staticmethod
@@ -71,17 +66,17 @@ class User(models.Model):
         try:
             user = User.objects.get(qt_user_app_id=qt_user_app_id)
         except User.DoesNotExist:
-            raise UserError.USER_NOT_FOUND
+            raise UserErrors.USER_NOT_FOUND
         return user
 
     """
     字典函数
     """
 
-    def _readable_user_id(self):
+    def _dictify_user_id(self):
         return self.pk
 
-    def _readable_root_res(self):
+    def _dictify_root_res(self):
         from Resource.models import Resource
         try:
             res = Resource.get_root_folder(self)
@@ -102,8 +97,8 @@ class User(models.Model):
             user = cls.get_by_qtid(qt_user_app_id)
             user.qtb_token = token
             user.save()
-        except E as e:
-            if e.eis(UserError.USER_NOT_FOUND):
+        except Error as e:
+            if e == UserErrors.USER_NOT_FOUND:
                 try:
                     user = cls(
                         qt_user_app_id=qt_user_app_id,
@@ -111,7 +106,7 @@ class User(models.Model):
                     )
                     user.save()
                 except Exception:
-                    return UserError.CREATE_USER
+                    return UserErrors.CREATE_USER
             else:
                 return e
         return user

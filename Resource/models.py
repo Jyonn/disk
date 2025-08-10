@@ -4,97 +4,46 @@
 """
 import datetime
 
-from SmartDjango import models, E
+from diq import Dictify
+from django.db import models
 from django.utils.crypto import get_random_string
+from smartdjango import Error
 
+from Resource.validators import ResourceErrors, RtypeChoice, StypeChoice, StatusChoice, CoverChoice, ResourceValidator
 from User.models import User
 
 
-@E.register(id_processor=E.idp_cls_prefix())
-class ResourceError:
-    PARENT_NOT_BELONG = E("无法在他人目录下存储", hc=403)
-    NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE = E("不允许非图片资源设置封面为自身", hc=403)
-    NOT_ALLOWED_COVER_UPLOAD = E("不允许封面类型直接修改为本地上传类型", hc=403)
-
-    DELETE_ROOT_FOLDER = E("无法删除用户根目录", hc=403)
-    RESOURCE_CIRCLE = E("不允许资源关系成环", hc=403)
-
-    REQUIRE_FOLDER = E("目标需要为目录资源", hc=403)
-    REQUIRE_FILE = E("目标需要为文件资源", hc=403)
-
-    NOT_READABLE = E("没有读取权限", hc=403)
-    RIGHT_NOT_FOUND = E("不存在的读取权限", hc=404)
-    CREATE_RIGHT = E("存储读取权限错误", hc=500)
-    REQUIRE_EMPTY_FOLDER = E("非空目录无法删除", hc=403)
-    GET_ROOT_FOLDER = E("无法获得根目录", hc=500)
-    CREATE_LINK = E("存储链接错误", hc=500)
-    CREATE_FOLDER = E("存储目录错误", hc=500)
-    CREATE_FILE = E("存储文件错误", hc=500)
-    FILE_PARENT = E("文件资源不能成为父目录", hc=403)
-    RESOURCE_NOT_BELONG = E("没有权限", hc=403)
-    RESOURCE_NOT_FOUND = E("不存在的资源", hc=404)
-    INVALID_RNAME = E("不合法的资源名称", hc=400)
-
-
-class RtypeChoice(models.cenum.CREnum):
-    FILE = 0
-    FOLDER = 1
-    LINK = 2
-    
-
-class StatusChoice(models.cenum.CREnum):
-    PUBLIC = 0
-    PRIVATE = 1
-    PROTECT = 2
-
-
-class StypeChoice(models.cenum.CREnum):
-    FOLDER = 0
-    IMAGE = 1
-    VIDEO = 2
-    MUSIC = 3
-    FILE = 4
-    LINK = 5
-
-
-class CoverChoice(models.cenum.CREnum):
-    RANDOM = 0
-    UPLOAD = 1
-    PARENT = 2
-    OUTLNK = 3
-    SELF = 4
-    RESOURCE = 5
-
-
-class Resource(models.Model):
+class Resource(models.Model, Dictify):
     """
     资源类
     根资源文件夹id=1
     一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
     ROOT_ID = 1
+    vldt = ResourceValidator
 
     rname = models.CharField(
         verbose_name='resource name',
-        max_length=256,
+        max_length=vldt.MAX_RNAME_LENGTH,
+        validators=[vldt.rname]
     )
     rtype = models.IntegerField(
         verbose_name='file or folder',
-        choices=RtypeChoice.list(),
+        choices=RtypeChoice.to_choices(),
     )
     rsize = models.IntegerField(
         default=0,
     )
     sub_type = models.IntegerField(
         verbose_name='sub type',
-        choices=StypeChoice.list(),
-        default=StypeChoice.FOLDER.value,
+        choices=StypeChoice.to_choices(),
+        default=StypeChoice.FOLDER,
     )
     mime = models.CharField(
         verbose_name='资源类型',
         null=True,
         default=True,
-        max_length=100,
+        max_length=vldt.MAX_MIME_LENGTH,
     )
     description = models.TextField(
         verbose_name='description in Markdown',
@@ -106,7 +55,7 @@ class Resource(models.Model):
         null=True,
         blank=True,
         default=None,
-        max_length=1024,
+        max_length=vldt.MAX_COVER_LENGTH,
     )
     owner = models.ForeignKey(
         User,
@@ -118,23 +67,24 @@ class Resource(models.Model):
         blank=True,
         default=0,
         on_delete=models.CASCADE,
+        validators=[vldt.parent]
     )
     dlpath = models.CharField(
         verbose_name='download relative path to res.6-79.cn',
-        max_length=1024,
+        max_length=vldt.MAX_DLPATH_LENGTH,
         default=None,
         null=True,
         blank=True,
     )
     status = models.IntegerField(
-        choices=StatusChoice.list(),
+        choices=StatusChoice.to_choices(),
         verbose_name='加密状态 0公开 1仅自己可见 2需要密码',
-        default=StatusChoice.PUBLIC.value,
+        default=StatusChoice.PUBLIC,
     )
     visit_key = models.CharField(
-        max_length=16,
-        min_length=3,
+        max_length=vldt.MAX_VISIT_KEY_LENGTH,
         verbose_name='当status为2时有效',
+        validators=[vldt.visit_key],
     )
     vk_change_time = models.FloatField(
         null=True,
@@ -151,7 +101,7 @@ class Resource(models.Model):
         default=None,
         null=True,
         blank=True,
-        max_length=6,
+        max_length=vldt.MAX_RES_STR_ID_LENGTH,
         unique=True,
     )
     right_bubble = models.BooleanField(
@@ -161,11 +111,11 @@ class Resource(models.Model):
         blank=True,
     )
     cover_type = models.IntegerField(
-        choices=CoverChoice.list(),
+        choices=CoverChoice.to_choices(),
         verbose_name='封面类型 0 上传图片 1 与父资源相同 2 与指定资源相同 3 外部URI链接',
-        default=CoverChoice.RANDOM.value,
-        null=0,
-        blank=0,
+        default=CoverChoice.RANDOM,
+        null=False,
+        blank=False,
     )
 
     @classmethod
@@ -174,25 +124,9 @@ class Resource(models.Model):
             res_str_id = get_random_string(length=6)
             try:
                 cls.get_by_id(res_str_id)
-            except E as ret:
-                if ret.eis(ResourceError.RESOURCE_NOT_FOUND):
+            except Error as e:
+                if e == ResourceErrors.RESOURCE_NOT_FOUND:
                     return res_str_id
-
-    @staticmethod
-    def _valid_rname(rname):
-        """验证rname属性"""
-        invalid_chars = '\\/*:\'"|<>?'
-        for char in invalid_chars:
-            if char in rname:
-                raise ResourceError.INVALID_RNAME
-
-    @staticmethod
-    def _valid_res_parent(parent):
-        """验证parent属性"""
-        # if not isinstance(parent, Resource):
-        #     raise BaseError.STRANGE
-        if parent.rtype != RtypeChoice.FOLDER.value:
-            raise ResourceError.FILE_PARENT
 
     @classmethod
     def create_abstract(cls, rname, rtype, desc, user, parent, dlpath, rsize, sub_type, mime):
@@ -204,11 +138,11 @@ class Resource(models.Model):
             mime=mime,
             description=desc,
             cover=None,
-            cover_type=CoverChoice.SELF.value if sub_type == StypeChoice.IMAGE.value else CoverChoice.RANDOM.value,
+            cover_type=CoverChoice.SELF if sub_type == StypeChoice.IMAGE else CoverChoice.RANDOM,
             owner=user,
             parent=parent,
             dlpath=dlpath,
-            status=StatusChoice.PRIVATE.value,
+            status=StatusChoice.PRIVATE,
             visit_key=get_random_string(length=4),
             create_time=crt_time,
             vk_change_time=crt_time.timestamp(),
@@ -235,7 +169,7 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.FILE.value,
+                rtype=RtypeChoice.FILE,
                 desc=None,
                 user=user,
                 parent=res_parent,
@@ -246,7 +180,7 @@ class Resource(models.Model):
             )
             res.save()
         except Exception:
-            raise ResourceError.CREATE_FILE
+            raise ResourceErrors.CREATE_FILE
         return res
 
     @classmethod
@@ -262,18 +196,18 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.FOLDER.value,
+                rtype=RtypeChoice.FOLDER,
                 desc=desc,
                 user=user,
                 parent=res_parent,
                 dlpath=None,
                 rsize=0,
-                sub_type=StypeChoice.FOLDER.value,
+                sub_type=StypeChoice.FOLDER,
                 mime=None,
             )
             res.save()
         except Exception:
-            raise ResourceError.CREATE_FOLDER
+            raise ResourceErrors.CREATE_FOLDER
         return res
 
     @classmethod
@@ -289,18 +223,18 @@ class Resource(models.Model):
         try:
             res = cls.create_abstract(
                 rname=rname,
-                rtype=RtypeChoice.LINK.value,
+                rtype=RtypeChoice.LINK,
                 desc=None,
                 user=user,
                 parent=res_parent,
                 dlpath=dlpath,
                 rsize=0,
-                sub_type=StypeChoice.LINK.value,
+                sub_type=StypeChoice.LINK,
                 mime=None,
             )
             res.save()
         except Exception as e:
-            raise ResourceError.CREATE_LINK
+            raise ResourceErrors.CREATE_LINK
         return res
 
     """
@@ -312,7 +246,7 @@ class Resource(models.Model):
         try:
             res = cls.objects.get(res_str_id=res_str_id)
         except cls.DoesNotExist:
-            raise ResourceError.RESOURCE_NOT_FOUND
+            raise ResourceErrors.RESOURCE_NOT_FOUND
         return res
 
     @classmethod
@@ -321,7 +255,7 @@ class Resource(models.Model):
         try:
             res = cls.objects.get(pk=res_id)
         except cls.DoesNotExist:
-            raise ResourceError.RESOURCE_NOT_FOUND
+            raise ResourceErrors.RESOURCE_NOT_FOUND
         return res
 
     def belong(self, user):
@@ -336,26 +270,26 @@ class Resource(models.Model):
         res = self
         cover = None
         while res.pk != Resource.ROOT_ID:
-            if res.cover_type == CoverChoice.PARENT.value:
+            if res.cover_type == CoverChoice.PARENT:
                 res = res.parent
-            elif res.cover_type == CoverChoice.RESOURCE.value:
+            elif res.cover_type == CoverChoice.RESOURCE:
                 try:
                     res = Resource.get_by_id(res.cover)
-                except E:
+                except Error:
                     return None, None
                 if not res.belong(self.owner):
                     return None, None
             else:
                 cover = res.cover
                 break
-        if res.cover_type == CoverChoice.SELF.value:
-            if res.sub_type == StypeChoice.IMAGE.value:
+        if res.cover_type == CoverChoice.SELF:
+            if res.sub_type == StypeChoice.IMAGE:
                 from Base.qn_manager import qn_res_manager
                 return (qn_res_manager.get_resource_url(res.dlpath),
                         qn_res_manager.get_resource_url("%s-small" % res.dlpath))
         if cover is None:
             return None, None
-        if res.cover_type == CoverChoice.UPLOAD.value:
+        if res.cover_type == CoverChoice.UPLOAD:
             from Base.qn_manager import qn_res_manager
             return (qn_res_manager.get_resource_url(cover),
                     qn_res_manager.get_resource_url("%s-small" % cover))
@@ -366,36 +300,36 @@ class Resource(models.Model):
     字典方法
     """
 
-    def _readable_owner(self):
+    def _dictify_owner(self):
         return self.owner.d()
 
-    def _readable_create_time(self):
+    def _dictify_create_time(self):
         return self.create_time.timestamp()
 
-    def _readable_visit_key(self):
-        return self.visit_key if self.status == StatusChoice.PROTECT.value else None
+    def _dictify_visit_key(self):
+        return self.visit_key if self.status == StatusChoice.PROTECT else None
 
-    def _readable_is_home(self):
+    def _dictify_is_home(self):
         return self.is_home()
 
-    def _readable_secure_env(self):
+    def _dictify_secure_env(self):
         if self.pk == Resource.ROOT_ID or \
                 not self.right_bubble or \
-                self.status == StatusChoice.PUBLIC.value:
+                self.status == StatusChoice.PUBLIC:
             return True
         res = self.parent
         while res.pk != Resource.ROOT_ID:
-            if res.status == StatusChoice.PUBLIC.value:
+            if res.status == StatusChoice.PUBLIC:
                 return res.rname
             if not res.right_bubble:
                 break
             res = res.parent
         return True
 
-    def _readable_raw_cover(self):
+    def _dictify_raw_cover(self):
         return self.cover
 
-    def _readable_parent_str_id(self):
+    def _dictify_parent_str_id(self):
         return self.parent.res_str_id
 
     def d(self):
@@ -428,7 +362,8 @@ class Resource(models.Model):
         return dict_
 
     def d_layer(self):
-        child_list = Resource.objects.filter(parent=self).dict(Resource.d_child)
+        child_list = Resource.objects.filter(parent=self)
+        child_list = [child.d_child() for child in child_list]
         return dict(
             info=self.d(),
             child_list=child_list,
@@ -438,7 +373,8 @@ class Resource(models.Model):
         return self.dictify('res_str_id', 'rname', 'rtype', 'sub_type')
 
     def d_selector_layer(self):
-        child_list = Resource.objects.filter(parent=self).dict(Resource.d_child_selector)
+        child_list = Resource.objects.filter(parent=self)
+        child_list = [child.d_child_selector() for child in child_list]
         info = self.dictify('is_home', 'res_str_id', 'rname', 'parent_str_id')
         return dict(
             info=info,
@@ -453,22 +389,22 @@ class Resource(models.Model):
     def get_root_folder(cls, user):
         """获取当前用户的根目录"""
         try:
-            res = cls.objects.get(owner=user, parent=1, rtype=RtypeChoice.FOLDER.value)
+            res = cls.objects.get(owner=user, parent=1, rtype=RtypeChoice.FOLDER)
         except cls.DoesNotExist:
-            raise ResourceError.GET_ROOT_FOLDER
+            raise ResourceErrors.GET_ROOT_FOLDER
         return res
 
     def readable(self, user, visit_key):
         """判断当前资源是否被当前用户可读"""
         res = self
         while res.pk != Resource.ROOT_ID:
-            if res.owner == user or res.status == StatusChoice.PUBLIC.value:
+            if res.owner == user or res.status == StatusChoice.PUBLIC:
                 return True
-            if res.status == StatusChoice.PROTECT.value and res.visit_key == visit_key:
+            if res.status == StatusChoice.PROTECT and res.visit_key == visit_key:
                 if user:
                     UserRight.update(user, res)
                 return True
-            if res.status == StatusChoice.PROTECT.value and UserRight.verify(user, res):
+            if res.status == StatusChoice.PROTECT and UserRight.verify(user, res):
                 return True
             if not res.right_bubble:
                 break
@@ -480,14 +416,14 @@ class Resource(models.Model):
         """获取当前资源的下载链接"""
         self.dlcount += 1
         self.save()
-        if self.rtype == RtypeChoice.LINK.value:
+        if self.rtype == RtypeChoice.LINK:
             return self.dlpath
         from Base.qn_manager import qn_res_manager
         return qn_res_manager.get_resource_url(self.dlpath)
 
     def get_visit_key(self):
         """获取当前资源的访问密码"""
-        if self.status == StatusChoice.PROTECT.value:
+        if self.status == StatusChoice.PROTECT:
             return self.visit_key
         return None
 
@@ -529,7 +465,7 @@ class Resource(models.Model):
             parent = self.parent
 
         if self.rname != rname:
-            if self.rtype == RtypeChoice.FILE.value:
+            if self.rtype == RtypeChoice.FILE:
                 self.modify_rname(rname)
             else:
                 self.rname = rname
@@ -537,7 +473,7 @@ class Resource(models.Model):
         self.status = status
         self.right_bubble = right_bubble
         self.parent = parent
-        if status == StatusChoice.PROTECT.value:
+        if status == StatusChoice.PROTECT:
             if self.visit_key != visit_key:
                 self.visit_key = visit_key
                 self.vk_change_time = datetime.datetime.now().timestamp()
@@ -546,7 +482,7 @@ class Resource(models.Model):
     def modify_cover(self, cover, cover_type):
         """修改资源封面"""
         from Base.qn_manager import qn_res_manager
-        if self.cover_type == CoverChoice.UPLOAD.value:
+        if self.cover_type == CoverChoice.UPLOAD:
             try:
                 qn_res_manager.delete_res(self.cover)
             except:
@@ -565,15 +501,15 @@ class Resource(models.Model):
 
     def remove(self):
         """ 删除资源 """
-        if self.rtype == RtypeChoice.FOLDER.value:
+        if self.rtype == RtypeChoice.FOLDER:
             if not self.is_empty():
-                raise ResourceError.REQUIRE_EMPTY_FOLDER
+                raise ResourceErrors.REQUIRE_EMPTY_FOLDER
         from Base.qn_manager import qn_res_manager
-        if self.cover and self.cover_type == CoverChoice.UPLOAD.value:
+        if self.cover and self.cover_type == CoverChoice.UPLOAD:
             qn_res_manager.delete_res(self.cover)
             self.cover = None
             self.save()
-        if self.rtype == RtypeChoice.FILE.value:
+        if self.rtype == RtypeChoice.FILE:
             qn_res_manager.delete_res(self.dlpath)
         self.delete()
 
@@ -600,8 +536,8 @@ class UserRight(models.Model):
             right = cls.get_right(user, res)
             right.verify_time = datetime.datetime.now().timestamp()
             right.save()
-        except E as e:
-            if e.eis(ResourceError.RESOURCE_NOT_FOUND):
+        except Error as e:
+            if e == ResourceErrors.RESOURCE_NOT_FOUND:
                 try:
                     right = cls(
                         user=user,
@@ -610,7 +546,7 @@ class UserRight(models.Model):
                     )
                     right.save()
                 except Exception:
-                    raise ResourceError.CREATE_RIGHT
+                    raise ResourceErrors.CREATE_RIGHT
             else:
                 return e
         return right
@@ -620,7 +556,7 @@ class UserRight(models.Model):
         try:
             right = cls.objects.get(user=user, res=res)
         except cls.DoesNotExist:
-            raise ResourceError.RIGHT_NOT_FOUND
+            raise ResourceErrors.RIGHT_NOT_FOUND
         return right
 
     @classmethod
@@ -629,14 +565,10 @@ class UserRight(models.Model):
             return False
         try:
             right = cls.get_right(user, res)
-        except E:
+        except Error:
             return False
         if right.verify_time > res.vk_change_time:
             return True
         else:
             right.delete()
             return False
-
-
-P_RNAME, P_VISIT_KEY, P_STATUS, P_DESC, P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE = Resource.get_params(
-        'rname', 'visit_key', 'status', 'description', 'right_bubble', 'cover', 'cover_type')

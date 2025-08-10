@@ -1,40 +1,34 @@
-""" Adel Liu 180111
+from django.db import models
+from smartdjango import Error
 
-系统配置类
-"""
-from SmartDjango import models, E
-
-
-@E.register(id_processor=E.idp_cls_prefix())
-class ConfigError:
-    CREATE = E("更新配置错误", hc=500)
-    NOT_FOUND = E("不存在的配置", hc=404)
+from Config.validators import ConfigValidator, ConfigErrors
 
 
 class Config(models.Model):
-    """
-    系统配置，如七牛密钥等
-    """
+    vldt = ConfigValidator
+
     key = models.CharField(
-        max_length=255,
+        max_length=vldt.MAX_KEY_LENGTH,
         unique=True,
+        validators=[vldt.key],
     )
+
     value = models.CharField(
-        max_length=255,
+        max_length=vldt.MAX_VALUE_LENGTH,
+        validators=[vldt.value],
     )
 
     @classmethod
-    def get_config_by_key(cls, key):
+    def get_config_by_key(cls, key) -> 'Config':
         try:
             return cls.objects.get(key=key)
         except cls.DoesNotExist as err:
-            raise ConfigError.CONFIG_NOT_FOUND(debug_message=err)
+            raise ConfigErrors.NOT_FOUND(details=err)
 
     @classmethod
     def get_value_by_key(cls, key, default=None):
         try:
-            config = cls.get_config_by_key(key)
-            return config.value
+            return cls.get_config_by_key(key).value
         except Exception:
             return default
 
@@ -44,18 +38,20 @@ class Config(models.Model):
             config = cls.get_config_by_key(key)
             config.value = value
             config.save()
-        except E as e:
-            if e.eis(ConfigError.CONFIG_NOT_FOUND):
+        except Error as e:
+            if e == ConfigErrors.NOT_FOUND:
                 try:
                     config = cls(
                         key=key,
                         value=value,
                     )
                     config.save()
-                except Exception:
-                    raise ConfigError.CREATE_CONFIG
+                except Exception as err:
+                    raise ConfigErrors.CREATE(details=err)
             else:
-                raise ConfigError.CREATE_CONFIG
+                raise e
+        except Exception as err:
+            raise ConfigErrors.CREATE(details=err)
 
 
 class ConfigInstance:

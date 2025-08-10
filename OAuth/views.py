@@ -1,5 +1,5 @@
-from SmartDjango import Analyse, P, E
 from django.views import View
+from smartdjango import analyse, Validator, Error
 
 from Base.auth import Auth
 from Base.common import qt_manager
@@ -23,15 +23,14 @@ ROOT_DESC = '''
 - 行前`#`符号表示层级标题，`#`越多表示层级越深
 - 行前`-`/`*`符号表示列举
 - 行前`>`符号表示引用
-- 跳转页面可以使用`[跳转](页面链接)`的格式，例如：[更多Markdown格式](http://www.markdown.cn/)
+- 跳转页面可以使用`[跳转](页面链接)`的格式，例如：[更多Markdown格式](https://www.markdown.cn/)
 '''
 
 
 class OAuthView(View):
-    @staticmethod
-    @Analyse.r(q=[P('code', '齐天簿授权码')])
-    def get(r):
-        code = r.d.code
+    @analyse.query(Validator('code', '齐天簿授权码'))
+    def get(self, request):
+        code = request.query.code
 
         body = qt_manager.get_token(code)
 
@@ -42,8 +41,8 @@ class OAuthView(View):
 
         try:
             Resource.get_root_folder(user)
-        except E as e:
-            if e.eis(ResourceError.GET_ROOT_FOLDER):
+        except Error as e:
+            if e == ResourceError.GET_ROOT_FOLDER:
                 root = Resource.get_by_pk(Resource.ROOT_ID)
 
                 Resource.create_folder(

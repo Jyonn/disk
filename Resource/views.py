@@ -1,173 +1,162 @@
-""" Adel Liu 180111
-
-资源API处理函数
-"""
-from SmartDjango import Analyse, P
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 from django.views import View
+from smartdjango import Validator, analyse
+from smartdjango.analyse import Request
 
 from Base.auth import Auth
 from Base.policy import Policy
 from Base.qn_manager import qn_res_manager, QnManager
-from Resource.models import Resource, P_RNAME, P_VISIT_KEY, ResourceError, P_STATUS, P_DESC, \
-    P_RIGHT_BUBBLE, P_COVER, P_COVER_TYPE, RtypeChoice, StypeChoice, CoverChoice
+from Resource.models import Resource, RtypeChoice, StypeChoice, CoverChoice
+from Resource.params import ResourceParams
+from Resource.validators import ResourceErrors
 from User.models import User
-
-
-P_RES = P('res_str_id', yield_name='res').process(Resource.get_by_id)
-P_PARENT_RES = P('parent_str_id', yield_name='parent_res').process(Resource.get_by_id)
-P_USER = P('user_id', yield_name='user').process(User.get_by_id)
+from User.params import UserParams
 
 
 class BaseView(View):
-    @staticmethod
     @Auth.maybe_login
-    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_RES])
-    def get(r):
+    @analyse.query(ResourceParams.visit_key.copy().null().default(None))
+    @analyse.argument(ResourceParams.resource_getter)
+    def get(self, request: Request):
         """ GET /api/res/:res_str_id
 
         获取资源信息
         """
-        user = r.user
-        res = r.d.res
-        visit_key = r.d.visit_key
+        user = request.user
+        resource: Resource = request.argument.resource
+        visit_key = request.query.visit_key
 
-        if not res.readable(user, visit_key):
-            raise ResourceError.NOT_READABLE
-        return res.d_layer()
+        if not resource.readable(user, visit_key):
+            raise ResourceErrors.NOT_READABLE
+        return resource.d_layer()
 
-    @staticmethod
-    @Analyse.r(b=[
-        P_RNAME.clone().null(),
-        P_STATUS.clone().null(),
-        P_DESC.clone().null(),
-        P_VISIT_KEY.clone().null(),
-        P_RIGHT_BUBBLE.clone().null(),
-        P_PARENT_RES.clone().null()
-    ], a=[P_RES])
+    @analyse.json(
+        ResourceParams.rname.copy().null().default(None),
+        ResourceParams.status.copy().null().default(None),
+        ResourceParams.description.copy().null().default(None),
+        ResourceParams.visit_key.copy().null().default(None),
+        ResourceParams.right_bubble.copy().null().default(None),
+        ResourceParams.parent.copy().null().default(None)
+    )
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def put(r):
+    def put(self, request: Request):
         """ PUT /api/res/:slug/
 
         修改资源信息
         """
-        user = r.user
-        rname = r.d.rname
-        description = r.d.description
-        status = r.d.status
-        visit_key = r.d.visit_key
-        right_bubble = r.d.right_bubble
-        parent_res = r.d.parent_res
+        user = request.user
+        rname = request.json.rname
+        description = request.json.description
+        status = request.json.status
+        visit_key = request.json.visit_key
+        right_bubble = request.json.right_bubble
+        parent: Resource = request.json.parent
 
-        res = r.d.res
+        resource: Resource = request.argument.resource
 
-        if parent_res:
-            if not parent_res.belong(user):
-                raise ResourceError.RESOURCE_NOT_BELONG
+        if parent:
+            if not parent.belong(user):
+                raise ResourceErrors.RESOURCE_NOT_BELONG
 
-            if parent_res.rtype != RtypeChoice.FOLDER.value:
-                raise ResourceError.REQUIRE_FOLDER
+            if parent.rtype != RtypeChoice.FOLDER:
+                raise ResourceErrors.REQUIRE_FOLDER
 
-            temp_res = parent_res
+            temp_res = parent
             while temp_res.pk != Resource.ROOT_ID:
-                if temp_res.pk == res.pk:
-                    raise ResourceError.RESOURCE_CIRCLE
+                if temp_res.pk == resource.pk:
+                    raise ResourceErrors.RESOURCE_CIRCLE
                 temp_res = temp_res.parent
 
-        res.modify_info(rname, description, status, visit_key, right_bubble, parent_res)
-        return res.d()
+        resource.modify_info(rname, description, status, visit_key, right_bubble, parent)
+        return resource.d()
 
-    @staticmethod
-    @Analyse.r(a=[P_RES])
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def delete(r):
+    def delete(self, request: Request):
         """ DELETE /api/res/:slug
 
         删除资源
         """
-        res = r.d.res
+        resource: Resource = request.argument.resource
 
-        if res.parent == Resource.ROOT_ID:
-            raise ResourceError.DELETE_ROOT_FOLDER
+        if resource.parent == Resource.ROOT_ID:
+            raise ResourceErrors.DELETE_ROOT_FOLDER
 
-        res.remove()
+        resource.remove()
 
 
 class FolderView(View):
-    @staticmethod
-    @Analyse.r(b=[P_RNAME.clone().rename('folder_name')],
-               a=[P_RES])
+    @analyse.json(ResourceParams.rname.copy().rename('folder_name'))
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def post(r):
+    def post(self, request: Request):
         """ POST /api/res/:res_str_id/folder
 
         上传文件夹资源
         """
-        user = r.user
-        folder_name = r.d.folder_name
-        res_parent = r.d.res
+        user = request.user
+        folder_name = request.json.folder_name
+        res_parent: Resource = request.argument.resource
 
         res = Resource.create_folder(folder_name, user, res_parent)
         return res.d()
 
 
 class LinkView(View):
-    @staticmethod
-    @Analyse.r(b=[P_RNAME.clone().rename('link_name'), P('link')],
-               a=[P_RES])
+    @analyse.json(ResourceParams.rname.copy().rename('link_name'), 'link')
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def post(r):
+    def post(self, request: Request):
         """ POST /api/res/:res_str_id/link
 
         上传链接资源
         """
-        user = r.user
-        link_name = r.d.link_name
-        link = r.d.link
-        res_parent = r.d.res
+        user = request.user
+        link_name = request.json.link_name
+        link = request.json.link
+        parent: Resource = request.argument.resource
 
-        res = Resource.create_link(link_name, user, res_parent, link)
-        return res.d()
+        resource: Resource = Resource.create_link(link_name, user, parent, link)
+        return resource.d()
 
 
 class PathView(View):
-    @staticmethod
-    @Analyse.r(a=[P_RES])
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(r):
-        res = r.d.res
+    def get(self, request: Request):
+        resource: Resource = request.argument.resource
         res_path = []
-        while res.pk != Resource.ROOT_ID:
-            if res.res_str_id in res_path:
-                raise ResourceError.RESOURCE_CIRCLE
-            res_path.append(res.res_str_id)
-            res = res.parent
+        while resource.pk != Resource.ROOT_ID:
+            if resource.res_str_id in res_path:
+                raise ResourceErrors.RESOURCE_CIRCLE
+            res_path.append(resource.res_str_id)
+            resource = resource.parent
         return res_path
 
 
 class SelectView(View):
-    @staticmethod
-    @Analyse.r(a=[P_RES])
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(r):
-        res = r.d.res
-        return res.d_selector_layer()
+    def get(self, request: Request):
+        resource: Resource = request.argument.resource
+        return resource.d_selector_layer()
 
 
 class TokenView(View):
-    @staticmethod
-    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
+    @analyse.query(ResourceParams.rname.copy().rename('filename'))
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(r):
+    def get(self, request: Request):
         """ GET /api/res/:res_str_id/token
 
         获取七牛上传资源token
         """
-        user = r.user
-        filename = r.d.filename
+        user = request.user
+        filename = request.query.filename
         filename = QnManager.encode_key(filename)
-        res_parent = r.d.res
+        res_parent: Resource = request.argument.resource
 
         import datetime
         crt_time = datetime.datetime.now().timestamp()
@@ -177,34 +166,33 @@ class TokenView(View):
             key, Policy.file(filename, user.pk, res_parent.res_str_id))
         return dict(upload_token=qn_token, key=key)
 
-    @staticmethod
-    @Analyse.r(b=[P('key'), P_USER, P('fsize'), P('fname'), P('ftype')],
-               a=[P_RES])
-    def post(r):
+    @analyse.json(UserParams.user_getter, 'fsize', 'fname', 'ftype', 'key')
+    @analyse.argument(ResourceParams.resource_getter)
+    def post(self, request: Request):
         """ POST /api/res/:res_str_id/token
 
         七牛上传资源回调函数
         """
-        qn_res_manager.auth_callback(r)
+        qn_res_manager.auth_callback(request)
 
-        key = r.d.key
-        user = r.d.user
-        fsize = r.d.fsize
-        fname = r.d.fname
-        ftype = r.d.ftype
-        res_parent = r.d.res
+        key = request.json.key
+        user: User = request.json.user
+        fsize = request.json.fsize
+        fname = request.json.fname
+        ftype = request.json.ftype
+        parent: Resource = request.argument.resource
 
         if ftype.find('video') == 0:
-            sub_type = StypeChoice.VIDEO.value
+            sub_type = StypeChoice.VIDEO
         elif ftype.find('image') == 0:
-            sub_type = StypeChoice.IMAGE.value
+            sub_type = StypeChoice.IMAGE
         elif ftype.find('audio') == 0:
-            sub_type = StypeChoice.MUSIC.value
+            sub_type = StypeChoice.MUSIC
         else:
-            sub_type = StypeChoice.FILE.value
+            sub_type = StypeChoice.FILE
 
-        if not res_parent.belong(user):
-            raise ResourceError.PARENT_NOT_BELONG
+        if not parent.belong(user):
+            raise ResourceErrors.PARENT_NOT_BELONG
 
         decode_fname = QnManager.decode_key(fname)
         if fname != decode_fname:
@@ -213,149 +201,141 @@ class TokenView(View):
             fname = decode_fname
             key = new_key
 
-        res = Resource.create_file(fname, user, res_parent, key, fsize, sub_type, ftype)
-        return res.d_child()
+        resource = Resource.create_file(fname, user, parent, key, fsize, sub_type, ftype)
+        return resource.d_child()
 
 
 class CoverView(View):
-    @staticmethod
-    @Analyse.r(q=[P_RNAME.clone().rename('filename')], a=[P_RES])
+    @analyse.query(ResourceParams.rname.copy().rename('filename'))
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(r):
+    def get(self, request: Request):
         """ GET /api/res/:res_str_id/cover
 
         获取七牛上传资源封面token
         """
-        filename = r.d.filename
+        filename = request.query.filename
         filename = QnManager.encode_key(filename)
-        res = r.d.res
+        resource: Resource = request.argument.resource
 
         import datetime
         crt_time = datetime.datetime.now().timestamp()
         salt = get_random_string(4)
         key = 'cover/%s/%s/%s' % (salt, crt_time, filename)
-        qn_token, key = qn_res_manager.get_upload_token(key, Policy.cover(res.res_str_id))
+        qn_token, key = qn_res_manager.get_upload_token(key, Policy.cover(resource.res_str_id))
         return dict(upload_token=qn_token, key=key)
 
-    @staticmethod
-    @Analyse.r(b=[P('key')], a=[P_RES])
-    def post(r):
+    @analyse.json('key')
+    @analyse.argument(ResourceParams.resource_getter)
+    def post(self, request):
         """ POST /api/res/:res_str_id/cover
 
         七牛上传资源封面成功后的回调函数
         """
-        qn_res_manager.auth_callback(r)
+        qn_res_manager.auth_callback(request)
 
-        key = r.d.key
-        res = r.d.res  # type: Resource
+        key = request.json.key
+        resource: Resource = request.argument.resource
 
-        res.modify_cover(key, CoverChoice.UPLOAD.value)
-        return res.d()
+        resource.modify_cover(key, CoverChoice.UPLOAD)
+        return resource.d()
 
-    @staticmethod
-    @Analyse.r(b=[P_COVER, P_COVER_TYPE], a=[P_RES])
+    @analyse.json(ResourceParams.cover, ResourceParams.cover_type)
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def put(r):
+    def put(self, request: Request):
         """ PUT /api/res/:res_str_id/cover
 
         修改封面信息
         """
-        cover = r.d.cover
-        cover_type = r.d.cover_type
+        cover = request.json.cover
+        cover_type = request.json.cover_type
 
-        res = r.d.res
-        user = r.user
+        resource: Resource = request.argument.resource
+        user = request.user
 
-        if cover_type == CoverChoice.UPLOAD.value:
-            raise ResourceError.NOT_ALLOWED_COVER_UPLOAD
-        if cover_type == CoverChoice.SELF.value and res.sub_type != StypeChoice.IMAGE.value:
-            raise ResourceError.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
-        if cover_type == CoverChoice.RESOURCE.value:
+        if cover_type == CoverChoice.UPLOAD:
+            raise ResourceErrors.NOT_ALLOWED_COVER_UPLOAD
+        if cover_type == CoverChoice.SELF and resource.sub_type != StypeChoice.IMAGE:
+            raise ResourceErrors.NOT_ALLOWED_COVER_SELF_OF_NOT_IMAGE
+        if cover_type == CoverChoice.RESOURCE:
             resource_chain = [cover]
             next_str_id = cover
             while True:
                 next_res = Resource.get_by_id(next_str_id)
-                if next_res.res_str_id == res.res_str_id:
-                    raise ResourceError.RESOURCE_CIRCLE
+                if next_res.res_str_id == resource.res_str_id:
+                    raise ResourceErrors.RESOURCE_CIRCLE
                 if not next_res.belong(user):
-                    raise ResourceError.RESOURCE_NOT_BELONG
-                if next_res.cover_type == CoverChoice.RESOURCE.value:
+                    raise ResourceErrors.RESOURCE_NOT_BELONG
+                if next_res.cover_type == CoverChoice.RESOURCE:
                     next_str_id = next_res.cover
-                elif next_res.cover_type == CoverChoice.PARENT.value:
+                elif next_res.cover_type == CoverChoice.PARENT:
                     next_str_id = next_res.parent.res_str_id
                 else:
                     break
                 if next_str_id in resource_chain:
-                    raise ResourceError.RESOURCE_CIRCLE
+                    raise ResourceErrors.RESOURCE_CIRCLE
                 resource_chain.append(next_str_id)
 
-        res.modify_cover(cover, cover_type)
-        return res.d()
+        resource.modify_cover(cover, cover_type)
+        return resource.d()
 
 
 class BaseInfoView(View):
-    @staticmethod
-    @Analyse.r(a=[P_RES])
+    @analyse.argument(ResourceParams.resource_getter)
     @Auth.maybe_login
-    def get(r):
+    def get(self, resource):
         """ GET /api/res/:res_str_id/base
 
         获取资源公开信息
         """
-        user = r.user  # type: User
-        res = r.d.res  # type: Resource
+        user = resource.user  # type: User
+        resource: Resource = resource.argument.resource
 
         return dict(
-            info=res.d_base(),
-            readable=res.readable(user, None)
+            info=resource.d_base(),
+            readable=resource.readable(user, None)
         )
 
 
 class DownloadView(View):
-    @staticmethod
     @Auth.maybe_login
-    def get_dl_link(r, visit_key):
-        user = r.user
+    def get_dl_link(self, request: Request, visit_key):
+        user = request.user
 
-        res = r.d.res  # type: Resource
-        if not res.readable(user, visit_key):
-            raise ResourceError.NOT_READABLE
+        resource: Resource = request.data.resource
+        if not resource.readable(user, visit_key):
+            raise ResourceErrors.NOT_READABLE
 
-        if res.rtype == RtypeChoice.FOLDER.value:
-            raise ResourceError.REQUIRE_FILE
+        if resource.rtype == RtypeChoice.FOLDER:
+            raise ResourceErrors.REQUIRE_FILE
 
-        dl_url = res.get_dl_url()
+        dl_url = resource.get_dl_url()
         return HttpResponseRedirect(dl_url)
 
-    @staticmethod
-    @Analyse.r(q=[P('token', '登录口令').null(), P_VISIT_KEY.clone().null()], a=[P_RES])
-    def get(r):
+    @analyse.query(
+        Validator('token', '登录口令').null().default(None),
+        ResourceParams.visit_key.copy().null().default(None)
+    )
+    @analyse.argument(ResourceParams.resource_getter)
+    def get(self, request: Request):
         """ GET /api/res/:res_str_id/dl
 
         获取下载资源链接
         """
-        r.META['HTTP_TOKEN'] = r.d.token
+        request.META['HTTP_TOKEN'] = request.query.token
 
-        visit_key = r.d.visit_key
-        return DownloadView.get_dl_link(r, visit_key)
-
-
-def remove_dot(res_str_id):
-    find_dot = res_str_id.find('.')
-    if find_dot != -1:
-        res_str_id = res_str_id[:find_dot]
-    return res_str_id
+        visit_key = request.query.visit_key
+        return DownloadView.get_dl_link(request, visit_key)
 
 
 class ShortLinkView(View):
-    P_SL_RES_ID = P_RES.clone().process(remove_dot, begin=True)
-
-    @staticmethod
-    @Analyse.r(q=[P_VISIT_KEY.clone().null()], a=[P_SL_RES_ID])
-    def get(r):
+    @analyse.query(ResourceParams.visit_key.copy().null().default(None))
+    @analyse.argument(ResourceParams.shortlink_resource_getter)
+    def get(self, request: Request):
         """ /s/:res_str_id
 
         GET: direct_link, 直链分享解析
         """
-        visit_key = r.d.visit_key
-        return DownloadView.get_dl_link(r, visit_key)
+        visit_key = request.query.visit_key
+        return DownloadView.get_dl_link(request, visit_key)

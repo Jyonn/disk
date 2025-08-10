@@ -2,48 +2,45 @@
 
 用户API处理函数
 """
-from SmartDjango import Analyse, P
 from django.views import View
+from smartdjango import analyse
+from smartdjango.analyse import Request
 
 from Base.auth import Auth
 
 from User.models import User
-
-P_QITIAN_USER = P('qt_user_app_id', yield_name='user').process(User.get_by_qtid)
+from User.params import UserParams
 
 
 class BaseView(View):
-    @staticmethod
     @Auth.require_login
-    def get(r):
+    def get(self, request: Request):
         """ GET /api/user/
 
         获取我的信息
         """
-        user = r.user
+        user: User = request.user
         user.update()
         return user.d()
 
 
 class QitianView(View):
-    @staticmethod
-    @Analyse.r(a=[P_QITIAN_USER])
-    def get(r):
+    @analyse.argument(UserParams.qt_user_getter)
+    def get(self, request: Request):
         """ GET /api/user/@:qt_user_app_id
 
         获取用户信息
         """
-        user = r.d.user
+        user: User = request.argument.user
         user.update()
         return user.d()
 
-    @staticmethod
-    @Analyse.r(a=[P_QITIAN_USER])
+    @analyse.argument(UserParams.qt_user_getter)
     @Auth.require_root
-    def delete_user(r):
+    def delete_user(self, request: Request):
         """ DELETE /api/user/@:qt_user_app_id
 
         删除用户
         """
-        user = r.d.user
+        user: User = request.argument.user
         user.remove()

@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'YOUR-SECRET-KEY'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-PROJ_INIT = True
+PROJ_INIT = False
 DEBUG = True
 
 ALLOWED_HOSTS = ['disk.6-79.cn', 'localhost', 'local.6-79.cn']
@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.gzip.GZipMiddleware',
-    'SmartDjango.middleware.HttpPackMiddleware',
+    'smartdjango.middleware.APIPacker',
 ]
 
 # 增加跨域
