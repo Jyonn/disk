@@ -284,13 +284,13 @@ class CoverView(View):
 class BaseInfoView(View):
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.maybe_login
-    def get(self, resource):
+    def get(self, request, **kwargs):
         """ GET /api/res/:res_str_id/base
 
         获取资源公开信息
         """
-        user = resource.user  # type: User
-        resource: Resource = resource.argument.resource
+        user = request.user  # type: User
+        resource: Resource = request.argument.resource
 
         return dict(
             info=resource.d_base(),
