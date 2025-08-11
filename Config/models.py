@@ -62,6 +62,7 @@ class ConfigInstance:
 
     QITIAN_APP_ID = 'qt-app-id'
     QITIAN_APP_SECRET = 'qt-app-secret'
+    QITIAN_HOST = 'qt-host'
     ADMIN_QITIAN = 'admin-qitian'
 
     QINIU_ACCESS_KEY = 'qiniu-access-key'
