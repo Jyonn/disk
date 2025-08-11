@@ -18,7 +18,7 @@ class BaseView(View):
     @Auth.maybe_login
     @analyse.query(ResourceParams.visit_key.copy().null().default(None))
     @analyse.argument(ResourceParams.resource_getter)
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/res/:res_str_id
 
         获取资源信息
@@ -41,7 +41,7 @@ class BaseView(View):
     )
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def put(self, request: Request):
+    def put(self, request: Request, **kwargs):
         """ PUT /api/res/:slug/
 
         修改资源信息
@@ -74,7 +74,7 @@ class BaseView(View):
 
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def delete(self, request: Request):
+    def delete(self, request: Request, **kwargs):
         """ DELETE /api/res/:slug
 
         删除资源
@@ -91,7 +91,7 @@ class FolderView(View):
     @analyse.json(ResourceParams.rname.copy().rename('folder_name'))
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def post(self, request: Request):
+    def post(self, request: Request, **kwargs):
         """ POST /api/res/:res_str_id/folder
 
         上传文件夹资源
@@ -108,7 +108,7 @@ class LinkView(View):
     @analyse.json(ResourceParams.rname.copy().rename('link_name'), 'link')
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def post(self, request: Request):
+    def post(self, request: Request, **kwargs):
         """ POST /api/res/:res_str_id/link
 
         上传链接资源
@@ -125,7 +125,7 @@ class LinkView(View):
 class PathView(View):
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         resource: Resource = request.argument.resource
         res_path = []
         while resource.pk != Resource.ROOT_ID:
@@ -139,7 +139,7 @@ class PathView(View):
 class SelectView(View):
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         resource: Resource = request.argument.resource
         return resource.d_selector_layer()
 
@@ -148,7 +148,7 @@ class TokenView(View):
     @analyse.query(ResourceParams.rname.copy().rename('filename'))
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/res/:res_str_id/token
 
         获取七牛上传资源token
@@ -168,7 +168,7 @@ class TokenView(View):
 
     @analyse.json(UserParams.user_getter, 'fsize', 'fname', 'ftype', 'key')
     @analyse.argument(ResourceParams.resource_getter)
-    def post(self, request: Request):
+    def post(self, request: Request, **kwargs):
         """ POST /api/res/:res_str_id/token
 
         七牛上传资源回调函数
@@ -209,7 +209,7 @@ class CoverView(View):
     @analyse.query(ResourceParams.rname.copy().rename('filename'))
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/res/:res_str_id/cover
 
         获取七牛上传资源封面token
@@ -243,7 +243,7 @@ class CoverView(View):
     @analyse.json(ResourceParams.cover, ResourceParams.cover_type)
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
-    def put(self, request: Request):
+    def put(self, request: Request, **kwargs):
         """ PUT /api/res/:res_str_id/cover
 
         修改封面信息
@@ -318,7 +318,7 @@ class DownloadView(View):
         ResourceParams.visit_key.copy().null().default(None)
     )
     @analyse.argument(ResourceParams.resource_getter)
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/res/:res_str_id/dl
 
         获取下载资源链接
@@ -332,7 +332,7 @@ class DownloadView(View):
 class ShortLinkView(View):
     @analyse.query(ResourceParams.visit_key.copy().null().default(None))
     @analyse.argument(ResourceParams.shortlink_resource_getter)
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ /s/:res_str_id
 
         GET: direct_link, 直链分享解析

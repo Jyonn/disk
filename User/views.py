@@ -14,7 +14,7 @@ from User.params import UserParams
 
 class BaseView(View):
     @Auth.require_login
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/user/
 
         获取我的信息
@@ -26,7 +26,7 @@ class BaseView(View):
 
 class QitianView(View):
     @analyse.argument(UserParams.qt_user_getter)
-    def get(self, request: Request):
+    def get(self, request: Request, **kwargs):
         """ GET /api/user/@:qt_user_app_id
 
         获取用户信息
@@ -37,7 +37,7 @@ class QitianView(View):
 
     @analyse.argument(UserParams.qt_user_getter)
     @Auth.require_root
-    def delete_user(self, request: Request):
+    def delete_user(self, request: Request, **kwargs):
         """ DELETE /api/user/@:qt_user_app_id
 
         删除用户
