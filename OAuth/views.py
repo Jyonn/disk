@@ -3,7 +3,7 @@ from smartdjango import analyse, Validator, Error
 
 from Base.auth import Auth
 from Base.common import qt_manager
-from Resource.models import Resource, ResourceError
+from Resource.models import Resource, ResourceErrors
 from User.models import User
 
 
@@ -42,7 +42,7 @@ class OAuthView(View):
         try:
             Resource.get_root_folder(user)
         except Error as e:
-            if e == ResourceError.GET_ROOT_FOLDER:
+            if e == ResourceErrors.GET_ROOT_FOLDER:
                 root = Resource.get_by_pk(Resource.ROOT_ID)
 
                 Resource.create_folder(
