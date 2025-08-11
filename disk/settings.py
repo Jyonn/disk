@@ -54,8 +54,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'Base.middleware.CompatibleAPIPacker',
     'django.middleware.gzip.GZipMiddleware',
+    'Base.middleware.CompatibleAPIPacker',
 ]
 
 # 增加跨域
