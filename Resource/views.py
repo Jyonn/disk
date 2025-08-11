@@ -299,8 +299,9 @@ class BaseInfoView(View):
 
 
 class DownloadView(View):
+    @staticmethod
     @Auth.maybe_login
-    def get_dl_link(self, request: Request, visit_key):
+    def get_dl_link(request: Request, visit_key):
         user = request.user
 
         resource: Resource = request.data.resource
