@@ -20,7 +20,6 @@ class ResourceParams(metaclass=Params):
     right_bubble: Validator
     cover: Validator
     cover_type: Validator
-    parent: Validator
 
     resource_getter = Validator('res_str_id', final_name='resource').to(Resource.get_by_id)
     parent_getter = Validator('parent_str_id', final_name='parent').to(Resource.get_by_id)

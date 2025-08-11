@@ -37,7 +37,7 @@ class BaseView(View):
         ResourceParams.description.copy().null().default(None),
         ResourceParams.visit_key.copy().null().default(None),
         ResourceParams.right_bubble.copy().null().default(None),
-        ResourceParams.parent.copy().null().default(None)
+        ResourceParams.parent_getter.copy().null().default(None)
     )
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
