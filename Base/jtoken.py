@@ -44,12 +44,12 @@ class JWT:
         try:
             dict_ = jwt.decode(str_, SECRET_KEY, JWT_ENCODE_ALGO)
         except jwt.DecodeError:
-            raise JWTError.ERROR_JWT_FORMAT
+            raise JWTErrors.ERROR_JWT_FORMAT
         if 'expire' not in dict_.keys() \
                 or 'ctime' not in dict_.keys() \
                 or not isinstance(dict_['ctime'], float) \
                 or not isinstance(dict_['expire'], int):
-            raise JWTError.JWT_PARAM_INCOMPLETE
+            raise JWTErrors.JWT_PARAM_INCOMPLETE
         if datetime.datetime.now().timestamp() > dict_['ctime'] + dict_['expire']:
-            raise JWTError.JWT_EXPIRED
+            raise JWTErrors.JWT_EXPIRED
         return dict_
