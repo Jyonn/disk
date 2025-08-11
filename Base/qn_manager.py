@@ -82,13 +82,13 @@ class QnManager:
         """七牛callback认证校验"""
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         if auth_header is None:
-            raise QNError.UNAUTH_CALLBACK
+            raise QNErrors.UNAUTH_CALLBACK
         url = request.get_full_path()
         body = request.body
         verified = self.auth.verify_callback(auth_header, url, body,
                                              content_type='application/json')
         if not verified:
-            raise QNError.UNAUTH_CALLBACK
+            raise QNErrors.UNAUTH_CALLBACK
 
     def get_resource_url(self, key, expires=3600, small=False):
         """获取资源链接"""
@@ -111,15 +111,15 @@ class QnManager:
         try:
             r = requests.post(url, headers=headers)
         except requests.exceptions.RequestException:
-            raise QNError.REQUEST_QINIU
+            raise QNErrors.REQUEST_QINIU
         status = r.status_code
         r.close()
         if status == 200:
             return
         elif status == 401:
-            raise QNError.QINIU_UNAUTHORIZED
+            raise QNErrors.QINIU_UNAUTHORIZED
         else:
-            raise QNError.FAIL_QINIU('状态错误%s' % status)
+            raise QNErrors.FAIL_QINIU('状态错误%s' % status)
 
     def delete_res(self, key):
         entry = '%s:%s' % (self.bucket, key)
