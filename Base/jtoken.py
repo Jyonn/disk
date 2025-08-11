@@ -11,7 +11,7 @@ from Base.common import JWT_ENCODE_ALGO, SECRET_KEY
 
 
 @Error.register
-class JWTError:
+class JWTErrors:
     JWT_EXPIRED = Error("认证过期", code=Code.Unauthorized)
     ERROR_JWT_FORMAT = Error("错误的认证格式", code=Code.BadRequest)
     JWT_PARAM_INCOMPLETE = Error("认证参数不完整", code=Code.BadRequest)
