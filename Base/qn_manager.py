@@ -30,7 +30,7 @@ QINIU_MANAGE_HOST = "https://rs.qiniu.com"
 
 
 @Error.register
-class QNError:
+class QNErrors:
     REQUEST_QINIU = Error("七牛请求错误", code=Code.InternalServerError)
     QINIU_UNAUTHORIZED = Error("七牛端身份验证错误", code=Code.Forbidden)
     FAIL_QINIU = Error("未知原因导致的七牛端操作错误", code=Code.InternalServerError)
