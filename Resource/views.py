@@ -333,7 +333,7 @@ class DownloadView(View):
 
 class ShortLinkView(View):
     @analyse.query(ResourceParams.visit_key.copy().null().default(None))
-    @analyse.argument(ResourceParams.shortlink_resource_getter)
+    @analyse.argument(ResourceParams.shortlink_resource_getter, restrict_keys=False)
     def get(self, request: Request, **kwargs):
         """ /s/:res_str_id
 
