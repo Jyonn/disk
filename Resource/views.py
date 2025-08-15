@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 from django.views import View
-from smartdjango import Validator, analyse
+from smartdjango import Validator, analyse, Key
 from smartdjango.analyse import Request
 
 from Base.auth import Auth
@@ -145,7 +145,7 @@ class SelectView(View):
 
 
 class TokenView(View):
-    @analyse.query(ResourceParams.rname.copy().rename('filename'))
+    @analyse.query(ResourceParams.rname.copy().rename(Key('filename')))
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
     def get(self, request: Request, **kwargs):
@@ -154,16 +154,17 @@ class TokenView(View):
         获取七牛上传资源token
         """
         user = request.user
+
         filename = request.query.filename
         filename = QnManager.encode_key(filename)
-        res_parent: Resource = request.argument.resource
+        parent: Resource = request.argument.resource
 
         import datetime
         crt_time = datetime.datetime.now().timestamp()
         salt = get_random_string(4)
         key = 'res/%s/%s/%s' % (salt, crt_time, filename)
         qn_token, key = qn_res_manager.get_upload_token(
-            key, Policy.file(filename, user.pk, res_parent.res_str_id))
+            key, Policy.file(filename, user.pk, parent.res_str_id))
         return dict(upload_token=qn_token, key=key)
 
     @analyse.json(UserParams.user_getter, 'fsize', 'fname', 'ftype', 'key')
