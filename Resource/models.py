@@ -354,7 +354,16 @@ class Resource(models.Model, Dictify):
         return dict_
 
     def d_child(self):
-        dict_ = self.dictify('res_str_id', 'rname', 'rtype', 'status', 'create_time', 'sub_type', 'dlcount')
+        dict_ = self.dictify(
+            'res_str_id',
+            'rname',
+            'rtype',
+            'rsize',
+            'status',
+            'create_time',
+            'sub_type',
+            'dlcount',
+        )
         cover_urls = self.get_cover_urls()
         dict_.update(dict(
             cover_small=cover_urls[1],
