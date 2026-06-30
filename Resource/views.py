@@ -8,7 +8,7 @@ from Base.auth import Auth
 from Base.policy import Policy
 from Base.qn_manager import qn_res_manager, QnManager
 from Resource.models import Resource, RtypeChoice, StypeChoice, CoverChoice
-from Resource.params import ResourceParams, empty_to_none
+from Resource.params import ResourceParams
 from Resource.validators import ResourceErrors
 from User.models import User
 from User.params import UserParams
@@ -16,7 +16,7 @@ from User.params import UserParams
 
 class BaseView(View):
     @Auth.maybe_login
-    @analyse.query(ResourceParams.visit_key.copy().to(empty_to_none).null().default(None))
+    @analyse.query(ResourceParams.visit_key.copy().null().default(None))
     @analyse.argument(ResourceParams.resource_getter)
     def get(self, request: Request, **kwargs):
         """ GET /api/res/:res_str_id
@@ -323,7 +323,7 @@ class DownloadView(View):
 
     @analyse.query(
         Validator('token', '登录口令').null().default(None, as_final=True),
-        ResourceParams.visit_key.copy().to(empty_to_none).null().default(None, as_final=True),
+        ResourceParams.visit_key.copy().null().default(None, as_final=True),
     )
     @analyse.argument(ResourceParams.resource_getter)
     def get(self, request: Request, **kwargs):
@@ -338,7 +338,7 @@ class DownloadView(View):
 
 
 class ShortLinkView(View):
-    @analyse.query(ResourceParams.visit_key.copy().to(empty_to_none).null().default(None))
+    @analyse.query(ResourceParams.visit_key.copy().null().default(None))
     @analyse.argument(ResourceParams.shortlink_resource_getter, restrict_keys=False)
     def get(self, request: Request, **kwargs):
         """ /s/:res_str_id
