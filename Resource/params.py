@@ -10,6 +10,12 @@ def remove_dot(res_str_id):
     return res_str_id
 
 
+def empty_to_none(value):
+    if value == '':
+        return None
+    return value
+
+
 class ResourceParams(metaclass=Params):
     model_class = Resource
 
