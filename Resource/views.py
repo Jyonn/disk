@@ -103,6 +103,8 @@ class FolderView(View):
         if res_parent.rtype != RtypeChoice.FOLDER:
             raise ResourceErrors.REQUIRE_FOLDER
 
+        import pdb
+        pdb.set_trace()
         print(folder_name)
         print(user)
         print(res_parent)
