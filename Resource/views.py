@@ -100,6 +100,9 @@ class FolderView(View):
         folder_name = request.json.folder_name
         res_parent: Resource = request.argument.resource
 
+        if res_parent.rtype != RtypeChoice.FOLDER:
+            raise ResourceErrors.REQUIRE_FOLDER
+
         res = Resource.create_folder(folder_name, user, res_parent)
         return res.d()
 
@@ -117,6 +120,9 @@ class LinkView(View):
         link_name = request.json.link_name
         link = request.json.link
         parent: Resource = request.argument.resource
+
+        if parent.rtype != RtypeChoice.FOLDER:
+            raise ResourceErrors.REQUIRE_FOLDER
 
         resource: Resource = Resource.create_link(link_name, user, parent, link)
         return resource.d()

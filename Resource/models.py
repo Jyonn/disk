@@ -20,6 +20,8 @@ class Resource(models.Model, Dictify):
     一旦新增用户，就在根目录创建一个属于新增用户的文件夹
     """
     ROOT_ID = 1
+    FOLDER_MIME = 'inode/directory'
+    LINK_MIME = 'text/uri-list'
     vldt = ResourceValidator
 
     rname = models.CharField(
@@ -203,11 +205,11 @@ class Resource(models.Model, Dictify):
                 dlpath=None,
                 rsize=0,
                 sub_type=StypeChoice.FOLDER,
-                mime=None,
+                mime=cls.FOLDER_MIME,
             )
             res.save()
-        except Exception:
-            raise ResourceErrors.CREATE_FOLDER
+        except Exception as err:
+            raise ResourceErrors.CREATE_FOLDER(details=err)
         return res
 
     @classmethod
@@ -230,11 +232,11 @@ class Resource(models.Model, Dictify):
                 dlpath=dlpath,
                 rsize=0,
                 sub_type=StypeChoice.LINK,
-                mime=None,
+                mime=cls.LINK_MIME,
             )
             res.save()
-        except Exception as e:
-            raise ResourceErrors.CREATE_LINK
+        except Exception as err:
+            raise ResourceErrors.CREATE_LINK(details=err)
         return res
 
     """
