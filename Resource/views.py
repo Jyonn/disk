@@ -88,7 +88,7 @@ class BaseView(View):
 
 
 class FolderView(View):
-    @analyse.json(ResourceParams.rname.copy().rename('folder_name'))
+    @analyse.json(ResourceParams.rname.copy().rename(Key('folder_name')))
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
     def post(self, request: Request, **kwargs):
@@ -103,18 +103,12 @@ class FolderView(View):
         if res_parent.rtype != RtypeChoice.FOLDER:
             raise ResourceErrors.REQUIRE_FOLDER
 
-        import pdb
-        pdb.set_trace()
-        print(folder_name)
-        print(user)
-        print(res_parent)
-
         res = Resource.create_folder(folder_name, user, res_parent)
         return res.d()
 
 
 class LinkView(View):
-    @analyse.json(ResourceParams.rname.copy().rename('link_name'), 'link')
+    @analyse.json(ResourceParams.rname.copy().rename(Key('link_name')), 'link')
     @analyse.argument(ResourceParams.resource_getter)
     @Auth.require_owner
     def post(self, request: Request, **kwargs):
