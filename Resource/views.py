@@ -103,6 +103,10 @@ class FolderView(View):
         if res_parent.rtype != RtypeChoice.FOLDER:
             raise ResourceErrors.REQUIRE_FOLDER
 
+        print(folder_name)
+        print(user)
+        print(res_parent)
+
         res = Resource.create_folder(folder_name, user, res_parent)
         return res.d()
 
