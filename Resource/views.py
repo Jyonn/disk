@@ -322,8 +322,8 @@ class DownloadView(View):
         return HttpResponseRedirect(dl_url)
 
     @analyse.query(
-        Validator('token', '登录口令').null().default(None),
-        ResourceParams.visit_key.copy().null().default(None)
+        Validator('token', '登录口令').null().default(None, as_final=True),
+        ResourceParams.visit_key.copy().null().default(None, as_final=True),
     )
     @analyse.argument(ResourceParams.resource_getter)
     def get(self, request: Request, **kwargs):
