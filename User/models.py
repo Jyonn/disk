@@ -2,6 +2,9 @@
 
 用户类
 """
+import logging
+import time
+
 from diq import Dictify
 from django.db import models
 from smartdjango import Error
@@ -10,10 +13,14 @@ from Base.common import qt_manager
 from User.validators import UserValidator, UserErrors
 
 
+logger = logging.getLogger(__name__)
+
+
 class User(models.Model, Dictify):
     vldt = UserValidator
 
     ROOT_ID = 1
+    PROFILE_SYNC_TTL = 10 * 60
 
     avatar = models.CharField(
         default=None,
@@ -43,6 +50,12 @@ class User(models.Model, Dictify):
     description = models.CharField(
         max_length=vldt.MAX_DESCRIPTION_LENGTH,
         default=None,
+        blank=True,
+        null=True,
+    )
+
+    profile_sync_time = models.FloatField(
+        default=0,
         blank=True,
         null=True,
     )
@@ -111,12 +124,50 @@ class User(models.Model, Dictify):
                 return e
         return user
 
+    def has_profile_cache(self):
+        return any([
+            self.avatar,
+            self.nickname,
+            self.description,
+            self.profile_sync_time,
+        ])
+
+    def profile_is_fresh(self, now=None):
+        if not self.profile_sync_time:
+            return False
+        if now is None:
+            now = time.time()
+        return now - self.profile_sync_time < self.PROFILE_SYNC_TTL
+
+    def refresh_profile(self, force=False, suppress_error=False):
+        now = time.time()
+        if not force and self.profile_is_fresh(now):
+            return False
+
+        try:
+            body = qt_manager.get_user_info(self.qtb_token)
+        except Error as err:
+            if suppress_error:
+                logger.warning(
+                    'User profile refresh degraded user_id=%s qt_user_app_id=%s force=%s identifier=%s append_msg=%s',
+                    self.pk,
+                    self.qt_user_app_id,
+                    force,
+                    err.identifier,
+                    getattr(err, 'append_msg', ''),
+                )
+                return False
+            raise
+
+        self.avatar = body.get('avatar')
+        self.nickname = body.get('nickname')
+        self.description = body.get('description')
+        self.profile_sync_time = now
+        self.save(update_fields=['avatar', 'nickname', 'description', 'profile_sync_time'])
+        return True
+
     def update(self):
-        body = qt_manager.get_user_info(self.qtb_token)
-        self.avatar = body['avatar']
-        self.nickname = body['nickname']
-        self.description = body['description']
-        self.save()
+        return self.refresh_profile(force=True)
 
     def remove(self):
         return self.delete()

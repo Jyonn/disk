@@ -31,7 +31,7 @@ class CompatibleAPIPacker:
         response['body'] = body
         response['code'] = int(error.identifier != OK.identifier)
         response['msg'] = error.user_message
-        response['append_msg'] = ''
+        response['append_msg'] = getattr(error, 'append_msg', '')
         response['debug_msg'] = error.details
         response.pop('message')
         response.pop('details')

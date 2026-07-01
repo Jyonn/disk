@@ -52,5 +52,5 @@ class OAuthView(View):
                     ROOT_DESC
                 )
 
-        user.update()
+        user.refresh_profile(force=True, suppress_error=True)
         return Auth.get_login_token(user)

@@ -20,7 +20,20 @@ class BaseView(View):
         获取我的信息
         """
         user: User = request.user
-        user.update()
+        force_refresh = str(request.GET.get('refresh', '')).lower() in ('1', 'true', 'yes')
+        user.refresh_profile(force=force_refresh, suppress_error=not force_refresh)
+        return user.d()
+
+
+class RefreshView(View):
+    @Auth.require_login
+    def post(self, request: Request, **kwargs):
+        """ POST /api/user/refresh/
+
+        强制刷新我的信息
+        """
+        user: User = request.user
+        user.refresh_profile(force=True, suppress_error=False)
         return user.d()
 
 
@@ -32,7 +45,7 @@ class QitianView(View):
         获取用户信息
         """
         user: User = request.argument.user
-        user.update()
+        user.refresh_profile(force=False, suppress_error=True)
         return user.d()
 
     @analyse.argument(UserParams.qt_user_getter)

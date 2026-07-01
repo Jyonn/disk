@@ -1,8 +1,7 @@
 """ 190815 Adel Liu """
 
-from QitianSDK import QitianManager
-
 from Config.models import Config, CI
+from Base.qitian import ResilientQitianManager
 from disk.settings import PROJ_INIT
 
 
@@ -27,9 +26,10 @@ else:
     MAX_IMAGE_SIZE = int(Config.get_value_by_key(CI.MAX_IMAGE_SIZE))
     MAX_FILE_SIZE = int(Config.get_value_by_key(CI.MAX_FILE_SIZE))
 
-qt_manager = QitianManager(
+qt_manager = ResilientQitianManager(
     app_id=QITIAN_APP_ID,
     app_secret=QITIAN_APP_SECRET,
     host=QITIAN_HOST,
-    timeout=5
+    timeout=5,
+    retries=3,
 )
