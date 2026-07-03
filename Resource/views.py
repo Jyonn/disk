@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 from django.views import View
-from smartdjango import Validator, analyse, Key
+from smartdjango import Validator, analyse, Key, OK
 from smartdjango.analyse import Request
 
 from Base.auth import Auth
@@ -85,6 +85,8 @@ class BaseView(View):
             raise ResourceErrors.DELETE_ROOT_FOLDER
 
         resource.remove()
+
+        return OK
 
 
 class FolderView(View):

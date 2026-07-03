@@ -3,7 +3,7 @@
 用户API处理函数
 """
 from django.views import View
-from smartdjango import analyse
+from smartdjango import analyse, OK
 from smartdjango.analyse import Request
 
 from Base.auth import Auth
@@ -57,3 +57,5 @@ class QitianView(View):
         """
         user: User = request.argument.user
         user.remove()
+
+        return OK
