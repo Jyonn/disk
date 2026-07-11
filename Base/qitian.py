@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from typing import Any
@@ -8,6 +9,15 @@ from smartdjango import Code, Error, OK
 
 
 logger = logging.getLogger(__name__)
+
+
+def _redact(value, keep_start=6, keep_end=4):
+    if value is None:
+        return None
+    text = str(value)
+    if len(text) <= keep_start + keep_end:
+        return text
+    return '%s...%s' % (text[:keep_start], text[-keep_end:])
 
 
 @Error.register
@@ -63,10 +73,30 @@ class ResilientQitianManager:
 
         url = self.host + path
         last_error = None
+        printable_headers = dict(headers or {})
+        if 'token' in printable_headers:
+            printable_headers['token'] = _redact(printable_headers['token'])
+        printable_json = dict(json or {})
+        if 'code' in printable_json:
+            printable_json['code'] = _redact(printable_json['code'])
+        if 'app_secret' in printable_json:
+            printable_json['app_secret'] = _redact(printable_json['app_secret'])
 
         for attempt in range(1, self.retries + 1):
             started_at = time.time()
             response = None
+            print(
+                '[disk-backend][qitian] request',
+                dict(
+                    target=target,
+                    attempt='%s/%s' % (attempt, self.retries),
+                    method=method,
+                    url=url,
+                    headers=printable_headers,
+                    json=printable_json,
+                ),
+                flush=True,
+            )
             try:
                 response = self.session.request(
                     method=method,
@@ -75,8 +105,29 @@ class ResilientQitianManager:
                     json=json,
                     timeout=self.timeout,
                 )
+                response_preview = response.text[:1200]
+                print(
+                    '[disk-backend][qitian] response',
+                    dict(
+                        target=target,
+                        attempt='%s/%s' % (attempt, self.retries),
+                        status_code=response.status_code,
+                        text=response_preview,
+                    ),
+                    flush=True,
+                )
                 body = self._extract_response(response, target)
                 elapsed_ms = int((time.time() - started_at) * 1000)
+                print(
+                    '[disk-backend][qitian] success',
+                    dict(
+                        target=target,
+                        attempt='%s/%s' % (attempt, self.retries),
+                        elapsed_ms=elapsed_ms,
+                        body=json_dumps_safe(body),
+                    ),
+                    flush=True,
+                )
                 if attempt > 1:
                     logger.info(
                         'Qitian request recovered target=%s attempt=%s status=%s elapsed_ms=%s',
@@ -89,6 +140,16 @@ class ResilientQitianManager:
             except requests.RequestException as err:
                 last_error = err
                 elapsed_ms = int((time.time() - started_at) * 1000)
+                print(
+                    '[disk-backend][qitian] request-exception',
+                    dict(
+                        target=target,
+                        attempt='%s/%s' % (attempt, self.retries),
+                        elapsed_ms=elapsed_ms,
+                        error='%s: %s' % (type(err).__name__, err),
+                    ),
+                    flush=True,
+                )
                 logger.warning(
                     'Qitian request exception target=%s attempt=%s/%s elapsed_ms=%s error=%s',
                     target,
@@ -102,6 +163,18 @@ class ResilientQitianManager:
             except Error as err:
                 last_error = err
                 elapsed_ms = int((time.time() - started_at) * 1000)
+                print(
+                    '[disk-backend][qitian] request-error',
+                    dict(
+                        target=target,
+                        attempt='%s/%s' % (attempt, self.retries),
+                        elapsed_ms=elapsed_ms,
+                        identifier=err.identifier,
+                        append_msg=getattr(err, 'append_msg', ''),
+                        details=err.details,
+                    ),
+                    flush=True,
+                )
                 logger.warning(
                     'Qitian request failed target=%s attempt=%s/%s elapsed_ms=%s identifier=%s append=%s details=%s',
                     target,
@@ -164,3 +237,10 @@ class ResilientQitianManager:
         error.append_msg = append_msg
         error.retryable = retryable
         return error
+
+
+def json_dumps_safe(value):
+    try:
+        return json.dumps(value, ensure_ascii=False)
+    except Exception:
+        return str(value)
