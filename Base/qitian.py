@@ -41,7 +41,7 @@ class ResilientQitianManager:
     def get_token(self, code):
         return self._request(
             method='POST',
-            path='/api/oauth/token',
+            path='/oauth/token',
             target='身份认证',
             json=dict(
                 code=code,
@@ -52,7 +52,7 @@ class ResilientQitianManager:
     def get_user_info(self, token):
         return self._request(
             method='GET',
-            path='/api/user/',
+            path='/user/',
             target='用户信息',
             headers=dict(token=token),
         )
@@ -60,7 +60,7 @@ class ResilientQitianManager:
     def get_user_phone(self, token):
         return self._request(
             method='GET',
-            path='/api/user/phone/',
+            path='/user/phone/',
             target='用户手机号',
             headers=dict(token=token),
         )
